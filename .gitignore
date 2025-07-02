@@ -43,3 +43,9 @@ npm-debug.log
 
 # Mac
 .DS_Store
+
+# Dialyzer
+/priv/plts/
+
+# Sobelow
+.sobelow

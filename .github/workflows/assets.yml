@@ -1,0 +1,48 @@
+name: Assets
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  test-assets:
+    name: Test Assets Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: '27.0'
+        elixir-version: '1.18.0'
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Cache deps
+      id: cache-deps
+      uses: actions/cache@v4
+      env:
+        cache-name: cache-elixir-deps
+      with:
+        path: deps
+        key: ${{ runner.os }}-mix-${{ env.cache-name }}-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-mix-${{ env.cache-name }}-
+
+    - name: Install dependencies
+      run: mix deps.get
+
+    - name: Check assets compile
+      run: mix assets.deploy
+
+    - name: Check for outdated assets
+      run: |
+        if [ -n "$(git status --porcelain priv/static)" ]; then
+          echo "Assets are not up to date. Please run 'mix assets.deploy' and commit the changes."
+          exit 1
+        fi
