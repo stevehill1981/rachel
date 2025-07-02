@@ -29,7 +29,6 @@ defmodule RachelWeb.CoreComponents do
   use Phoenix.Component
 
   alias Phoenix.HTML.Form
-  alias Phoenix.HTML.FormField
   use Gettext, backend: RachelWeb.Gettext
 
   alias Phoenix.LiveView.JS

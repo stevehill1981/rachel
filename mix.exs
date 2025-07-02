@@ -2,7 +2,7 @@ defmodule Rachel.MixProject do
   use Mix.Project
 
   def project do
-    [
+    base_config = [
       app: :rachel,
       version: "0.1.0",
       elixir: "~> 1.15",
@@ -17,6 +17,13 @@ defmodule Rachel.MixProject do
         "coveralls.json": :test
       ]
     ]
+
+    # Only add listeners in dev environment
+    if Mix.env() == :dev do
+      Keyword.put(base_config, :listeners, [Phoenix.CodeReloader])
+    else
+      base_config
+    end
   end
 
   # Configuration for the OTP application.

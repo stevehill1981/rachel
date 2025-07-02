@@ -19,135 +19,160 @@ defmodule RachelWeb.GameLive.Modern do
     <div class="game-board min-h-screen">
       <!-- Header -->
       <header class="relative z-10 p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 class="text-3xl font-bold text-white tracking-wide">
-            Rachel Card Game
+        <div class="max-w-7xl mx-auto">
+          <h1 class="text-3xl font-bold text-white tracking-wide text-center">
+            Rachel
           </h1>
-
-          <div class="flex gap-2">
-            <button
-              phx-click="show_save_modal"
-              class="px-4 py-2 bg-white/10 backdrop-blur text-white rounded-lg hover:bg-white/20 transition-colors"
-            >
-              💾 Save
-            </button>
-            <button
-              phx-click="show_load_modal"
-              class="px-4 py-2 bg-white/10 backdrop-blur text-white rounded-lg hover:bg-white/20 transition-colors"
-            >
-              📁 Load
-            </button>
-            <button
-              phx-click="export_game"
-              class="px-4 py-2 bg-white/10 backdrop-blur text-white rounded-lg hover:bg-white/20 transition-colors"
-            >
-              📤 Export
-            </button>
-          </div>
         </div>
       </header>
       
     <!-- Flash Messages -->
       <%= if Phoenix.Flash.get(@flash, :info) do %>
-        <div class="notification-enter fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg">
+        <div
+          id="flash-info"
+          class="notification-enter fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg"
+          phx-click="lv:clear-flash"
+          phx-value-key="info"
+          phx-hook="AutoHideFlash"
+        >
           {Phoenix.Flash.get(@flash, :info)}
         </div>
       <% end %>
 
       <%= if Phoenix.Flash.get(@flash, :error) do %>
-        <div class="notification-enter fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg">
+        <div
+          id="flash-error"
+          class="notification-enter fixed top-20 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-red-500 text-white rounded-lg shadow-lg"
+          phx-click="lv:clear-flash"
+          phx-value-key="error"
+          phx-hook="AutoHideFlash"
+        >
           {Phoenix.Flash.get(@flash, :error)}
         </div>
       <% end %>
       
     <!-- Main Game Area -->
       <main class="relative z-10 p-4 max-w-7xl mx-auto">
-        <!-- Game Status Bar -->
-        <div class="mb-8">
-          <.game_status game={@game} />
-        </div>
         
-    <!-- Game Table -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <!-- Players List -->
-          <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
-            <h2 class="text-xl font-bold text-white mb-4">Players</h2>
-            <div class="space-y-3">
-              <%= for {player, idx} <- Enum.with_index(@game.players) do %>
-                <.player_card
-                  player={player}
-                  is_current={idx == @game.current_player_index}
-                  card_count={length(player.hand)}
-                />
-              <% end %>
+    <!-- Players List (Horizontal) -->
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-6 mb-8">
+          <div class="flex flex-wrap gap-4 justify-center items-center">
+            <%= if @game.direction == :clockwise do %>
+              <div class="text-white/60 text-2xl direction-indicator">→</div>
+            <% else %>
+              <div class="text-white/60 text-2xl direction-indicator">←</div>
+            <% end %>
+            <%= for {player, idx} <- Enum.with_index(@game.players) do %>
+              <.player_card_horizontal
+                player={player}
+                is_current={idx == @game.current_player_index}
+                card_count={length(player.hand)}
+              />
+            <% end %>
+            <%= if @game.direction == :clockwise do %>
+              <div class="text-white/60 text-2xl direction-indicator">→</div>
+            <% else %>
+              <div class="text-white/60 text-2xl direction-indicator">←</div>
+            <% end %>
+          </div>
+        </div>
+
+    <!-- Deck and Current Card Display -->
+        <div class="relative">
+          <!-- AI Thinking Indicator -->
+          <%= if @show_ai_thinking && current_player(@game) && current_player(@game).is_ai do %>
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 z-20">
+              <.ai_thinking_indicator />
             </div>
-          </div>
+          <% end %>
           
-    <!-- Current Card Display -->
-          <div class="flex items-center justify-center">
-            <.current_card_display card={@game.current_card} />
-          </div>
-          
-    <!-- Game Info -->
-          <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
-            <h2 class="text-xl font-bold text-white mb-4">Game Info</h2>
-            <div class="space-y-4 text-white">
-              <%= if @show_ai_thinking do %>
-                <div class="ai-thinking">
-                  AI is thinking...
-                </div>
-              <% end %>
-
-              <%= if length(@game.winners) > 0 do %>
-                <div class="p-4 bg-green-500/20 rounded-lg">
-                  <h3 class="font-bold mb-2">🎉 Winners</h3>
-                  <p>{Enum.join(@game.winners, ", ")}</p>
-                </div>
-              <% end %>
-
-              <%= if @game.stats do %>
-                <div class="text-sm space-y-2">
-                  <p>Turn: {@game.stats.game_stats.total_turns}</p>
-                  <p>Cards Played: {@game.stats.game_stats.total_cards_played}</p>
-                </div>
-              <% end %>
+          <div class="flex items-center justify-center gap-8 mb-8">
+            <!-- Deck -->
+            <div class="flex flex-col items-center">
+              <div class="w-32 h-44">
+                <.deck_display 
+                  deck_size={Rachel.Games.Deck.size(@game.deck)}
+                  can_draw={current_player(@game) && current_player(@game).id == @player_id && !Game.has_valid_play?(@game, current_player(@game))}
+                />
+              </div>
+            </div>
+            
+            <!-- Current Card -->
+            <div class="flex flex-col items-center">
+              <div class="w-32 h-44">
+                <.current_card_display 
+                  card={@game.current_card} 
+                  discard_pile_size={length(@game.discard_pile)}
+                  pending_pickups={@game.pending_pickups}
+                  pending_skips={@game.pending_skips}
+                />
+              </div>
             </div>
           </div>
         </div>
         
     <!-- Player Hand -->
-        <%= if current_player(@game) && current_player(@game).id == @player_id && @player_id not in @game.winners do %>
+        <%= if @player_id not in @game.winners do %>
           <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-bold text-white">Your Hand</h2>
-              <div class="flex gap-2">
-                <%= if length(@selected_cards) > 0 do %>
-                  <button
-                    phx-click="play_cards"
-                    class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
-                  >
-                    Play {length(@selected_cards)} Card(s)
-                  </button>
-                <% end %>
-
-                <%= if !Game.has_valid_play?(@game, current_player(@game)) do %>
-                  <button
-                    phx-click="draw_card"
-                    class="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
-                  >
-                    Draw {max(1, @game.pending_pickups)} Card(s)
-                  </button>
-                <% end %>
+            <%= if length(@selected_cards) > 0 do %>
+              <div class="flex justify-center mb-4">
+                <button
+                  phx-click="play_cards"
+                  class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
+                >
+                  Play {length(@selected_cards)} Card{if length(@selected_cards) == 1, do: "", else: "s"}
+                </button>
               </div>
-            </div>
+            <% end %>
 
-            <div class="flex flex-wrap gap-3">
-              <%= for {card, idx} <- Enum.with_index(current_player(@game).hand) do %>
+            <!-- Game Messages -->
+            <%= if current_player(@game) && current_player(@game).id == @player_id && @game.pending_pickups > 0 && !Game.has_valid_play?(@game, current_player(@game)) && @game.status == :playing do %>
+              <div class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse game-message">
+                <div class="text-center text-red-200 font-semibold">
+                  Drawing <%= @game.pending_pickups %> cards...
+                </div>
+              </div>
+            <% end %>
+            
+            <%= if current_player(@game) && current_player(@game).id != @player_id && @game.status == :playing do %>
+              <div class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30 game-message">
+                <div class="text-center text-gray-200 font-semibold">
+                  Waiting for <%= current_player(@game).name %>'s turn...
+                </div>
+              </div>
+            <% end %>
+            
+            <%= if current_player(@game) && current_player(@game).id == @player_id && !Game.has_valid_play?(@game, current_player(@game)) && @game.pending_pickups == 0 && @game.status == :playing do %>
+              <div class="mb-4 p-3 bg-yellow-500/20 rounded-lg border border-yellow-400/30 game-message">
+                <div class="text-center text-yellow-200 font-semibold">
+                  No valid moves - Click the deck to draw a card
+                </div>
+              </div>
+            <% end %>
+            
+            <!-- Nominated Suit Message -->
+            <%= if @game.nominated_suit && @game.nominated_suit != :pending && current_player(@game) && current_player(@game).id == @player_id do %>
+              <div class="mb-4 p-3 bg-purple-500/20 rounded-lg border border-purple-400/30 game-message">
+                <div class="text-center text-purple-200 font-semibold">
+                  Must play <%= case @game.nominated_suit do %>
+                    <% :hearts -> %><span class="text-red-400">♥ Hearts</span>
+                    <% :diamonds -> %><span class="text-red-400">♦ Diamonds</span>  
+                    <% :clubs -> %><span class="text-gray-300">♣ Clubs</span>
+                    <% :spades -> %><span class="text-gray-300">♠ Spades</span>
+                  <% end %> or an Ace
+                </div>
+              </div>
+            <% end %>
+
+            <div class="flex flex-wrap gap-3 justify-center">
+              <%= for {card, idx} <- Enum.with_index(Enum.find(@game.players, fn p -> p.id == @player_id end).hand) do %>
                 <.playing_card
                   card={card}
                   selected={idx in @selected_cards}
                   disabled={
-                    !can_select_card?(@game, card, @selected_cards, current_player(@game).hand)
+                    current_player(@game) == nil || 
+                    current_player(@game).id != @player_id || 
+                    !can_select_card?(@game, card, @selected_cards, Enum.find(@game.players, fn p -> p.id == @player_id end).hand)
                   }
                   index={idx}
                   phx-click="select_card"
@@ -159,17 +184,20 @@ defmodule RachelWeb.GameLive.Modern do
         <% end %>
         
     <!-- Winner Celebration -->
-        <%= if @player_id in @game.winners do %>
-          <div class="winner-celebration">
-            <div class="fixed inset-0 flex items-center justify-center z-50">
-              <div class="bg-white rounded-2xl p-12 shadow-2xl text-center max-w-md animate-bounce-in">
+        <%= if @show_winner_banner do %>
+          <div class="winner-celebration" phx-hook="WinnerCelebration" id="winner-celebration">
+            <div class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+              <div class="bg-white rounded-2xl p-12 shadow-2xl text-center max-w-md mx-4 animate-bounce-in">
                 <h2 class="text-4xl font-bold mb-4">🎉 You Won! 🎉</h2>
                 <p class="text-gray-600 mb-6">
-                  Congratulations on your victory! You can watch the other players finish the game.
+                  Congratulations on your victory! Click to continue watching the other players finish the game.
                 </p>
                 <button
+                  id="acknowledge-win-button"
                   phx-click="acknowledge_win"
                   class="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                  phx-hook="SoundEffect"
+                  data-sound="win"
                 >
                   Continue Watching
                 </button>
@@ -184,97 +212,11 @@ defmodule RachelWeb.GameLive.Modern do
         <% end %>
       </main>
       
-    <!-- Modals -->
-      <%= if @show_save_modal do %>
-        <div class="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
-          <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
-            <h3 class="text-2xl font-bold mb-6">Save Game</h3>
-            <form phx-submit="save_game">
-              <input
-                type="text"
-                name="save_name"
-                placeholder="Enter save name..."
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <div class="flex gap-3 mt-6">
-                <button
-                  type="submit"
-                  class="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
-                >
-                  Save
-                </button>
-                <button
-                  type="button"
-                  phx-click="hide_save_modal"
-                  class="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      <% end %>
-
-      <%= if @show_load_modal do %>
-        <div class="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
-          <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <h3 class="text-2xl font-bold mb-6">Load Game</h3>
-
-            <%= if Enum.empty?(@saved_games) do %>
-              <p class="text-gray-500 text-center py-8">No saved games found.</p>
-            <% else %>
-              <div class="space-y-3">
-                <%= for save <- @saved_games do %>
-                  <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div>
-                      <div class="font-semibold">{save.name}</div>
-                      <div class="text-sm text-gray-600">
-                        {save.players} players • {format_date(save.saved_at)}
-                      </div>
-                    </div>
-                    <div class="flex gap-2">
-                      <button
-                        phx-click="load_game"
-                        phx-value-save_name={save.name}
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold"
-                      >
-                        Load
-                      </button>
-                      <button
-                        phx-click="delete_save"
-                        phx-value-save_name={save.name}
-                        onclick="return confirm('Delete this save?')"
-                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-semibold"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                <% end %>
-              </div>
-            <% end %>
-
-            <div class="mt-6">
-              <button
-                phx-click="hide_load_modal"
-                class="w-full px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      <% end %>
-      
     <!-- Confetti for winners -->
-      <div id="confetti-container" class="winner-celebration"></div>
+      <%= if @show_winner_banner do %>
+        <div id="confetti-container" class="winner-celebration" phx-hook="WinnerCelebration"></div>
+      <% end %>
     </div>
     """
-  end
-
-  defp format_date(datetime) do
-    Calendar.strftime(datetime, "%b %d, %Y at %I:%M %p")
   end
 end

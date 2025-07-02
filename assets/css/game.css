@@ -1,28 +1,7 @@
 /* Game-specific styles and animations */
 
 /* Card animations */
-@keyframes cardDeal {
-  from {
-    transform: translateY(-100vh) rotate(720deg) scale(0);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) rotate(0) scale(1);
-    opacity: 1;
-  }
-}
 
-@keyframes cardHover {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-10px) scale(1.05);
-  }
-  100% {
-    transform: translateY(0) scale(1);
-  }
-}
 
 @keyframes cardSelect {
   0% {
@@ -35,9 +14,26 @@
 }
 
 @keyframes cardPlay {
-  to {
-    transform: translateY(-200px) scale(0.5) rotate(360deg);
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-100px) scale(1.2) rotate(180deg);
+  }
+  100% {
+    transform: translateY(-200px) scale(0) rotate(360deg);
     opacity: 0;
+  }
+}
+
+@keyframes cardDeal {
+  from {
+    transform: translateX(-100%) translateY(-100%) scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
   }
 }
 
@@ -67,15 +63,20 @@
 .playing-card {
   position: relative;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: cardDeal 0.5s ease-out;
   transform-style: preserve-3d;
   cursor: pointer;
   user-select: none;
 }
 
 .playing-card:hover:not(:disabled) {
-  animation: cardHover 0.5s ease-in-out;
+  transform: translateY(-10px) scale(1.05) rotateZ(-2deg);
+  box-shadow: 0 15px 40px rgba(59, 130, 246, 0.3);
   z-index: 10;
+}
+
+.playing-card:active:not(:disabled) {
+  transform: translateY(-5px) scale(1.02) rotateZ(-1deg);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
 }
 
 .playing-card.selected {
@@ -121,6 +122,19 @@
   border-radius: inherit;
   z-index: -1;
   animation: gradient 3s ease infinite;
+  filter: blur(4px);
+}
+
+.current-player::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  background-size: 300% 300%;
+  border-radius: inherit;
+  z-index: -1;
+  animation: gradient 3s ease infinite;
+  opacity: 0.8;
 }
 
 @keyframes gradient {
@@ -166,7 +180,18 @@
 }
 
 .notification-exit {
-  animation: slideIn 0.3s ease-out reverse;
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
 }
 
 /* Loading states */
@@ -207,6 +232,22 @@
   color: rgba(255, 255, 255, 0.1);
 }
 
+/* Deck draw animation */
+@keyframes deckPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+}
+
+.deck-can-draw {
+  animation: deckPulse 2s infinite;
+}
+
 /* Bounce in animation */
 @keyframes bounce-in {
   0% {
@@ -241,6 +282,21 @@
   }
 }
 
+@keyframes firework {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
 .winner-celebration {
   position: fixed;
   inset: 0;
@@ -256,6 +312,27 @@
   animation: confetti 3s ease-out;
 }
 
+.winner-banner-enter {
+  animation: bounceInDown 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-2000px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(30px);
+  }
+  80% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
 /* Responsive improvements */
 @media (max-width: 768px) {
   .playing-card {
@@ -268,9 +345,71 @@
   }
 }
 
+/* Special card effects */
+.special-card-glow {
+  animation: specialGlow 2s ease-in-out infinite;
+}
+
+@keyframes specialGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(147, 51, 234, 0.8), 0 0 60px rgba(147, 51, 234, 0.4);
+  }
+}
+
+.pickup-card-indicator {
+  position: relative;
+}
+
+.pickup-card-indicator::after {
+  content: attr(data-effect);
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  animation: bounce 1s infinite;
+}
+
 /* Smooth transitions */
 * {
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Game messages animation */
+@keyframes slideInMessage {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.game-message {
+  animation: slideInMessage 0.3s ease-out;
+}
+
+/* Direction indicator animation */
+@keyframes directionFlow {
+  from {
+    transform: translateX(-5px);
+  }
+  to {
+    transform: translateX(5px);
+  }
+}
+
+.direction-indicator {
+  animation: directionFlow 1s ease-in-out infinite alternate;
 }
 
 /* Focus states for accessibility */

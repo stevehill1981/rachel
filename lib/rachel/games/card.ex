@@ -44,7 +44,7 @@ defmodule Rachel.Games.Card do
   def matches_rank?(%__MODULE__{rank: rank1}, %__MODULE__{rank: rank2}), do: rank1 == rank2
 
   def can_play_on?(%__MODULE__{} = card, %__MODULE__{} = top_card) do
-    matches_suit?(card, top_card) or matches_rank?(card, top_card)
+    matches_suit?(card, top_card) or matches_rank?(card, top_card) or card.rank == :ace
   end
 
   def display(%__MODULE__{suit: suit, rank: rank}) do

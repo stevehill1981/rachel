@@ -1,14 +1,10 @@
 defmodule RachelWeb.GameLive do
   use RachelWeb, :live_view
 
-  alias Rachel.Games.{AIPlayer, Card, Game, GameSave}
-  import RachelWeb.GameComponents
+  alias Rachel.Games.{AIPlayer, Card, Game}
 
   @impl true
   def mount(_params, _session, socket) do
-    # Initialize save system
-    GameSave.start_link()
-
     game = create_test_game()
 
     socket =
@@ -17,12 +13,14 @@ defmodule RachelWeb.GameLive do
       |> assign(:player_id, "human")
       |> assign(:selected_cards, [])
       |> assign(:show_ai_thinking, false)
-      |> assign(:show_save_modal, false)
-      |> assign(:show_load_modal, false)
-      |> assign(:saved_games, [])
+      |> assign(:show_winner_banner, false)
+      |> assign(:winner_acknowledged, false)
 
     # Check if AI should start
     schedule_ai_move(game)
+    
+    # Check if player needs to auto-draw
+    socket = check_auto_draw(socket)
 
     {:ok, socket}
   end
@@ -36,49 +34,48 @@ defmodule RachelWeb.GameLive do
       selected = socket.assigns.selected_cards
 
       # If clicking on a selected card, deselect it
-      new_selected =
-        if index in selected do
-          List.delete(selected, index)
-        else
-          # Check if we can add this card
-          if can_select_card?(
-               socket.assigns.game,
-               Enum.at(current_player.hand, index),
-               selected,
-               current_player.hand
-             ) do
-            # Check if this is the only card that could be stacked
-            clicked_card = Enum.at(current_player.hand, index)
-            stackable_cards = count_stackable_cards(current_player.hand, clicked_card, selected)
-
-            # If this is the only instance of this rank (no stacking possible)
-            # and no cards are selected yet, auto-play it
-            if length(selected) == 0 && stackable_cards == 0 do
-              # Auto-play immediately
-              case Game.play_cards(socket.assigns.game, current_player.id, [index]) do
+      if index in selected do
+        {:noreply, assign(socket, :selected_cards, List.delete(selected, index))}
+      else
+        # Check if we can add this card
+        clicked_card = Enum.at(current_player.hand, index)
+        
+        if clicked_card && can_select_card?(socket.assigns.game, clicked_card, selected, current_player.hand) do
+          # Check for auto-play condition
+          if clicked_card && length(selected) == 0 do
+            # Count other cards with same rank (excluding the clicked card)
+            other_same_rank = count_other_cards_with_rank(current_player.hand, clicked_card, index, selected)
+            
+            if other_same_rank == 0 do
+              # Auto-play immediately - this is the only card of its rank
+              case Game.play_card(socket.assigns.game, current_player.id, [index]) do
                 {:ok, new_game} ->
                   socket =
                     socket
                     |> assign(:game, new_game)
                     |> assign(:selected_cards, [])
-                    |> put_flash(:info, "Card played!")
+                    |> check_and_show_winner_banner(new_game)
 
                   schedule_ai_move(new_game)
+                  socket = check_auto_draw(socket)
                   {:noreply, socket}
 
                 {:error, reason} ->
-                  {:noreply, put_flash(socket, :error, format_error(reason))}
+                  {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
               end
             else
-              # Add to selection for potential stacking
-              [index | selected]
+              # Can stack with other cards - add to selection
+              {:noreply, assign(socket, :selected_cards, selected ++ [index])}
             end
           else
-            selected
+            # Either cards are already selected or clicked_card is nil - add to selection
+            {:noreply, assign(socket, :selected_cards, selected ++ [index])}
           end
+        else
+          # Can't select this card
+          {:noreply, socket}
         end
-
-      {:noreply, assign(socket, :selected_cards, new_selected)}
+      end
     else
       {:noreply, socket}
     end
@@ -90,7 +87,7 @@ defmodule RachelWeb.GameLive do
     if current_player &&
          current_player.id == socket.assigns.player_id &&
          length(socket.assigns.selected_cards) > 0 do
-      case Game.play_cards(
+      case Game.play_card(
              socket.assigns.game,
              current_player.id,
              socket.assigns.selected_cards
@@ -100,13 +97,14 @@ defmodule RachelWeb.GameLive do
             socket
             |> assign(:game, new_game)
             |> assign(:selected_cards, [])
-            |> put_flash(:info, "Cards played!")
+            |> check_and_show_winner_banner(new_game)
 
           schedule_ai_move(new_game)
+          socket = check_auto_draw(socket)
           {:noreply, socket}
 
         {:error, reason} ->
-          {:noreply, put_flash(socket, :error, format_error(reason))}
+          {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
       end
     else
       {:noreply, socket}
@@ -123,13 +121,14 @@ defmodule RachelWeb.GameLive do
             socket
             |> assign(:game, new_game)
             |> assign(:selected_cards, [])
+            |> clear_flash()
             |> put_flash(:info, "Card drawn!")
 
           schedule_ai_move(new_game)
           {:noreply, socket}
 
         {:error, reason} ->
-          {:noreply, put_flash(socket, :error, format_error(reason))}
+          {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
       end
     else
       {:noreply, socket}
@@ -147,100 +146,24 @@ defmodule RachelWeb.GameLive do
           socket =
             socket
             |> assign(:game, new_game)
+            |> clear_flash()
             |> put_flash(:info, "Suit nominated: #{suit}")
 
           schedule_ai_move(new_game)
           {:noreply, socket}
 
         {:error, reason} ->
-          {:noreply, put_flash(socket, :error, format_error(reason))}
+          {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
       end
     else
       {:noreply, socket}
     end
   end
 
-  def handle_event("show_save_modal", _, socket) do
-    {:noreply, assign(socket, :show_save_modal, true)}
-  end
-
-  def handle_event("hide_save_modal", _, socket) do
-    {:noreply, assign(socket, :show_save_modal, false)}
-  end
-
-  def handle_event("save_game", %{"save_name" => save_name}, socket) do
-    case GameSave.save_game(socket.assigns.game, save_name) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> assign(:show_save_modal, false)
-         |> put_flash(:info, "Game saved successfully!")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to save game")}
-    end
-  end
-
-  def handle_event("show_load_modal", _, socket) do
-    saved_games = GameSave.list_saved_games()
-
-    {:noreply,
-     socket
-     |> assign(:show_load_modal, true)
-     |> assign(:saved_games, saved_games)}
-  end
-
-  def handle_event("hide_load_modal", _, socket) do
-    {:noreply, assign(socket, :show_load_modal, false)}
-  end
-
-  def handle_event("load_game", %{"save_name" => save_name}, socket) do
-    case GameSave.load_game(save_name) do
-      {:ok, game} ->
-        socket =
-          socket
-          |> assign(:game, game)
-          |> assign(:show_load_modal, false)
-          |> assign(:selected_cards, [])
-          |> put_flash(:info, "Game loaded successfully!")
-
-        schedule_ai_move(game)
-        {:noreply, socket}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to load game")}
-    end
-  end
-
-  def handle_event("delete_save", %{"save_name" => save_name}, socket) do
-    case GameSave.delete_save(save_name) do
-      :ok ->
-        saved_games = GameSave.list_saved_games()
-
-        {:noreply,
-         socket
-         |> assign(:saved_games, saved_games)
-         |> put_flash(:info, "Save deleted")}
-
-      _ ->
-        {:noreply, put_flash(socket, :error, "Failed to delete save")}
-    end
-  end
 
   @impl true
   def handle_event("acknowledge_win", _, socket) do
-    {:noreply, socket}
-  end
-
-  def handle_event("export_game", _params, socket) do
-    case GameSave.export_game(socket.assigns.game) do
-      {:ok, _json_data} ->
-        # In a real app, you'd trigger a download. For now, just show success
-        {:noreply, put_flash(socket, :info, "Game exported to JSON (check browser console)")}
-
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to export game")}
-    end
+    {:noreply, assign(socket, :show_winner_banner, false)}
   end
 
   @impl true
@@ -249,14 +172,13 @@ defmodule RachelWeb.GameLive do
     current = Game.current_player(game)
 
     # Double-check it's still AI's turn
-    if current && current.is_ai && game.status == :playing &&
-         game.nominated_suit != :pending do
+    if current && current.is_ai && game.status == :playing do
       socket = assign(socket, :show_ai_thinking, true)
 
       # Get AI's move
       case AIPlayer.make_move(game, current.id) do
         {:play, cards} ->
-          case Game.play_cards(game, current.id, cards) do
+          case Game.play_card(game, current.id, cards) do
             {:ok, new_game} ->
               socket =
                 socket
@@ -264,6 +186,7 @@ defmodule RachelWeb.GameLive do
                 |> assign(:show_ai_thinking, false)
 
               schedule_ai_move(new_game)
+              socket = check_auto_draw(socket)
               {:noreply, socket}
 
             _ ->
@@ -280,6 +203,7 @@ defmodule RachelWeb.GameLive do
                 |> assign(:show_ai_thinking, false)
 
               schedule_ai_move(new_game)
+              socket = check_auto_draw(socket)
               {:noreply, socket}
 
             _ ->
@@ -290,6 +214,50 @@ defmodule RachelWeb.GameLive do
           handle_ai_draw(socket, game, current.id)
 
         _ ->
+          {:noreply, socket}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_info(:auto_hide_winner_banner, socket) do
+    {:noreply, assign(socket, :show_winner_banner, false)}
+  end
+
+  def handle_info(:auto_draw_pending_cards, socket) do
+    game = socket.assigns.game
+    current_player = current_player(game)
+    
+    # Double-check conditions are still met
+    if current_player && 
+       current_player.id == socket.assigns.player_id && 
+       game.pending_pickups > 0 && 
+       !Game.has_valid_play?(game, current_player) &&
+       game.status == :playing do
+      
+      pickup_count = game.pending_pickups
+      pickup_type = game.pending_pickup_type
+      
+      case Game.draw_card(game, current_player.id) do
+        {:ok, new_game} ->
+          message = if pickup_type == :black_jacks do
+            "Drew #{pickup_count} cards from Black Jacks!"
+          else
+            "Drew #{pickup_count} cards from 2s!"
+          end
+          
+          socket =
+            socket
+            |> assign(:game, new_game)
+            |> assign(:selected_cards, [])
+            |> clear_flash()
+            |> put_flash(:info, message)
+          
+          schedule_ai_move(new_game)
+          {:noreply, socket}
+          
+        {:error, _} ->
           {:noreply, socket}
       end
     else
@@ -319,17 +287,21 @@ defmodule RachelWeb.GameLive do
     end
   end
 
+
   @impl true
   def render(assigns) do
     RachelWeb.GameLive.Modern.render(assigns)
   end
 
   defp create_test_game do
+    ai_names = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack", "Kate", "Liam", "Maya", "Noah", "Olivia", "Paul", "Quinn", "Ruby", "Sam", "Tara"]
+    selected_names = Enum.take_random(ai_names, 3)
+    
     Game.new()
     |> Game.add_player("human", "You", false)
-    |> Game.add_player("ai1", "AI Player 1", true)
-    |> Game.add_player("ai2", "AI Player 2", true)
-    |> Game.add_player("ai3", "AI Player 3", true)
+    |> Game.add_player("ai1", Enum.at(selected_names, 0), true)
+    |> Game.add_player("ai2", Enum.at(selected_names, 1), true)
+    |> Game.add_player("ai3", Enum.at(selected_names, 2), true)
     |> Game.start_game()
   end
 
@@ -367,15 +339,12 @@ defmodule RachelWeb.GameLive do
     end
   end
 
-  defp render_card(%Card{} = card) do
-    Card.display(card)
-  end
 
   defp schedule_ai_move(%Game{} = game) do
     current = Game.current_player(game)
 
     if current && current.is_ai && game.status == :playing do
-      Process.send_after(self(), :ai_move, 500)
+      Process.send_after(self(), :ai_move, 1500)
     end
   end
 
@@ -390,81 +359,50 @@ defmodule RachelWeb.GameLive do
   defp format_error(:can_only_stack_same_rank), do: "You can only stack cards of the same rank!"
   defp format_error(error), do: "Error: #{inspect(error)}"
 
-  defp format_suit(:hearts), do: "♥ Hearts"
-  defp format_suit(:diamonds), do: "♦ Diamonds"
-  defp format_suit(:clubs), do: "♣ Clubs"
-  defp format_suit(:spades), do: "♠ Spades"
-  defp format_suit(_), do: "Unknown"
 
-  defp count_stackable_cards(hand, clicked_card, selected_indices) do
+
+  defp count_other_cards_with_rank(hand, clicked_card, clicked_index, selected_indices) do
     hand
     |> Enum.with_index()
     |> Enum.count(fn {card, idx} ->
-      idx not in selected_indices && card.rank == clicked_card.rank
+      idx != clicked_index && idx not in selected_indices && card.rank == clicked_card.rank
     end)
   end
 
-  defp render_stats(%Game{} = game) do
-    case Game.get_game_stats(game) do
-      nil ->
-        assigns = %{}
-        ~H"<p>Statistics tracking not available</p>"
 
-      stats ->
-        assigns = %{stats: stats}
 
-        ~H"""
-        <div class="space-y-4">
-          <!-- Game Overview -->
-          <div class="stats shadow">
-            <div class="stat">
-              <div class="stat-title">Total Turns</div>
-              <div class="stat-value text-primary">{@stats.game.total_turns}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-title">Cards Played</div>
-              <div class="stat-value text-secondary">{@stats.game.total_cards_played}</div>
-            </div>
-            <div class="stat">
-              <div class="stat-title">Duration</div>
-              <div class="stat-value text-accent">{@stats.game.duration_minutes}</div>
-            </div>
-          </div>
-          
-        <!-- Player Stats -->
-          <h3 class="text-lg font-bold">Player Statistics</h3>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>Cards Played</th>
-                  <th>Special Cards</th>
-                  <th>Cards Drawn</th>
-                  <th>Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                <%= for player <- @stats.players do %>
-                  <tr class={player.won && "font-bold text-success"}>
-                    <td>{player.name}</td>
-                    <td>{player.total_cards_played}</td>
-                    <td>{player.special_cards_played}</td>
-                    <td>{player.total_cards_drawn}</td>
-                    <td>{player.score}</td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        """
+  defp check_and_show_winner_banner(socket, game) do
+    player_id = socket.assigns.player_id
+    
+    # Check if the current player just won and hasn't acknowledged it yet
+    if player_id in game.winners && !socket.assigns.winner_acknowledged do
+      # Auto-hide the banner after 5 seconds
+      Process.send_after(self(), :auto_hide_winner_banner, 5000)
+      
+      socket
+      |> assign(:show_winner_banner, true)
+      |> assign(:winner_acknowledged, true)
+    else
+      socket
     end
   end
 
-  defp format_date(datetime) do
-    datetime
-    |> DateTime.shift_zone!("Etc/UTC")
-    |> Calendar.strftime("%b %d at %I:%M %p")
+  defp check_auto_draw(socket) do
+    game = socket.assigns.game
+    current_player = current_player(game)
+    
+    # Check if it's the human player's turn with pending pickups and no valid plays
+    if current_player && 
+       current_player.id == socket.assigns.player_id && 
+       game.pending_pickups > 0 && 
+       !Game.has_valid_play?(game, current_player) &&
+       game.status == :playing do
+      
+      # Schedule auto-draw after a delay
+      Process.send_after(self(), :auto_draw_pending_cards, 2000)
+      socket
+    else
+      socket
+    end
   end
 end

@@ -25,9 +25,98 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+
+// Hooks for custom client-side behavior
+const Hooks = {
+  AutoHideFlash: {
+    mounted() {
+      // Auto-hide flash messages after 5 seconds
+      this.timer = setTimeout(() => {
+        this.el.classList.add("notification-exit")
+        setTimeout(() => {
+          this.pushEvent("lv:clear-flash", {key: this.el.id.replace("flash-", "")})
+        }, 300)
+      }, 5000)
+    },
+    beforeDestroy() {
+      clearTimeout(this.timer)
+    }
+  },
+  
+  CardAnimation: {
+    mounted() {
+      // Only animate on initial mount, not when re-rendering
+      if (!this.el.dataset.animated) {
+        this.el.dataset.animated = "true"
+        this.el.style.opacity = "0"
+        this.el.style.transform = "translateY(20px)"
+        
+        setTimeout(() => {
+          this.el.style.transition = "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+          this.el.style.opacity = "1"
+          this.el.style.transform = "translateY(0)"
+        }, this.el.dataset.delay || 0)
+      }
+    }
+  },
+  
+  WinnerCelebration: {
+    mounted() {
+      // Create confetti effect
+      const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b']
+      const confettiCount = 50
+      
+      for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div')
+        confetti.className = 'confetti'
+        confetti.style.left = Math.random() * 100 + '%'
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]
+        confetti.style.animationDelay = Math.random() * 3 + 's'
+        confetti.style.animationDuration = (Math.random() * 3 + 2) + 's'
+        this.el.appendChild(confetti)
+      }
+    }
+  },
+  
+  SoundEffect: {
+    mounted() {
+      // Play sound effects for game actions
+      const action = this.el.dataset.sound
+      if (action && window.AudioContext) {
+        // Simple sound generation (can be replaced with actual sound files)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+        
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+        
+        switch(action) {
+          case 'card-play':
+            oscillator.frequency.value = 523.25 // C5
+            gainNode.gain.value = 0.1
+            break
+          case 'card-draw':
+            oscillator.frequency.value = 392 // G4
+            gainNode.gain.value = 0.05
+            break
+          case 'win':
+            oscillator.frequency.value = 783.99 // G5
+            gainNode.gain.value = 0.15
+            break
+        }
+        
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.1)
+      }
+    }
+  }
+}
+
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: {_csrf_token: csrfToken}
+  params: {_csrf_token: csrfToken},
+  hooks: Hooks
 })
 
 // Show progress bar on live navigation and form submits

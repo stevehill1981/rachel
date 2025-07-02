@@ -10,15 +10,22 @@ defmodule Rachel.Games.AIPlayer do
     player = Game.current_player(game)
 
     if player && player.id == player_id do
-      valid_plays = Game.get_valid_plays(game, player)
-
-      if Enum.empty?(valid_plays) do
-        # Must draw
-        {:draw, nil}
+      # Check if we need to nominate a suit
+      if game.nominated_suit == :pending do
+        # Choose the suit we have the most of
+        suit = choose_best_suit(player.hand)
+        {:nominate, suit}
       else
-        # Choose best card to play
-        {_card, index} = choose_best_play(game, valid_plays)
-        {:play, index}
+        valid_plays = Game.get_valid_plays(game, player)
+
+        if Enum.empty?(valid_plays) do
+          # Must draw
+          {:draw, nil}
+        else
+          # Choose best card to play
+          {_card, index} = choose_best_play(game, valid_plays)
+          {:play, index}
+        end
       end
     else
       {:error, :not_ai_turn}
@@ -104,5 +111,20 @@ defmodule Rachel.Games.AIPlayer do
     |> Enum.count(fn {player, idx} ->
       idx != current && length(player.hand) <= 3
     end)
+  end
+
+  defp choose_best_suit(hand) do
+    # Count cards by suit
+    suit_counts =
+      hand
+      |> Enum.group_by(& &1.suit)
+      |> Enum.map(fn {suit, cards} -> {suit, length(cards)} end)
+      |> Enum.sort_by(fn {_suit, count} -> count end, :desc)
+
+    # Choose the suit we have the most of
+    case suit_counts do
+      [{suit, _} | _] -> suit
+      [] -> :hearts  # Fallback, shouldn't happen
+    end
   end
 end

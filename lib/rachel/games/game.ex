@@ -21,6 +21,7 @@ defmodule Rachel.Games.Game do
           id: String.t(),
           players: [player()],
           deck: Deck.t(),
+          discard_pile: [Card.t()],
           current_card: Card.t() | nil,
           current_player_index: integer(),
           direction: direction(),
@@ -30,7 +31,8 @@ defmodule Rachel.Games.Game do
           nominated_suit: Card.suit() | nil,
           status: game_status(),
           winners: [player_id()],
-          stats: Stats.t() | nil
+          stats: Stats.t() | nil,
+          last_action: {:skipped, String.t()} | nil
         }
 
   defstruct [
@@ -38,6 +40,7 @@ defmodule Rachel.Games.Game do
     :deck,
     :current_card,
     players: [],
+    discard_pile: [],
     current_player_index: 0,
     direction: :clockwise,
     pending_pickups: 0,
@@ -46,7 +49,8 @@ defmodule Rachel.Games.Game do
     nominated_suit: nil,
     status: :waiting,
     winners: [],
-    stats: nil
+    stats: nil,
+    last_action: nil
   ]
 
   def new(id \\ generate_id()) do
@@ -93,10 +97,12 @@ defmodule Rachel.Games.Game do
       new_game =
         game
         |> remove_cards_from_player(player_index, cards)
+        |> add_cards_to_discard_pile(validated_cards)
         |> apply_card_effects(validated_cards)
         |> update_current_card(List.last(validated_cards))
         |> record_cards_played(player_id, validated_cards)
         |> check_for_winner(player_index)
+        |> clear_nominated_suit_if_played(validated_cards)
 
       # Only advance turn if we're not waiting for suit nomination
       new_game =
@@ -123,12 +129,13 @@ defmodule Rachel.Games.Game do
          player <- Enum.at(game.players, player_index),
          false <- has_valid_play?(game, player) do
       count = max(1, game.pending_pickups)
-      {cards, new_deck} = Deck.draw(game.deck, count)
+      {cards, new_deck, new_discard_pile} = draw_cards_with_reshuffle(game.deck, game.discard_pile, count)
 
       new_game =
         game
         |> update_player_hand(player_index, player.hand ++ cards)
         |> Map.put(:deck, new_deck)
+        |> Map.put(:discard_pile, new_discard_pile)
         |> Map.put(:pending_pickups, 0)
         |> Map.put(:pending_pickup_type, nil)
         |> record_cards_drawn(player_id, count)
@@ -287,6 +294,35 @@ defmodule Rachel.Games.Game do
     %{game | players: players}
   end
 
+  defp add_cards_to_discard_pile(game, cards) do
+    %{game | discard_pile: game.discard_pile ++ cards}
+  end
+
+  defp draw_cards_with_reshuffle(deck, discard_pile, count) do
+    deck_size = Deck.size(deck)
+    
+    if deck_size >= count do
+      # Enough cards in deck
+      {cards, new_deck} = Deck.draw(deck, count)
+      {cards, new_deck, discard_pile}
+    else
+      # Need to reshuffle discard pile into deck
+      # Create a new deck with the discarded cards added back and shuffled
+      cards_to_reshuffle = discard_pile
+      
+      # Create a new deck by adding discard pile cards to the existing deck
+      all_cards = deck.cards ++ cards_to_reshuffle
+      reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
+      
+      # Clear discard pile since we reshuffled it
+      new_discard_pile = []
+      
+      # Now draw the required cards
+      {cards, final_deck} = Deck.draw(reshuffled_deck, count)
+      {cards, final_deck, new_discard_pile}
+    end
+  end
+
   defp apply_card_effects(game, cards) do
     Enum.reduce(cards, game, fn card, game_acc ->
       apply_single_card_effect(game_acc, card)
@@ -345,9 +381,24 @@ defmodule Rachel.Games.Game do
     player = Enum.at(game.players, player_index)
 
     if Enum.empty?(player.hand) do
+      new_game = 
+        game
+        |> Map.put(:winners, game.winners ++ [player.id])
+        |> record_winner(player.id)
+      
+      # Check if only one player remains (who becomes the loser)
+      check_for_game_end(new_game)
+    else
       game
-      |> Map.put(:winners, game.winners ++ [player.id])
-      |> record_winner(player.id)
+    end
+  end
+
+  defp check_for_game_end(game) do
+    active_players = Enum.reject(game.players, fn player -> player.id in game.winners end)
+    
+    if length(active_players) <= 1 do
+      # Game ends - set status to finished
+      %{game | status: :finished}
     else
       game
     end
@@ -363,7 +414,34 @@ defmodule Rachel.Games.Game do
   defp advance_turn(game) do
     game
     |> record_turn_advance()
+    |> Map.put(:last_action, nil)  # Clear any previous skip messages
     |> increment_turn()
+    |> apply_pending_skips()
+  end
+  
+  defp apply_pending_skips(%__MODULE__{pending_skips: 0} = game), do: game
+  
+  defp apply_pending_skips(%__MODULE__{pending_skips: skips} = game) when skips > 0 do
+    current_player = current_player(game)
+    
+    # Check if current player can play a 7
+    can_play_seven = 
+      current_player.hand
+      |> Enum.any?(fn card -> 
+        card.rank == 7 && valid_play?(game, card)
+      end)
+    
+    if can_play_seven do
+      # Player can defend with their own 7 - give them the chance
+      game
+    else
+      # Player has no 7s - skip them and record it
+      game
+      |> Map.put(:pending_skips, skips - 1)
+      |> Map.put(:last_action, {:skipped, current_player.name})
+      |> increment_turn()
+      |> apply_pending_skips()
+    end
   end
 
   defp increment_turn(%__MODULE__{direction: :clockwise} = game) do
@@ -437,6 +515,20 @@ defmodule Rachel.Games.Game do
   defp record_winner(%__MODULE__{stats: stats} = game, winner_id) do
     new_stats = Stats.record_winner(stats, winner_id)
     %{game | stats: new_stats}
+  end
+
+  defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: nil} = game, _cards), do: game
+  defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: :pending} = game, _cards), do: game
+  
+  defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: nominated_suit} = game, cards) do
+    [first_card | _] = cards
+    
+    # If the first card matches the nominated suit (not an Ace), clear the nomination
+    if first_card.suit == nominated_suit && first_card.rank != :ace do
+      %{game | nominated_suit: nil}
+    else
+      game
+    end
   end
 
   def get_game_stats(%__MODULE__{stats: nil}), do: nil
