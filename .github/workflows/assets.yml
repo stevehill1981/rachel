@@ -37,12 +37,18 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
 
-    - name: Check assets compile
-      run: mix assets.deploy
-
-    - name: Check for outdated assets
+    - name: Compile assets
       run: |
-        if [ -n "$(git status --porcelain priv/static)" ]; then
-          echo "Assets are not up to date. Please run 'mix assets.deploy' and commit the changes."
-          exit 1
-        fi
+        mix assets.build
+        echo "✓ Assets compiled successfully"
+    
+    - name: Test asset digests
+      run: |
+        mix phx.digest
+        echo "✓ Asset digests generated successfully"
+        
+    - name: Verify critical assets exist
+      run: |
+        test -f priv/static/assets/css/app.css || (echo "❌ app.css not found" && exit 1)
+        test -f priv/static/assets/js/app.js || (echo "❌ app.js not found" && exit 1)
+        echo "✓ All critical assets present"

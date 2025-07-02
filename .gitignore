@@ -31,6 +31,14 @@ rachel-*.tar
 # Ignore digested assets cache.
 /priv/static/cache_manifest.json
 
+# Ignore all digested/fingerprinted assets
+/priv/static/*-*.ico
+/priv/static/*-*.txt
+/priv/static/*-*.txt.gz
+/priv/static/**/*-*.svg
+/priv/static/**/*-*.svg.gz
+/priv/static/**/*.gz
+
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
