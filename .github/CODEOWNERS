@@ -1,0 +1,24 @@
+# CODEOWNERS for the Rachel card game project
+# These owners will be requested for review when someone opens a pull request
+
+# Global owners for all files
+* @stevehill1981
+
+# Elixir and Phoenix files
+*.ex @stevehill1981
+*.exs @stevehill1981
+/lib/ @stevehill1981
+/test/ @stevehill1981
+/config/ @stevehill1981
+
+# Frontend assets
+/assets/ @stevehill1981
+*.css @stevehill1981
+*.js @stevehill1981
+
+# Documentation
+*.md @stevehill1981
+/docs/ @stevehill1981
+
+# GitHub configuration
+/.github/ @stevehill1981

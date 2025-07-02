@@ -14,8 +14,6 @@ updates:
       - "elixir"
     assignees:
       - "stevehill1981"
-    reviewers:
-      - "stevehill1981"
     commit-message:
       prefix: "deps"
       include: "scope"
