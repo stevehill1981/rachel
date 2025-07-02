@@ -1,7 +1,7 @@
 defmodule RachelWeb.GameLive do
   use RachelWeb, :live_view
 
-  alias Rachel.Games.{Game, Card, AIPlayer, GameSave}
+  alias Rachel.Games.{AIPlayer, Card, Game, GameSave}
 
   @impl true
   def mount(_params, _session, socket) do

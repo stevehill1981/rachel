@@ -20,21 +20,19 @@ defmodule Rachel.Games.GameSave do
   end
 
   def save_game(%Game{} = game, save_name \\ nil) do
-    try do
-      save_name = save_name || generate_save_name(game)
-      timestamp = DateTime.utc_now()
+    save_name = save_name || generate_save_name(game)
+    timestamp = DateTime.utc_now()
 
-      save_data = %{
-        game: game,
-        saved_at: timestamp,
-        save_name: save_name
-      }
+    save_data = %{
+      game: game,
+      saved_at: timestamp,
+      save_name: save_name
+    }
 
-      :ets.insert(@table_name, {save_name, save_data})
-      {:ok, save_name}
-    rescue
-      e -> {:error, e}
-    end
+    :ets.insert(@table_name, {save_name, save_data})
+    {:ok, save_name}
+  rescue
+    e -> {:error, e}
   end
 
   def load_game(save_name) do
@@ -81,17 +79,15 @@ defmodule Rachel.Games.GameSave do
   end
 
   def export_game(%Game{} = game) do
-    try do
-      game_data = %{
-        version: "1.0",
-        exported_at: DateTime.utc_now(),
-        game: serialize_game(game)
-      }
+    game_data = %{
+      version: "1.0",
+      exported_at: DateTime.utc_now(),
+      game: serialize_game(game)
+    }
 
-      {:ok, Jason.encode!(game_data, pretty: true)}
-    rescue
-      e -> {:error, e}
-    end
+    {:ok, Jason.encode!(game_data, pretty: true)}
+  rescue
+    e -> {:error, e}
   end
 
   def import_game(json_data) when is_binary(json_data) do
@@ -142,63 +138,85 @@ defmodule Rachel.Games.GameSave do
 
   defp serialize_cards(game_data) do
     game_data
-    |> Map.update(:current_card, nil, fn
+    |> serialize_current_card()
+    |> serialize_deck()
+    |> serialize_players()
+  end
+
+  defp serialize_current_card(game_data) do
+    Map.update(game_data, :current_card, nil, fn
       nil -> nil
       card -> Map.from_struct(card)
     end)
-    |> Map.update(:deck, %{}, fn deck ->
+  end
+
+  defp serialize_deck(game_data) do
+    Map.update(game_data, :deck, %{}, fn deck ->
       deck
-      |> Map.update(:cards, [], fn cards ->
-        Enum.map(cards, &Map.from_struct/1)
-      end)
-      |> Map.update(:discarded, [], fn cards ->
-        Enum.map(cards, &Map.from_struct/1)
-      end)
-    end)
-    |> Map.update(:players, [], fn players ->
-      Enum.map(players, fn player ->
-        Map.update(player, :hand, [], fn hand ->
-          Enum.map(hand, &Map.from_struct/1)
-        end)
-      end)
+      |> Map.update(:cards, [], &serialize_card_list/1)
+      |> Map.update(:discarded, [], &serialize_card_list/1)
     end)
   end
 
-  defp deserialize_game(game_data) when is_map(game_data) do
-    try do
-      game =
-        struct(Game, game_data)
-        |> deserialize_cards()
-        |> deserialize_stats()
+  defp serialize_players(game_data) do
+    Map.update(game_data, :players, [], fn players ->
+      Enum.map(players, &serialize_player/1)
+    end)
+  end
 
-      {:ok, game}
-    rescue
-      error -> {:error, {:deserialization_failed, error}}
-    end
+  defp serialize_player(player) do
+    Map.update(player, :hand, [], &serialize_card_list/1)
+  end
+
+  defp serialize_card_list(cards) do
+    Enum.map(cards, &Map.from_struct/1)
+  end
+
+  defp deserialize_game(game_data) when is_map(game_data) do
+    game =
+      struct(Game, game_data)
+      |> deserialize_cards()
+      |> deserialize_stats()
+
+    {:ok, game}
+  rescue
+    error -> {:error, {:deserialization_failed, error}}
   end
 
   defp deserialize_cards(%Game{} = game) do
     game
-    |> Map.update(:current_card, nil, fn
+    |> deserialize_current_card()
+    |> deserialize_deck()
+    |> deserialize_players()
+  end
+
+  defp deserialize_current_card(game) do
+    Map.update(game, :current_card, nil, fn
       nil -> nil
       card_data -> struct(Rachel.Games.Card, card_data)
     end)
-    |> Map.update(:deck, %{}, fn deck_data ->
+  end
+
+  defp deserialize_deck(game) do
+    Map.update(game, :deck, %{}, fn deck_data ->
       struct(Rachel.Games.Deck, deck_data)
-      |> Map.update(:cards, [], fn cards ->
-        Enum.map(cards, &struct(Rachel.Games.Card, &1))
-      end)
-      |> Map.update(:discarded, [], fn cards ->
-        Enum.map(cards, &struct(Rachel.Games.Card, &1))
-      end)
+      |> Map.update(:cards, [], &deserialize_card_list/1)
+      |> Map.update(:discarded, [], &deserialize_card_list/1)
     end)
-    |> Map.update(:players, [], fn players ->
-      Enum.map(players, fn player_data ->
-        Map.update(player_data, :hand, [], fn hand ->
-          Enum.map(hand, &struct(Rachel.Games.Card, &1))
-        end)
-      end)
+  end
+
+  defp deserialize_players(game) do
+    Map.update(game, :players, [], fn players ->
+      Enum.map(players, &deserialize_player/1)
     end)
+  end
+
+  defp deserialize_player(player_data) do
+    Map.update(player_data, :hand, [], &deserialize_card_list/1)
+  end
+
+  defp deserialize_card_list(cards) do
+    Enum.map(cards, &struct(Rachel.Games.Card, &1))
   end
 
   defp deserialize_stats(%Game{stats: nil} = game), do: game

@@ -3,6 +3,8 @@ defmodule Rachel.Games.Stats do
   Game statistics tracking and scoring system.
   """
 
+  alias Rachel.Games.Card
+
   @type player_stats :: %{
           games_played: integer(),
           games_won: integer(),
@@ -159,10 +161,11 @@ defmodule Rachel.Games.Stats do
 
   def calculate_player_score(player_stats, _game_stats) do
     base_score =
-      cond do
+      if player_stats.games_won > 0 do
         # Winner bonus
-        player_stats.games_won > 0 -> 1000
-        true -> 0
+        1000
+      else
+        0
       end
 
     # Efficiency bonuses
@@ -213,7 +216,7 @@ defmodule Rachel.Games.Stats do
   end
 
   defp has_special_effect?(card) do
-    Rachel.Games.Card.special_effect(card) != nil
+    Card.special_effect(card) != nil
   end
 
   defp format_duration(nil), do: "In progress"

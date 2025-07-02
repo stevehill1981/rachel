@@ -16,6 +16,8 @@ defmodule Rachel.DataCase do
 
   use ExUnit.CaseTemplate
 
+  alias Ecto.Adapters.SQL.Sandbox
+
   using do
     quote do
       alias Rachel.Repo
@@ -28,7 +30,7 @@ defmodule Rachel.DataCase do
   end
 
   setup tags do
-    Rachel.DataCase.setup_sandbox(tags)
+    setup_sandbox(tags)
     :ok
   end
 
@@ -36,8 +38,8 @@ defmodule Rachel.DataCase do
   Sets up the sandbox based on the test tags.
   """
   def setup_sandbox(tags) do
-    pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Rachel.Repo, shared: not tags[:async])
-    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+    pid = Sandbox.start_owner!(Rachel.Repo, shared: not tags[:async])
+    on_exit(fn -> Sandbox.stop_owner(pid) end)
   end
 
   @doc """

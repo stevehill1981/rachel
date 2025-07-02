@@ -4,7 +4,7 @@ defmodule Rachel.Games.AIPlayer do
   Implements basic strategy for playing cards.
   """
 
-  alias Rachel.Games.{Game, Card}
+  alias Rachel.Games.{Card, Game}
 
   def make_move(%Game{} = game, player_id) do
     player = Game.current_player(game)
