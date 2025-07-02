@@ -1,0 +1,121 @@
+name: Migration Check
+
+on:
+  pull_request:
+    paths:
+      - 'priv/repo/migrations/**'
+      - 'lib/*/schema.ex'
+      - 'lib/**/schema.ex'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  migration-safety:
+    name: Migration Safety Check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rachel_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: '27.0'
+        elixir-version: '1.18.0'
+        
+    - name: Install dependencies
+      run: mix deps.get
+      
+    - name: Create and migrate database
+      run: |
+        mix ecto.create
+        mix ecto.migrate
+      env:
+        MIX_ENV: test
+        
+    - name: Check for pending migrations
+      run: |
+        if mix ecto.migrations | grep -q "down"; then
+          echo "There are pending migrations!"
+          mix ecto.migrations
+          exit 1
+        fi
+      env:
+        MIX_ENV: test
+        
+    - name: Test rollback
+      run: |
+        # Get the latest migration version
+        latest=$(mix ecto.migrations | grep "up" | tail -1 | awk '{print $1}')
+        if [ -n "$latest" ]; then
+          echo "Rolling back migration $latest"
+          mix ecto.rollback
+          echo "Re-applying migration"
+          mix ecto.migrate
+        fi
+      env:
+        MIX_ENV: test
+        
+    - name: Check for migration conflicts
+      run: |
+        # Check if multiple migrations have the same timestamp prefix
+        if ls priv/repo/migrations/*.exs 2>/dev/null | sed 's/.*\///' | cut -d'_' -f1 | sort | uniq -d | grep -q .; then
+          echo "⚠️ Found migrations with duplicate timestamps!"
+          ls priv/repo/migrations/*.exs | sed 's/.*\///' | cut -d'_' -f1 | sort | uniq -d
+          exit 1
+        fi
+        
+    - name: Analyze migration safety
+      run: |
+        echo "## Migration Safety Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check for dangerous operations
+        dangerous_patterns=(
+          "drop table"
+          "drop column"
+          "drop constraint"
+          "alter column.*not null"
+          "rename table"
+          "rename column"
+        )
+        
+        for file in priv/repo/migrations/*.exs; do
+          if [ -f "$file" ]; then
+            filename=$(basename "$file")
+            echo "### $filename" >> $GITHUB_STEP_SUMMARY
+            
+            found_dangerous=false
+            for pattern in "${dangerous_patterns[@]}"; do
+              if grep -i "$pattern" "$file" > /dev/null; then
+                echo "⚠️ Contains potentially dangerous operation: $pattern" >> $GITHUB_STEP_SUMMARY
+                found_dangerous=true
+              fi
+            done
+            
+            if [ "$found_dangerous" = false ]; then
+              echo "✅ No dangerous operations detected" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+        done

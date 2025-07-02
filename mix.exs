@@ -9,7 +9,13 @@ defmodule Rachel.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.html": :test,
+        "coveralls.json": :test
+      ]
     ]
   end
 
@@ -40,6 +46,7 @@ defmodule Rachel.MixProject do
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.0.9"},
       {:floki, ">= 0.30.0", only: :test},
+      {:excoveralls, "~> 0.18", only: :test},
       {:phoenix_live_dashboard, "~> 0.8.3"},
       {:esbuild, "~> 0.9", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},

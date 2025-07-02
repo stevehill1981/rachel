@@ -1,0 +1,140 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rachel_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: '27.0'
+        elixir-version: '1.18.0'
+        
+    - name: Cache deps
+      uses: actions/cache@v4
+      with:
+        path: deps
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-mix-
+          
+    - name: Cache build
+      uses: actions/cache@v4
+      with:
+        path: _build
+        key: ${{ runner.os }}-build-${{ hashFiles('**/mix.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-build-
+          
+    - name: Install dependencies
+      run: mix deps.get
+      
+    - name: Compile
+      run: mix compile --warnings-as-errors
+      
+    - name: Run tests with coverage
+      run: mix coveralls.html
+      env:
+        MIX_ENV: test
+        
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: cover/
+        retention-days: 7
+        
+    - name: Generate coverage summary
+      run: |
+        mix coveralls.json
+        coverage=$(cat cover/excoveralls.json | jq .coverage)
+        echo "## Test Coverage: ${coverage}%" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Generate a simple badge color based on coverage
+        if (( $(echo "$coverage >= 90" | bc -l) )); then
+          color="brightgreen"
+        elif (( $(echo "$coverage >= 80" | bc -l) )); then
+          color="green"
+        elif (( $(echo "$coverage >= 70" | bc -l) )); then
+          color="yellow"
+        elif (( $(echo "$coverage >= 60" | bc -l) )); then
+          color="orange"
+        else
+          color="red"
+        fi
+        
+        echo "Coverage is ${coverage}% (${color})" >> $GITHUB_STEP_SUMMARY
+        echo "View full report in the artifacts above" >> $GITHUB_STEP_SUMMARY
+        
+        # Add to PR comment if this is a PR
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "coverage=${coverage}" >> $GITHUB_OUTPUT
+          echo "color=${color}" >> $GITHUB_OUTPUT
+        fi
+      id: coverage
+      
+    - name: Comment PR with coverage
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const coverage = '${{ steps.coverage.outputs.coverage }}';
+          const color = '${{ steps.coverage.outputs.color }}';
+          const body = `## Test Coverage Report\n\n**Coverage: ${coverage}%** ![](https://img.shields.io/badge/coverage-${coverage}%25-${color})`;
+          
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && comment.body.includes('Test Coverage Report')
+          );
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+          }

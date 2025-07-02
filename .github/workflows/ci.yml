@@ -104,13 +104,13 @@ jobs:
       run: mix deps.get
 
     - name: Run Credo
-      run: mix credo --strict || true # Allow failures for now since we haven't added Credo yet
+      run: mix credo --strict
 
     - name: Check for unused dependencies
       run: mix deps.unlock --check-unused
 
     - name: Audit dependencies
-      run: mix deps.audit || true # Allow failures as some deps might have advisories
+      run: mix deps.audit
 
   security:
     name: Security Scan
@@ -140,7 +140,7 @@ jobs:
       run: mix deps.get
 
     - name: Check for security vulnerabilities
-      run: mix sobelow --config || true # Allow failures since we haven't configured Sobelow yet
+      run: mix sobelow --config
 
     - name: Check for outdated dependencies
-      run: mix hex.outdated || true
+      run: mix hex.outdated
