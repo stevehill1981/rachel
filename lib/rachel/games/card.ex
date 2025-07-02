@@ -7,9 +7,9 @@ defmodule Rachel.Games.Card do
   @type suit :: :hearts | :diamonds | :clubs | :spades
   @type rank :: 2..10 | :jack | :queen | :king | :ace
   @type t :: %__MODULE__{
-    suit: suit(),
-    rank: rank()
-  }
+          suit: suit(),
+          rank: rank()
+        }
 
   defstruct [:suit, :rank]
 
@@ -42,7 +42,7 @@ defmodule Rachel.Games.Card do
 
   def matches_suit?(%__MODULE__{suit: suit1}, %__MODULE__{suit: suit2}), do: suit1 == suit2
   def matches_rank?(%__MODULE__{rank: rank1}, %__MODULE__{rank: rank2}), do: rank1 == rank2
-  
+
   def can_play_on?(%__MODULE__{} = card, %__MODULE__{} = top_card) do
     matches_suit?(card, top_card) or matches_rank?(card, top_card)
   end

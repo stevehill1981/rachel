@@ -3,21 +3,22 @@ defmodule Rachel.Games.Deck do
   Manages a deck of cards for the Rachel game.
   Handles shuffling, dealing, and drawing cards.
   """
-  
+
   alias Rachel.Games.Card
 
   @type t :: %__MODULE__{
-    cards: [Card.t()],
-    discarded: [Card.t()]
-  }
+          cards: [Card.t()],
+          discarded: [Card.t()]
+        }
 
   defstruct cards: [], discarded: []
 
   def new do
-    cards = for suit <- Card.suits(), rank <- Card.ranks() do
-      Card.new(suit, rank)
-    end
-    
+    cards =
+      for suit <- Card.suits(), rank <- Card.ranks() do
+        Card.new(suit, rank)
+      end
+
     %__MODULE__{cards: Enum.shuffle(cards), discarded: []}
   end
 
@@ -58,12 +59,12 @@ defmodule Rachel.Games.Deck do
   defp reshuffle_and_draw(%__MODULE__{discarded: discarded}, count) do
     # Keep the top card of discard pile (current play card)
     [top_card | cards_to_shuffle] = Enum.reverse(discarded)
-    
+
     new_deck = %__MODULE__{
       cards: Enum.shuffle(cards_to_shuffle),
       discarded: [top_card]
     }
-    
+
     draw(new_deck, count)
   end
 end

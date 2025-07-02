@@ -59,11 +59,11 @@ defmodule Rachel.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      
+
       # Additional dependencies for Rachel
       {:bcrypt_elixir, "~> 3.0"},
       {:ex_machina, "~> 2.7", only: :test},
-      
+
       # Code quality and analysis tools
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},

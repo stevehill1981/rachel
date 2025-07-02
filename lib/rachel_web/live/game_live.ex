@@ -1,27 +1,28 @@
 defmodule RachelWeb.GameLive do
   use RachelWeb, :live_view
-  
+
   alias Rachel.Games.{Game, Card, AIPlayer, GameSave}
 
   @impl true
   def mount(_params, _session, socket) do
     # Initialize save system
     GameSave.start_link()
-    
+
     game = create_test_game()
-    
-    socket = socket
-    |> assign(:game, game)
-    |> assign(:player_id, "human")
-    |> assign(:selected_cards, [])
-    |> assign(:show_ai_thinking, false)
-    |> assign(:saved_games, GameSave.list_saved_games())
-    |> assign(:show_save_modal, false)
-    |> assign(:show_load_modal, false)
-    
+
+    socket =
+      socket
+      |> assign(:game, game)
+      |> assign(:player_id, "human")
+      |> assign(:selected_cards, [])
+      |> assign(:show_ai_thinking, false)
+      |> assign(:saved_games, GameSave.list_saved_games())
+      |> assign(:show_save_modal, false)
+      |> assign(:show_load_modal, false)
+
     # Schedule AI moves if it's their turn
     schedule_ai_move(game)
-    
+
     {:ok, socket}
   end
 
@@ -30,31 +31,34 @@ defmodule RachelWeb.GameLive do
     index = String.to_integer(index)
     selected = socket.assigns.selected_cards
     current_player = Game.current_player(socket.assigns.game)
-    
-    selected = if index in selected do
-      Enum.reject(selected, &(&1 == index))
-    else
-      selected ++ [index]
-    end
-    
+
+    selected =
+      if index in selected do
+        Enum.reject(selected, &(&1 == index))
+      else
+        selected ++ [index]
+      end
+
     # Check if we should auto-play
     if length(selected) == 1 do
       clicked_card = Enum.at(current_player.hand, index)
       stackable_cards = count_stackable_cards(current_player.hand, clicked_card, selected)
-      
+
       if stackable_cards == 0 do
         # Auto-play immediately
         case Game.play_card(socket.assigns.game, socket.assigns.player_id, selected) do
           {:ok, new_game} ->
-            socket = socket
-            |> assign(:game, new_game)
-            |> assign(:selected_cards, [])
-            
+            socket =
+              socket
+              |> assign(:game, new_game)
+              |> assign(:selected_cards, [])
+
             schedule_ai_move(new_game)
             {:noreply, socket}
-            
+
           {:error, reason} ->
-            {:noreply, assign(socket, :selected_cards, []) |> put_flash(:error, format_error(reason))}
+            {:noreply,
+             assign(socket, :selected_cards, []) |> put_flash(:error, format_error(reason))}
         end
       else
         {:noreply, assign(socket, :selected_cards, selected)}
@@ -67,31 +71,33 @@ defmodule RachelWeb.GameLive do
   @impl true
   def handle_event("play_cards", _params, socket) do
     %{game: game, player_id: player_id, selected_cards: selected} = socket.assigns
-    
+
     # Don't allow winners to play cards
     if player_id in game.winners do
-      {:noreply, put_flash(socket, :error, "You've already won! Watch the other players continue.")}
+      {:noreply,
+       put_flash(socket, :error, "You've already won! Watch the other players continue.")}
     else
-    
-    case Game.play_card(game, player_id, selected) do
-      {:ok, new_game} ->
-        socket = socket
-        |> assign(:game, new_game)
-        |> assign(:selected_cards, [])
-        
-        # Check if current player just won
-        socket = if player_id in new_game.winners and player_id not in game.winners do
-          put_flash(socket, :info, "🎉 Congratulations! You won the game! 🎉")
-        else
-          socket
-        end
-        
-        schedule_ai_move(new_game)
-        {:noreply, socket}
-        
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, format_error(reason))}
-    end
+      case Game.play_card(game, player_id, selected) do
+        {:ok, new_game} ->
+          socket =
+            socket
+            |> assign(:game, new_game)
+            |> assign(:selected_cards, [])
+
+          # Check if current player just won
+          socket =
+            if player_id in new_game.winners and player_id not in game.winners do
+              put_flash(socket, :info, "🎉 Congratulations! You won the game! 🎉")
+            else
+              socket
+            end
+
+          schedule_ai_move(new_game)
+          {:noreply, socket}
+
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, format_error(reason))}
+      end
     end
   end
 
@@ -99,36 +105,36 @@ defmodule RachelWeb.GameLive do
   def handle_event("nominate_suit", %{"suit" => suit}, socket) do
     %{game: game, player_id: player_id} = socket.assigns
     suit_atom = String.to_existing_atom(suit)
-    
+
     case Game.nominate_suit(game, player_id, suit_atom) do
       {:ok, new_game} ->
         socket = assign(socket, :game, new_game)
         schedule_ai_move(new_game)
         {:noreply, socket}
-        
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, format_error(reason))}
     end
   end
-  
+
   @impl true
   def handle_event("draw_card", _params, socket) do
     %{game: game, player_id: player_id} = socket.assigns
-    
+
     # Don't allow winners to draw cards
     if player_id in game.winners do
-      {:noreply, put_flash(socket, :error, "You've already won! Watch the other players continue.")}
+      {:noreply,
+       put_flash(socket, :error, "You've already won! Watch the other players continue.")}
     else
-    
-    case Game.draw_card(game, player_id) do
-      {:ok, new_game} ->
-        socket = assign(socket, :game, new_game)
-        schedule_ai_move(new_game)
-        {:noreply, socket}
-        
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, format_error(reason))}
-    end
+      case Game.draw_card(game, player_id) do
+        {:ok, new_game} ->
+          socket = assign(socket, :game, new_game)
+          schedule_ai_move(new_game)
+          {:noreply, socket}
+
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, format_error(reason))}
+      end
     end
   end
 
@@ -146,12 +152,14 @@ defmodule RachelWeb.GameLive do
   def handle_event("save_game", %{"save_name" => save_name}, socket) do
     case GameSave.save_game(socket.assigns.game, save_name) do
       {:ok, saved_name} ->
-        socket = socket
-        |> assign(:show_save_modal, false)
-        |> assign(:saved_games, GameSave.list_saved_games())
-        |> put_flash(:info, "Game saved as: #{saved_name}")
+        socket =
+          socket
+          |> assign(:show_save_modal, false)
+          |> assign(:saved_games, GameSave.list_saved_games())
+          |> put_flash(:info, "Game saved as: #{saved_name}")
+
         {:noreply, socket}
-      
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Failed to save game: #{inspect(reason)}")}
     end
@@ -159,9 +167,11 @@ defmodule RachelWeb.GameLive do
 
   @impl true
   def handle_event("show_load_modal", _params, socket) do
-    socket = socket
-    |> assign(:show_load_modal, true)
-    |> assign(:saved_games, GameSave.list_saved_games())
+    socket =
+      socket
+      |> assign(:show_load_modal, true)
+      |> assign(:saved_games, GameSave.list_saved_games())
+
     {:noreply, socket}
   end
 
@@ -174,18 +184,19 @@ defmodule RachelWeb.GameLive do
   def handle_event("load_game", %{"save_name" => save_name}, socket) do
     case GameSave.load_game(save_name) do
       {:ok, game} ->
-        socket = socket
-        |> assign(:game, game)
-        |> assign(:show_load_modal, false)
-        |> assign(:selected_cards, [])
-        |> put_flash(:info, "Game loaded: #{save_name}")
-        
+        socket =
+          socket
+          |> assign(:game, game)
+          |> assign(:show_load_modal, false)
+          |> assign(:selected_cards, [])
+          |> put_flash(:info, "Game loaded: #{save_name}")
+
         schedule_ai_move(game)
         {:noreply, socket}
-      
+
       {:error, :not_found} ->
         {:noreply, put_flash(socket, :error, "Save file not found")}
-      
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Failed to load game: #{inspect(reason)}")}
     end
@@ -195,11 +206,13 @@ defmodule RachelWeb.GameLive do
   def handle_event("delete_save", %{"save_name" => save_name}, socket) do
     case GameSave.delete_save(save_name) do
       :ok ->
-        socket = socket
-        |> assign(:saved_games, GameSave.list_saved_games())
-        |> put_flash(:info, "Save deleted: #{save_name}")
+        socket =
+          socket
+          |> assign(:saved_games, GameSave.list_saved_games())
+          |> put_flash(:info, "Save deleted: #{save_name}")
+
         {:noreply, socket}
-      
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Failed to delete save: #{inspect(reason)}")}
     end
@@ -208,10 +221,10 @@ defmodule RachelWeb.GameLive do
   @impl true
   def handle_event("export_game", _params, socket) do
     case GameSave.export_game(socket.assigns.game) do
-      {:ok, json_data} ->
+      {:ok, _json_data} ->
         # In a real app, you'd trigger a download. For now, just show success
         {:noreply, put_flash(socket, :info, "Game exported to JSON (check browser console)")}
-      
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, "Failed to export game: #{inspect(reason)}")}
     end
@@ -221,76 +234,86 @@ defmodule RachelWeb.GameLive do
   def handle_info(:ai_move, socket) do
     %{game: game} = socket.assigns
     current = Game.current_player(game)
-    
+
     if current && current.is_ai && game.status == :playing do
-      socket = assign(socket, :show_ai_thinking, true)
+      _socket = assign(socket, :show_ai_thinking, true)
       Process.send_after(self(), {:execute_ai_move, current.id}, 1000)
     end
-    
+
     {:noreply, socket}
   end
 
   @impl true
   def handle_info({:execute_ai_move, ai_id}, socket) do
     %{game: game} = socket.assigns
-    
+
     # Check if AI needs to nominate suit
     if game.nominated_suit == :pending && Game.current_player(game).id == ai_id do
       # AI picks a random suit
       suit = Enum.random([:hearts, :diamonds, :clubs, :spades])
+
       case Game.nominate_suit(game, ai_id, suit) do
         {:ok, new_game} ->
-          socket = socket
-          |> assign(:game, new_game)
-          |> assign(:show_ai_thinking, false)
-          
+          socket =
+            socket
+            |> assign(:game, new_game)
+            |> assign(:show_ai_thinking, false)
+
           schedule_ai_move(new_game)
           {:noreply, socket}
-          
-        _ -> {:noreply, socket}
+
+        _ ->
+          {:noreply, socket}
       end
     else
       case AIPlayer.make_move(game, ai_id) do
-      {:play, indices} when is_list(indices) ->
-        case Game.play_card(game, ai_id, indices) do
-          {:ok, new_game} ->
-            socket = socket
-            |> assign(:game, new_game)
-            |> assign(:show_ai_thinking, false)
-            
-            schedule_ai_move(new_game)
-            {:noreply, socket}
-            
-          _ -> {:noreply, socket}
-        end
-        
-      {:play, index} ->
-        case Game.play_card(game, ai_id, index) do
-          {:ok, new_game} ->
-            socket = socket
-            |> assign(:game, new_game)
-            |> assign(:show_ai_thinking, false)
-            
-            schedule_ai_move(new_game)
-            {:noreply, socket}
-            
-          _ -> {:noreply, socket}
-        end
-        
-      {:draw, _} ->
-        case Game.draw_card(game, ai_id) do
-          {:ok, new_game} ->
-            socket = socket
-            |> assign(:game, new_game)
-            |> assign(:show_ai_thinking, false)
-            
-            schedule_ai_move(new_game)
-            {:noreply, socket}
-            
-          _ -> {:noreply, socket}
-        end
-        
-      _ -> {:noreply, socket}
+        {:play, indices} when is_list(indices) ->
+          case Game.play_card(game, ai_id, indices) do
+            {:ok, new_game} ->
+              socket =
+                socket
+                |> assign(:game, new_game)
+                |> assign(:show_ai_thinking, false)
+
+              schedule_ai_move(new_game)
+              {:noreply, socket}
+
+            _ ->
+              {:noreply, socket}
+          end
+
+        {:play, index} ->
+          case Game.play_card(game, ai_id, index) do
+            {:ok, new_game} ->
+              socket =
+                socket
+                |> assign(:game, new_game)
+                |> assign(:show_ai_thinking, false)
+
+              schedule_ai_move(new_game)
+              {:noreply, socket}
+
+            _ ->
+              {:noreply, socket}
+          end
+
+        {:draw, _} ->
+          case Game.draw_card(game, ai_id) do
+            {:ok, new_game} ->
+              socket =
+                socket
+                |> assign(:game, new_game)
+                |> assign(:show_ai_thinking, false)
+
+              schedule_ai_move(new_game)
+              {:noreply, socket}
+
+            _ ->
+              {:noreply, socket}
+          end
+
+        _ ->
+          {:noreply, socket}
       end
     end
   end
@@ -303,7 +326,7 @@ defmodule RachelWeb.GameLive do
         <div class="flex justify-between items-center mb-8">
           <h1 class="text-4xl font-bold">Rachel Card Game</h1>
           
-          <!-- Save/Load Controls -->
+    <!-- Save/Load Controls -->
           <div class="flex gap-2">
             <button phx-click="show_save_modal" class="btn btn-primary btn-sm">
               💾 Save Game
@@ -317,50 +340,50 @@ defmodule RachelWeb.GameLive do
           </div>
         </div>
         
-        <!-- Flash Messages -->
+    <!-- Flash Messages -->
         <%= if Phoenix.Flash.get(@flash, :info) do %>
           <div class="alert alert-success mb-4">
-            <%= Phoenix.Flash.get(@flash, :info) %>
+            {Phoenix.Flash.get(@flash, :info)}
           </div>
         <% end %>
         <%= if Phoenix.Flash.get(@flash, :error) do %>
           <div class="alert alert-error mb-4">
-            <%= Phoenix.Flash.get(@flash, :error) %>
+            {Phoenix.Flash.get(@flash, :error)}
           </div>
         <% end %>
-        
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <!-- Game Status -->
           <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
               <h2 class="card-title">Game Status</h2>
               <div class="space-y-2">
-                <p>Current Player: <span class="font-bold"><%= current_player_name(@game) %></span></p>
-                <p>Direction: <%= @game.direction %></p>
-                <p>Deck Size: <%= Rachel.Games.Deck.size(@game.deck) %></p>
+                <p>Current Player: <span class="font-bold">{current_player_name(@game)}</span></p>
+                <p>Direction: {@game.direction}</p>
+                <p>Deck Size: {Rachel.Games.Deck.size(@game.deck)}</p>
                 <%= if @game.pending_pickups > 0 do %>
-                  <p class="text-error">Pending Pickups: <%= @game.pending_pickups %></p>
+                  <p class="text-error">Pending Pickups: {@game.pending_pickups}</p>
                 <% end %>
                 <%= if @game.nominated_suit && @game.nominated_suit != :pending do %>
-                  <p class="text-info">Nominated Suit: <%= format_suit(@game.nominated_suit) %></p>
+                  <p class="text-info">Nominated Suit: {format_suit(@game.nominated_suit)}</p>
                 <% end %>
               </div>
             </div>
           </div>
           
-          <!-- Current Card -->
+    <!-- Current Card -->
           <div class="card bg-base-100 shadow-xl">
             <div class="card-body items-center">
               <h2 class="card-title">Current Card</h2>
               <%= if @game.current_card do %>
                 <div class="text-6xl">
-                  <%= render_card(@game.current_card) %>
+                  {render_card(@game.current_card)}
                 </div>
               <% end %>
             </div>
           </div>
           
-          <!-- Players -->
+    <!-- Players -->
           <div class="card bg-base-100 shadow-xl">
             <div class="card-body">
               <h2 class="card-title">Players</h2>
@@ -370,8 +393,8 @@ defmodule RachelWeb.GameLive do
                     "flex justify-between p-2 rounded",
                     idx == @game.current_player_index && "bg-primary text-primary-content"
                   ]}>
-                    <span><%= player.name %></span>
-                    <span class="badge"><%= length(player.hand) %> cards</span>
+                    <span>{player.name}</span>
+                    <span class="badge">{length(player.hand)} cards</span>
                   </div>
                 <% end %>
               </div>
@@ -379,24 +402,31 @@ defmodule RachelWeb.GameLive do
           </div>
         </div>
         
-        <!-- AI Thinking Indicator -->
+    <!-- AI Thinking Indicator -->
         <%= if @show_ai_thinking do %>
           <div class="alert alert-info mt-4">
-            <span class="loading loading-spinner"></span>
-            AI is thinking...
+            <span class="loading loading-spinner"></span> AI is thinking...
           </div>
         <% end %>
         
-        <!-- Suit Nomination -->
+    <!-- Suit Nomination -->
         <%= if @game.nominated_suit == :pending && current_player(@game) && current_player(@game).id == @player_id do %>
           <div class="card bg-base-100 shadow-xl mt-8">
             <div class="card-body">
               <h2 class="card-title">Choose a suit for the next player:</h2>
               <div class="flex gap-4 justify-center">
-                <button phx-click="nominate_suit" phx-value-suit="hearts" class="btn btn-lg text-red-500">
+                <button
+                  phx-click="nominate_suit"
+                  phx-value-suit="hearts"
+                  class="btn btn-lg text-red-500"
+                >
                   ♥ Hearts
                 </button>
-                <button phx-click="nominate_suit" phx-value-suit="diamonds" class="btn btn-lg text-red-500">
+                <button
+                  phx-click="nominate_suit"
+                  phx-value-suit="diamonds"
+                  class="btn btn-lg text-red-500"
+                >
                   ♦ Diamonds
                 </button>
                 <button phx-click="nominate_suit" phx-value-suit="clubs" class="btn btn-lg">
@@ -410,7 +440,7 @@ defmodule RachelWeb.GameLive do
           </div>
         <% end %>
         
-        <!-- Winner Status -->
+    <!-- Winner Status -->
         <%= if @player_id in @game.winners do %>
           <div class="card bg-success text-success-content shadow-xl mt-8">
             <div class="card-body text-center">
@@ -420,7 +450,7 @@ defmodule RachelWeb.GameLive do
           </div>
         <% end %>
         
-        <!-- Human Player Hand -->
+    <!-- Human Player Hand -->
         <%= if current_player(@game) && current_player(@game).id == @player_id && @player_id not in @game.winners do %>
           <div class="card bg-base-100 shadow-xl mt-8">
             <div class="card-body">
@@ -433,25 +463,28 @@ defmodule RachelWeb.GameLive do
                     class={[
                       "btn btn-lg text-2xl",
                       idx in @selected_cards && "btn-primary",
-                      !can_select_card?(@game, card, @selected_cards, current_player(@game).hand) && "btn-disabled"
+                      !can_select_card?(@game, card, @selected_cards, current_player(@game).hand) &&
+                        "btn-disabled"
                     ]}
-                    disabled={!can_select_card?(@game, card, @selected_cards, current_player(@game).hand)}
+                    disabled={
+                      !can_select_card?(@game, card, @selected_cards, current_player(@game).hand)
+                    }
                   >
-                    <%= render_card(card) %>
+                    {render_card(card)}
                   </button>
                 <% end %>
               </div>
-              
+
               <div class="card-actions justify-end mt-4">
                 <%= if length(@selected_cards) > 0 do %>
                   <button phx-click="play_cards" class="btn btn-primary">
                     Play Selected Cards
                   </button>
                 <% end %>
-                
+
                 <%= if !Game.has_valid_play?(@game, current_player(@game)) do %>
                   <button phx-click="draw_card" class="btn btn-secondary">
-                    Draw <%= max(1, @game.pending_pickups) %> Card(s)
+                    Draw {max(1, @game.pending_pickups)} Card(s)
                   </button>
                 <% end %>
               </div>
@@ -459,25 +492,25 @@ defmodule RachelWeb.GameLive do
           </div>
         <% end %>
         
-        <!-- Winners -->
+    <!-- Winners -->
         <%= if length(@game.winners) > 0 do %>
           <div class="alert alert-success mt-4">
             <h3 class="font-bold">Winners:</h3>
-            <%= Enum.join(@game.winners, ", ") %>
+            {Enum.join(@game.winners, ", ")}
           </div>
         <% end %>
-
-        <!-- Game Statistics -->
+        
+    <!-- Game Statistics -->
         <%= if @game.stats do %>
           <div class="card bg-base-100 shadow-xl mt-8">
             <div class="card-body">
               <h2 class="card-title">Game Statistics</h2>
-              <%= render_stats(@game) %>
+              {render_stats(@game)}
             </div>
           </div>
         <% end %>
-
-        <!-- Save Game Modal -->
+        
+    <!-- Save Game Modal -->
         <%= if @show_save_modal do %>
           <div class="modal modal-open">
             <div class="modal-box">
@@ -487,12 +520,12 @@ defmodule RachelWeb.GameLive do
                   <label class="label">
                     <span class="label-text">Save Name</span>
                   </label>
-                  <input 
-                    type="text" 
-                    name="save_name" 
-                    placeholder="Enter save name..." 
-                    class="input input-bordered" 
-                    required 
+                  <input
+                    type="text"
+                    name="save_name"
+                    placeholder="Enter save name..."
+                    class="input input-bordered"
+                    required
                   />
                 </div>
                 <div class="modal-action">
@@ -503,13 +536,13 @@ defmodule RachelWeb.GameLive do
             </div>
           </div>
         <% end %>
-
-        <!-- Load Game Modal -->
+        
+    <!-- Load Game Modal -->
         <%= if @show_load_modal do %>
           <div class="modal modal-open">
             <div class="modal-box max-w-2xl">
               <h3 class="font-bold text-lg mb-4">Load Game</h3>
-              
+
               <%= if Enum.empty?(@saved_games) do %>
                 <p class="text-gray-500">No saved games found.</p>
               <% else %>
@@ -527,29 +560,29 @@ defmodule RachelWeb.GameLive do
                     <tbody>
                       <%= for save <- @saved_games do %>
                         <tr>
-                          <td class="font-mono text-sm"><%= save.name %></td>
-                          <td><%= save.players %></td>
+                          <td class="font-mono text-sm">{save.name}</td>
+                          <td>{save.players}</td>
                           <td>
                             <span class={[
                               "badge",
                               save.status == :playing && "badge-info",
                               save.status == :finished && "badge-success"
                             ]}>
-                              <%= save.status %>
+                              {save.status}
                             </span>
                           </td>
-                          <td class="text-sm"><%= format_date(save.saved_at) %></td>
+                          <td class="text-sm">{format_date(save.saved_at)}</td>
                           <td>
                             <div class="flex gap-1">
-                              <button 
-                                phx-click="load_game" 
+                              <button
+                                phx-click="load_game"
                                 phx-value-save_name={save.name}
                                 class="btn btn-xs btn-primary"
                               >
                                 Load
                               </button>
-                              <button 
-                                phx-click="delete_save" 
+                              <button
+                                phx-click="delete_save"
                                 phx-value-save_name={save.name}
                                 class="btn btn-xs btn-error"
                                 onclick="return confirm('Delete this save?')"
@@ -564,7 +597,7 @@ defmodule RachelWeb.GameLive do
                   </table>
                 </div>
               <% end %>
-              
+
               <div class="modal-action">
                 <button phx-click="hide_load_modal" class="btn">Close</button>
               </div>
@@ -602,14 +635,15 @@ defmodule RachelWeb.GameLive do
       # Check if it's a valid play
       current = Game.current_player(game)
       valid_plays = Game.get_valid_plays(game, current)
-      Enum.any?(valid_plays, fn {valid_card, _} -> 
+
+      Enum.any?(valid_plays, fn {valid_card, _} ->
         valid_card.suit == card.suit && valid_card.rank == card.rank
       end)
     else
       # If cards are already selected, can only select cards with same rank
       first_selected_index = hd(selected_indices)
       first_card = Enum.at(hand, first_selected_index)
-      
+
       if first_card do
         card.rank == first_card.rank
       else
@@ -624,6 +658,7 @@ defmodule RachelWeb.GameLive do
 
   defp schedule_ai_move(%Game{} = game) do
     current = Game.current_player(game)
+
     if current && current.is_ai && game.status == :playing do
       Process.send_after(self(), :ai_move, 500)
     end
@@ -639,13 +674,13 @@ defmodule RachelWeb.GameLive do
   defp format_error(:must_play_nominated_suit), do: "You must play the nominated suit!"
   defp format_error(:can_only_stack_same_rank), do: "You can only stack cards of the same rank!"
   defp format_error(error), do: "Error: #{inspect(error)}"
-  
+
   defp format_suit(:hearts), do: "♥ Hearts"
   defp format_suit(:diamonds), do: "♦ Diamonds"
   defp format_suit(:clubs), do: "♣ Clubs"
   defp format_suit(:spades), do: "♠ Spades"
   defp format_suit(_), do: "Unknown"
-  
+
   defp count_stackable_cards(hand, clicked_card, selected_indices) do
     hand
     |> Enum.with_index()
@@ -656,31 +691,32 @@ defmodule RachelWeb.GameLive do
 
   defp render_stats(%Game{} = game) do
     case Game.get_game_stats(game) do
-      nil -> 
+      nil ->
         assigns = %{}
         ~H"<p>Statistics tracking not available</p>"
-      
+
       stats ->
         assigns = %{stats: stats}
+
         ~H"""
         <div class="space-y-4">
           <!-- Game Overview -->
           <div class="stats shadow">
             <div class="stat">
               <div class="stat-title">Total Turns</div>
-              <div class="stat-value text-primary"><%= @stats.game.total_turns %></div>
+              <div class="stat-value text-primary">{@stats.game.total_turns}</div>
             </div>
             <div class="stat">
               <div class="stat-title">Cards Played</div>
-              <div class="stat-value text-secondary"><%= @stats.game.total_cards_played %></div>
+              <div class="stat-value text-secondary">{@stats.game.total_cards_played}</div>
             </div>
             <div class="stat">
               <div class="stat-title">Duration</div>
-              <div class="stat-value text-accent"><%= @stats.game.duration_minutes %></div>
+              <div class="stat-value text-accent">{@stats.game.duration_minutes}</div>
             </div>
           </div>
-
-          <!-- Player Leaderboard -->
+          
+        <!-- Player Leaderboard -->
           <div class="overflow-x-auto">
             <table class="table table-zebra w-full">
               <thead>
@@ -700,18 +736,18 @@ defmodule RachelWeb.GameLive do
                       <%= if index == 0 do %>
                         🏆 1st
                       <% else %>
-                        <%= index + 1 %>
+                        {index + 1}
                       <% end %>
                     </td>
                     <td>
-                      <%= get_player_name(player.id) %>
+                      {get_player_name(player.id)}
                       <%= if player.won do %>
                         <span class="badge badge-success">Winner</span>
                       <% end %>
                     </td>
-                    <td class="font-mono"><%= player.score %></td>
-                    <td><%= player.cards_played %></td>
-                    <td><%= player.cards_drawn %></td>
+                    <td class="font-mono">{player.score}</td>
+                    <td>{player.cards_played}</td>
+                    <td>{player.cards_drawn}</td>
                     <td>
                       <%= if player.won do %>
                         <span class="text-success">Completed</span>

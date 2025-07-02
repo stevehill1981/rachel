@@ -3,40 +3,46 @@ defmodule Rachel.Games.GameSave do
   Handles saving and loading game state to/from storage.
   Uses :ets for simple in-memory persistence.
   """
-  
+
   alias Rachel.Games.Game
 
   @table_name :rachel_saved_games
 
   def start_link do
     case :ets.info(@table_name) do
-      :undefined -> 
+      :undefined ->
         :ets.new(@table_name, [:set, :public, :named_table])
         {:ok, self()}
-      _ -> 
+
+      _ ->
         {:ok, self()}
     end
   end
 
   def save_game(%Game{} = game, save_name \\ nil) do
-    save_name = save_name || generate_save_name(game)
-    timestamp = DateTime.utc_now()
-    
-    save_data = %{
-      game: game,
-      saved_at: timestamp,
-      save_name: save_name
-    }
+    try do
+      save_name = save_name || generate_save_name(game)
+      timestamp = DateTime.utc_now()
 
-    :ets.insert(@table_name, {save_name, save_data})
-    {:ok, save_name}
+      save_data = %{
+        game: game,
+        saved_at: timestamp,
+        save_name: save_name
+      }
+
+      :ets.insert(@table_name, {save_name, save_data})
+      {:ok, save_name}
+    rescue
+      e -> {:error, e}
+    end
   end
 
   def load_game(save_name) do
     case :ets.lookup(@table_name, save_name) do
-      [{^save_name, save_data}] -> 
+      [{^save_name, save_data}] ->
         {:ok, save_data.game}
-      [] -> 
+
+      [] ->
         {:error, :not_found}
     end
   end
@@ -75,13 +81,17 @@ defmodule Rachel.Games.GameSave do
   end
 
   def export_game(%Game{} = game) do
-    game_data = %{
-      version: "1.0",
-      exported_at: DateTime.utc_now(),
-      game: serialize_game(game)
-    }
-    
-    {:ok, Jason.encode!(game_data, pretty: true)}
+    try do
+      game_data = %{
+        version: "1.0",
+        exported_at: DateTime.utc_now(),
+        game: serialize_game(game)
+      }
+
+      {:ok, Jason.encode!(game_data, pretty: true)}
+    rescue
+      e -> {:error, e}
+    end
   end
 
   def import_game(json_data) when is_binary(json_data) do
@@ -91,13 +101,14 @@ defmodule Rachel.Games.GameSave do
           {:ok, game} -> {:ok, game}
           {:error, reason} -> {:error, reason}
         end
-      {:error, _} -> 
+
+      {:error, _} ->
         {:error, :invalid_json}
     end
   end
 
   defp generate_save_name(%Game{players: players, id: id}) do
-    player_names = 
+    player_names =
       players
       |> Enum.filter(&(!&1.is_ai))
       |> Enum.map(& &1.name)
@@ -106,7 +117,7 @@ defmodule Rachel.Games.GameSave do
         names -> names
       end
       |> Enum.join("_")
-    
+
     timestamp = DateTime.utc_now() |> DateTime.to_unix()
     "#{player_names}_#{String.slice(id, 0, 4)}_#{timestamp}"
   end
@@ -120,7 +131,7 @@ defmodule Rachel.Games.GameSave do
       nil -> nil
       stats -> Map.from_struct(stats)
     end)
-    |> Map.update(:deck, %{}, fn deck -> 
+    |> Map.update(:deck, %{}, fn deck ->
       Map.from_struct(deck)
     end)
     |> Map.update(:players, [], fn players ->
@@ -155,11 +166,11 @@ defmodule Rachel.Games.GameSave do
 
   defp deserialize_game(game_data) when is_map(game_data) do
     try do
-      game = 
+      game =
         struct(Game, game_data)
         |> deserialize_cards()
         |> deserialize_stats()
-      
+
       {:ok, game}
     rescue
       error -> {:error, {:deserialization_failed, error}}
@@ -191,6 +202,7 @@ defmodule Rachel.Games.GameSave do
   end
 
   defp deserialize_stats(%Game{stats: nil} = game), do: game
+
   defp deserialize_stats(%Game{stats: stats_data} = game) when is_map(stats_data) do
     stats = struct(Rachel.Games.Stats, stats_data)
     %{game | stats: stats}
