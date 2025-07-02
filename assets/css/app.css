@@ -100,3 +100,6 @@
 [data-phx-session] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Import game-specific styles */
+@import "./game.css";

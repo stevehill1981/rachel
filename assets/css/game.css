@@ -1,0 +1,285 @@
+/* Game-specific styles and animations */
+
+/* Card animations */
+@keyframes cardDeal {
+  from {
+    transform: translateY(-100vh) rotate(720deg) scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardHover {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes cardSelect {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(-20px) scale(1.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes cardPlay {
+  to {
+    transform: translateY(-200px) scale(0.5) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Card styles */
+.playing-card {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: cardDeal 0.5s ease-out;
+  transform-style: preserve-3d;
+  cursor: pointer;
+  user-select: none;
+}
+
+.playing-card:hover:not(:disabled) {
+  animation: cardHover 0.5s ease-in-out;
+  z-index: 10;
+}
+
+.playing-card.selected {
+  animation: cardSelect 0.3s ease-out forwards;
+  z-index: 20;
+}
+
+.playing-card.playing {
+  animation: cardPlay 0.5s ease-out forwards;
+}
+
+.card-suit-red {
+  color: #dc2626;
+}
+
+.card-suit-black {
+  color: #000000;
+}
+
+/* Nominated suit indicator */
+.nominated-suit-indicator {
+  animation: pulse 2s infinite;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: bold;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Current player indicator */
+.current-player {
+  position: relative;
+  animation: pulse 2s infinite;
+}
+
+.current-player::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  background-size: 300% 300%;
+  border-radius: inherit;
+  z-index: -1;
+  animation: gradient 3s ease infinite;
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Game board layout */
+.game-board {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-board::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  animation: rotate 30s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Notification animations */
+.notification-enter {
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification-exit {
+  animation: slideIn 0.3s ease-out reverse;
+}
+
+/* Loading states */
+.ai-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.ai-thinking::before {
+  content: '🤔';
+  font-size: 1.5rem;
+  animation: pulse 1s infinite;
+}
+
+/* Card back design */
+.card-back {
+  background: linear-gradient(45deg, #4338ca 25%, #5b21b6 25%, #5b21b6 50%, #4338ca 50%, #4338ca 75%, #5b21b6 75%, #5b21b6);
+  background-size: 20px 20px;
+  border: 2px solid #312e81;
+  border-radius: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-back::after {
+  content: '♠';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  color: rgba(255, 255, 255, 0.1);
+}
+
+/* Bounce in animation */
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Win celebration */
+@keyframes confetti {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.winner-celebration {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  animation: confetti 3s ease-out;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .playing-card {
+    font-size: 1.5rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .game-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Smooth transitions */
+* {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Focus states for accessibility */
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.playing-card:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 4px;
+}
