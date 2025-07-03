@@ -105,6 +105,10 @@ defmodule RachelWeb.LobbyLiveTest do
     end
 
     test "refreshes game list when refresh button is clicked", %{conn: conn} do
+      # Clean up any existing games first
+      GameManager.list_active_games()
+      |> Enum.each(&GameManager.stop_game(&1.id))
+      
       {:ok, view, _html} = live(conn, "/lobby")
       
       # Initially no games
