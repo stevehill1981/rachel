@@ -50,7 +50,7 @@ defmodule Rachel.Games.GameServerTest do
     test "prevents joining a started game", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, _} = GameServer.start_game(game_id)
+      {:ok, _} = GameServer.start_game(game_id, "player1")
       
       assert {:error, :game_started} = GameServer.join_game(game_id, "player3", "Charlie")
     end
@@ -67,7 +67,7 @@ defmodule Rachel.Games.GameServerTest do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
       
-      assert {:ok, _game} = GameServer.start_game(game_id)
+      assert {:ok, _game} = GameServer.start_game(game_id, "player1")
       state = GameServer.get_state(game_id)
       assert state.status == :playing
       assert state.current_player_id in ["player1", "player2"]
@@ -82,15 +82,26 @@ defmodule Rachel.Games.GameServerTest do
     test "prevents starting with too few players", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       
-      assert {:error, :not_enough_players} = GameServer.start_game(game_id)
+      assert {:error, :not_enough_players} = GameServer.start_game(game_id, "player1")
     end
 
     test "prevents starting an already started game", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, _} = GameServer.start_game(game_id)
+      {:ok, _} = GameServer.start_game(game_id, "player1")
       
-      assert {:error, :already_started} = GameServer.start_game(game_id)
+      assert {:error, :already_started} = GameServer.start_game(game_id, "player1")
+    end
+    
+    test "only allows host to start the game", %{game_id: game_id} do
+      {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
+      {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
+      
+      # player2 tries to start but they're not the host
+      assert {:error, :not_host} = GameServer.start_game(game_id, "player2")
+      
+      # player1 (host) can start
+      assert {:ok, _game} = GameServer.start_game(game_id, "player1")
     end
   end
 
@@ -100,7 +111,7 @@ defmodule Rachel.Games.GameServerTest do
       {:ok, _pid} = GameServer.start_link(game_id: game_id)
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, game} = GameServer.start_game(game_id)
+      {:ok, game} = GameServer.start_game(game_id, "player1")
       
       {:ok, game_id: game_id, game: game}
     end
@@ -154,7 +165,7 @@ defmodule Rachel.Games.GameServerTest do
       {:ok, _pid} = GameServer.start_link(game_id: game_id)
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, game} = GameServer.start_game(game_id)
+      {:ok, game} = GameServer.start_game(game_id, "player1")
       
       {:ok, game_id: game_id, game: game}
     end
@@ -207,7 +218,7 @@ defmodule Rachel.Games.GameServerTest do
     test "converts player to AI when leaving during game", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, _} = GameServer.start_game(game_id)
+      {:ok, _} = GameServer.start_game(game_id, "player1")
       
       assert {:ok, game} = GameServer.leave_game(game_id, "player1")
       
@@ -235,7 +246,7 @@ defmodule Rachel.Games.GameServerTest do
     test "broadcasts when game starts", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, _} = GameServer.start_game(game_id)
+      {:ok, _} = GameServer.start_game(game_id, "player1")
       
       assert_receive {:game_started, game}
       assert game.status == :playing
@@ -244,7 +255,7 @@ defmodule Rachel.Games.GameServerTest do
     test "broadcasts player actions", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, _game} = GameServer.start_game(game_id)
+      {:ok, _game} = GameServer.start_game(game_id, "player1")
       
       state = GameServer.get_state(game_id)
       current_player = Enum.find(state.players, &(&1.id == state.current_player_id))
@@ -285,7 +296,7 @@ defmodule Rachel.Games.GameServerTest do
     test "allows player to reconnect to ongoing game", %{game_id: game_id} do
       {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
       {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
-      {:ok, _} = GameServer.start_game(game_id)
+      {:ok, _} = GameServer.start_game(game_id, "player1")
       
       # Simulate disconnect/reconnect
       assert {:ok, _game} = GameServer.reconnect_player(game_id, "player1")

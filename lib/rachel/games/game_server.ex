@@ -34,8 +34,8 @@ defmodule Rachel.Games.GameServer do
     GenServer.call(via_tuple(game_id), {:leave_game, player_id})
   end
 
-  def start_game(game_id) do
-    GenServer.call(via_tuple(game_id), :start_game)
+  def start_game(game_id, player_id) do
+    GenServer.call(via_tuple(game_id), {:start_game, player_id})
   end
 
   def play_cards(game_id, player_id, cards) do
@@ -65,6 +65,7 @@ defmodule Rachel.Games.GameServer do
       game: game,
       connected_players: %{},  # player_id => true/false
       player_monitors: %{},    # pid => player_id
+      host_id: nil,           # player_id of the game creator/host
       created_at: DateTime.utc_now(),
       updated_at: DateTime.utc_now()
     }
@@ -78,9 +79,13 @@ defmodule Rachel.Games.GameServer do
       :ok ->
         new_game = Game.add_player(state.game, player_id, player_name, false)
         
+        # First player becomes the host
+        host_id = if state.host_id == nil, do: player_id, else: state.host_id
+        
         new_state = %{state | 
           game: new_game,
           connected_players: Map.put(state.connected_players, player_id, true),
+          host_id: host_id,
           updated_at: DateTime.utc_now()
         }
 
@@ -138,24 +143,30 @@ defmodule Rachel.Games.GameServer do
   end
 
   @impl true
-  def handle_call(:start_game, _from, state) do
-    case validate_start(state.game) do
-      :ok ->
-        new_game = Game.start_game(state.game)
-        new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+  def handle_call({:start_game, player_id}, _from, state) do
+    cond do
+      state.host_id != player_id ->
+        {:reply, {:error, :not_host}, state}
         
-        broadcast_game_started(new_state)
-        
-        # Schedule AI turn if first player is AI
-        current_player = Enum.at(new_game.players, new_game.current_player_index)
-        if current_player && current_player.is_ai do
-          Process.send_after(self(), :ai_turn, 1500)
-        end
-        
-        {:reply, {:ok, new_state.game}, new_state}
+      true ->
+        case validate_start(state.game) do
+          :ok ->
+            new_game = Game.start_game(state.game)
+            new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+            
+            broadcast_game_started(new_state)
+            
+            # Schedule AI turn if first player is AI
+            current_player = Enum.at(new_game.players, new_game.current_player_index)
+            if current_player && current_player.is_ai do
+              Process.send_after(self(), :ai_turn, 1500)
+            end
+            
+            {:reply, {:ok, new_state.game}, new_state}
 
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
+          {:error, reason} ->
+            {:reply, {:error, reason}, state}
+        end
     end
   end
 
@@ -219,6 +230,7 @@ defmodule Rachel.Games.GameServer do
     combined_state = Map.merge(state.game, %{
       id: state.game.id,
       status: state.game.status,
+      host_id: state.host_id,
       players: Enum.map(state.game.players, fn p ->
         %Player{
           id: p.id,

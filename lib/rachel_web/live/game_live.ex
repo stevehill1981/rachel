@@ -211,6 +211,27 @@ defmodule RachelWeb.GameLive do
       {:noreply, socket}
     end
   end
+  
+  @impl true
+  def handle_event("start_game", _, socket) do
+    if socket.assigns.game_id && socket.assigns.player_id do
+      case GameServer.start_game(socket.assigns.game_id, socket.assigns.player_id) do
+        {:ok, _game} ->
+          {:noreply, put_flash(socket, :info, "Game started!")}
+          
+        {:error, :not_host} ->
+          {:noreply, put_flash(socket, :error, "Only the host can start the game")}
+          
+        {:error, :not_enough_players} ->
+          {:noreply, put_flash(socket, :error, "Need at least 2 players to start")}
+          
+        {:error, reason} ->
+          {:noreply, put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
+      end
+    else
+      {:noreply, socket}
+    end
+  end
 
   @impl true
   def handle_info(:ai_move, socket) do
