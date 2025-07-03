@@ -22,6 +22,10 @@ defmodule Rachel.Games.GameServer do
     GenServer.call(via_tuple(game_id), {:join_game, player_id, player_name})
   end
   
+  def join_as_spectator(game_id, player_id, player_name) do
+    GenServer.call(via_tuple(game_id), {:join_as_spectator, player_id, player_name})
+  end
+  
   def player_connected(game_id, player_id, pid) do
     GenServer.cast(via_tuple(game_id), {:player_connected, player_id, pid})
   end
@@ -69,6 +73,7 @@ defmodule Rachel.Games.GameServer do
       game: game,
       connected_players: %{},  # player_id => true/false
       player_monitors: %{},    # pid => player_id
+      spectators: %{},        # spectator_id => %{name: name, connected: true/false}
       host_id: nil,           # player_id of the game creator/host
       created_at: DateTime.utc_now(),
       updated_at: DateTime.utc_now()
@@ -94,6 +99,26 @@ defmodule Rachel.Games.GameServer do
         }
 
         broadcast_game_update(new_state)
+        {:reply, {:ok, new_state.game}, new_state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:join_as_spectator, spectator_id, spectator_name}, _from, state) do
+    case validate_spectator_join(state, spectator_id) do
+      :ok ->
+        new_state = %{state | 
+          spectators: Map.put(state.spectators, spectator_id, %{
+            name: spectator_name,
+            connected: true
+          }),
+          updated_at: DateTime.utc_now()
+        }
+
+        broadcast_spectator_joined(new_state, spectator_id, spectator_name)
         {:reply, {:ok, new_state.game}, new_state}
 
       {:error, reason} ->
@@ -265,7 +290,8 @@ defmodule Rachel.Games.GameServer do
       current_player_id: get_current_player_id(state.game),
       winner_ids: state.game.winners,
       deck: state.game.deck,
-      current_card: state.game.current_card
+      current_card: state.game.current_card,
+      spectators: state.spectators
     })
     
     {:reply, combined_state, state}
@@ -451,6 +477,15 @@ defmodule Rachel.Games.GameServer do
     end
   end
 
+  defp validate_spectator_join(state, spectator_id) do
+    cond do
+      state.game.status == :waiting -> {:error, :game_not_started}
+      Map.has_key?(state.spectators, spectator_id) -> {:error, :already_spectating}
+      Enum.any?(state.game.players, &(&1.id == spectator_id)) -> {:error, :already_playing}
+      true -> :ok
+    end
+  end
+
   defp get_current_player_id(game) do
     current_player = Enum.at(game.players, game.current_player_index)
     current_player && current_player.id
@@ -501,5 +536,10 @@ defmodule Rachel.Games.GameServer do
   defp broadcast_player_disconnected(state, player_id) do
     PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
       {:player_disconnected, %{player_id: player_id, game: state.game}})
+  end
+
+  defp broadcast_spectator_joined(state, spectator_id, spectator_name) do
+    PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
+      {:spectator_joined, %{spectator_id: spectator_id, spectator_name: spectator_name, game: state.game}})
   end
 end

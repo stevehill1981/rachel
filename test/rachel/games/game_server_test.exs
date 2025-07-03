@@ -315,6 +315,44 @@ defmodule Rachel.Games.GameServerTest do
     end
   end
 
+  describe "spectator mode" do
+    setup do
+      game_id = "test-game-#{System.unique_integer()}"
+      {:ok, _pid} = GameServer.start_link(game_id: game_id)
+      {:ok, _} = GameServer.join_game(game_id, "player1", "Alice")
+      {:ok, _} = GameServer.join_game(game_id, "player2", "Bob")
+      {:ok, _game} = GameServer.start_game(game_id, "player1")
+      
+      {:ok, game_id: game_id}
+    end
+
+    test "allows spectators to join started games", %{game_id: game_id} do
+      assert {:ok, _game} = GameServer.join_as_spectator(game_id, "spectator1", "Charlie")
+      
+      state = GameServer.get_state(game_id)
+      assert Map.has_key?(state.spectators, "spectator1")
+      assert state.spectators["spectator1"].name == "Charlie"
+      assert state.spectators["spectator1"].connected == true
+    end
+
+    test "prevents spectators from joining waiting games", %{game_id: _game_id} do
+      waiting_game_id = "waiting-game-#{System.unique_integer()}"
+      {:ok, _pid} = GameServer.start_link(game_id: waiting_game_id)
+      {:ok, _} = GameServer.join_game(waiting_game_id, "player1", "Alice")
+      
+      assert {:error, :game_not_started} = GameServer.join_as_spectator(waiting_game_id, "spectator1", "Charlie")
+    end
+
+    test "prevents duplicate spectator IDs", %{game_id: game_id} do
+      {:ok, _} = GameServer.join_as_spectator(game_id, "spectator1", "Charlie")
+      assert {:error, :already_spectating} = GameServer.join_as_spectator(game_id, "spectator1", "Charlie Again")
+    end
+
+    test "prevents players from becoming spectators", %{game_id: game_id} do
+      assert {:error, :already_playing} = GameServer.join_as_spectator(game_id, "player1", "Alice as Spectator")
+    end
+  end
+
   describe "reconnection" do
     setup do
       game_id = "test-game-#{System.unique_integer()}"

@@ -35,6 +35,27 @@ defmodule RachelWeb.GameLive do
           |> assign(:show_winner_banner, false)
           |> assign(:winner_acknowledged, false)
           |> assign(:connection_status, :connected)
+          |> assign(:is_spectator, false)
+        
+        {:ok, socket}
+
+      {:ok, game, :spectator} ->
+        # Subscribe to game updates as spectator
+        PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
+        
+        socket =
+          socket
+          |> assign(:game, game)
+          |> assign(:game_id, game_id)
+          |> assign(:player_id, player_id)
+          |> assign(:player_name, player_name)
+          |> assign(:selected_cards, [])
+          |> assign(:show_ai_thinking, false)
+          |> assign(:show_winner_banner, false)
+          |> assign(:winner_acknowledged, false)
+          |> assign(:connection_status, :connected)
+          |> assign(:is_spectator, true)
+          |> put_flash(:info, "Joined as spectator - watching the game!")
         
         {:ok, socket}
         
@@ -538,6 +559,12 @@ defmodule RachelWeb.GameLive do
             # Try to join the game
             case GameServer.join_game(game_id, player_id, player_name) do
               {:ok, updated_game} -> {:ok, updated_game}
+              {:error, :game_started} -> 
+                # Game already started, try to join as spectator
+                case GameServer.join_as_spectator(game_id, player_id, player_name) do
+                  {:ok, updated_game} -> {:ok, updated_game, :spectator}
+                  {:error, reason} -> {:error, reason}
+                end
               {:error, reason} -> {:error, reason}
             end
           end
@@ -635,6 +662,9 @@ defmodule RachelWeb.GameLive do
   defp format_join_error(:game_started), do: "Game has already started"
   defp format_join_error(:game_full), do: "Game is full"
   defp format_join_error(:already_joined), do: "You're already in this game"
+  defp format_join_error(:game_not_started), do: "Cannot spectate a game that hasn't started yet"
+  defp format_join_error(:already_spectating), do: "You're already spectating this game"
+  defp format_join_error(:already_playing), do: "You're already playing in this game"
   defp format_join_error(error), do: "Error joining game: #{inspect(error)}"
 
   def current_player(%Game{} = game) do

@@ -24,6 +24,7 @@ defmodule RachelWeb.GameLive.Modern do
             player_id={@player_id}
             selected_cards={@selected_cards}
             show_ai_thinking={@show_ai_thinking}
+            is_spectator={Map.get(assigns, :is_spectator, false)}
           />
         <% end %>
       </main>

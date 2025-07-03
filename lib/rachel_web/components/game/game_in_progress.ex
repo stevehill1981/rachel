@@ -13,6 +13,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
   attr :player_id, :string, required: true
   attr :selected_cards, :list, default: []
   attr :show_ai_thinking, :boolean, default: false
+  attr :is_spectator, :boolean, default: false
   
   def game_in_progress(assigns) do
     assigns = assign(assigns, :current_player, current_player(assigns.game))
@@ -31,10 +32,11 @@ defmodule RachelWeb.Components.Game.GameInProgress do
         player_id={@player_id}
         selected_cards={@selected_cards}
         current_player={@current_player}
+        is_spectator={@is_spectator}
       />
       
       <!-- Suit Nomination -->
-      <%= if @game.nominated_suit == :pending && @current_player && @current_player.id == @player_id do %>
+      <%= if !@is_spectator && @game.nominated_suit == :pending && @current_player && @current_player.id == @player_id do %>
         <.suit_selector />
       <% end %>
     </div>
