@@ -12,8 +12,10 @@ defmodule Rachel.Application do
       Rachel.Repo,
       {DNSCluster, query: Application.get_env(:rachel, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Rachel.PubSub},
-      # Start a worker by calling: Rachel.Worker.start_link(arg)
-      # {Rachel.Worker, arg},
+      # Game Registry for tracking active games
+      {Registry, keys: :unique, name: Rachel.GameRegistry},
+      # Dynamic supervisor for game servers
+      {DynamicSupervisor, name: Rachel.GameSupervisor, strategy: :one_for_one},
       # Start to serve requests, typically the last entry
       RachelWeb.Endpoint
     ]
