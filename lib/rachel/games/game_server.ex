@@ -46,6 +46,10 @@ defmodule Rachel.Games.GameServer do
     GenServer.call(via_tuple(game_id), {:draw_card, player_id})
   end
 
+  def nominate_suit(game_id, player_id, suit) do
+    GenServer.call(via_tuple(game_id), {:nominate_suit, player_id, suit})
+  end
+
   def get_state(game_id) do
     GenServer.call(via_tuple(game_id), :get_state)
   end
@@ -172,10 +176,10 @@ defmodule Rachel.Games.GameServer do
 
   @impl true
   def handle_call({:play_cards, player_id, cards}, _from, state) do
-    # Convert cards to indices
     player = Enum.find(state.game.players, &(&1.id == player_id))
     
     if player do
+      # Convert cards to indices for Game.play_card
       card_indices = cards 
         |> Enum.map(fn card -> Enum.find_index(player.hand, &(&1 == card)) end)
         |> Enum.reject(&is_nil/1)
@@ -213,6 +217,23 @@ defmodule Rachel.Games.GameServer do
       {:ok, new_game} ->
         new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
         broadcast_card_drawn(new_state, player_id)
+        
+        # Schedule AI turn if next player is AI
+        schedule_ai_turn_if_needed(new_state)
+        
+        {:reply, {:ok, new_state.game}, new_state}
+        
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:nominate_suit, player_id, suit}, _from, state) do
+    case Game.nominate_suit(state.game, player_id, suit) do
+      {:ok, new_game} ->
+        new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+        broadcast_suit_nominated(new_state, player_id, suit)
         
         # Schedule AI turn if next player is AI
         schedule_ai_turn_if_needed(new_state)

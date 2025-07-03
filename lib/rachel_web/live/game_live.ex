@@ -17,7 +17,12 @@ defmodule RachelWeb.GameLive do
         PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
         
         # Notify GameServer that we're connected
-        GameServer.player_connected(game_id, player_id, self())
+        try do
+          GameServer.player_connected(game_id, player_id, self())
+        catch
+          # Continue even if GameServer notification fails
+          :exit, _ -> :ok
+        end
         
         socket =
           socket
@@ -464,7 +469,12 @@ defmodule RachelWeb.GameLive do
   def terminate(_reason, socket) do
     # Notify GameServer that we're disconnecting (only for multiplayer)
     if socket.assigns[:game_id] && socket.assigns[:player_id] do
-      GameServer.player_disconnected(socket.assigns.game_id, socket.assigns.player_id)
+      try do
+        GameServer.player_disconnected(socket.assigns.game_id, socket.assigns.player_id)
+      catch
+        # Ignore errors during termination - GameServer might already be dead
+        :exit, _ -> :ok
+      end
     end
     :ok
   end
@@ -520,10 +530,16 @@ defmodule RachelWeb.GameLive do
           # Game exists - try to join or reconnect
           if player_in_game?(game, player_id) do
             # Player is already in game - reconnect
-            GameServer.reconnect_player(game_id, player_id)
+            case GameServer.reconnect_player(game_id, player_id) do
+              {:ok, updated_game} -> {:ok, updated_game}
+              {:error, reason} -> {:error, reason}
+            end
           else
             # Try to join the game
-            GameServer.join_game(game_id, player_id, player_name)
+            case GameServer.join_game(game_id, player_id, player_name) do
+              {:ok, updated_game} -> {:ok, updated_game}
+              {:error, reason} -> {:error, reason}
+            end
           end
           
         _ ->
@@ -542,8 +558,26 @@ defmodule RachelWeb.GameLive do
   # Action helpers - determine if multiplayer or single-player
   defp play_cards_action(socket, card_indices) do
     if socket.assigns.game_id do
-      # Multiplayer - use GameServer
-      GameServer.play_cards(socket.assigns.game_id, socket.assigns.player_id, card_indices)
+      # Multiplayer - use GameServer (convert indices to cards)
+      current_player = current_player(socket.assigns.game)
+      if current_player do
+        cards = card_indices
+          |> Enum.map(fn index -> Enum.at(current_player.hand, index) end)
+          |> Enum.reject(&is_nil/1)
+        
+        try do
+          case GameServer.play_cards(socket.assigns.game_id, socket.assigns.player_id, cards) do
+            {:ok, game} -> {:ok, game}
+            {:error, reason} -> {:error, reason}
+          end
+        catch
+          :exit, {:noproc, _} -> {:error, :game_not_found}
+          :exit, {:timeout, _} -> {:error, :timeout}
+          :exit, reason -> {:error, {:server_error, reason}}
+        end
+      else
+        {:error, :player_not_found}
+      end
     else
       # Single-player - use Game module directly
       Game.play_card(socket.assigns.game, socket.assigns.player_id, card_indices)
@@ -553,7 +587,16 @@ defmodule RachelWeb.GameLive do
   defp draw_card_action(socket) do
     if socket.assigns.game_id do
       # Multiplayer - use GameServer
-      GameServer.draw_card(socket.assigns.game_id, socket.assigns.player_id)
+      try do
+        case GameServer.draw_card(socket.assigns.game_id, socket.assigns.player_id) do
+          {:ok, game} -> {:ok, game}
+          {:error, reason} -> {:error, reason}
+        end
+      catch
+        :exit, {:noproc, _} -> {:error, :game_not_found}
+        :exit, {:timeout, _} -> {:error, :timeout}
+        :exit, reason -> {:error, {:server_error, reason}}
+      end
     else
       # Single-player - use Game module directly
       Game.draw_card(socket.assigns.game, socket.assigns.player_id)
@@ -562,8 +605,17 @@ defmodule RachelWeb.GameLive do
   
   defp nominate_suit_action(socket, suit) do
     if socket.assigns.game_id do
-      # Multiplayer - nominate suit directly since GameServer doesn't have this method
-      Game.nominate_suit(socket.assigns.game, socket.assigns.player_id, suit)
+      # Multiplayer - use GameServer
+      try do
+        case GameServer.nominate_suit(socket.assigns.game_id, socket.assigns.player_id, suit) do
+          {:ok, game} -> {:ok, game}
+          {:error, reason} -> {:error, reason}
+        end
+      catch
+        :exit, {:noproc, _} -> {:error, :game_not_found}
+        :exit, {:timeout, _} -> {:error, :timeout}
+        :exit, reason -> {:error, {:server_error, reason}}
+      end
     else
       # Single-player - use Game module directly
       Game.nominate_suit(socket.assigns.game, socket.assigns.player_id, suit)
@@ -638,6 +690,13 @@ defmodule RachelWeb.GameLive do
   defp format_error(:must_play_jacks), do: "You must play Jacks to counter black jacks!"
   defp format_error(:must_play_nominated_suit), do: "You must play the nominated suit!"
   defp format_error(:can_only_stack_same_rank), do: "You can only stack cards of the same rank!"
+  defp format_error(:game_not_found), do: "Game connection lost. Please return to lobby."
+  defp format_error(:timeout), do: "Game server is not responding. Please try again."
+  defp format_error(:player_not_found), do: "Player not found in game."
+  defp format_error(:cards_not_in_hand), do: "Selected cards are not in your hand."
+  defp format_error(:no_ace_played), do: "No ace was played, suit nomination not needed."
+  defp format_error(:not_host), do: "Only the host can start the game."
+  defp format_error({:server_error, _reason}), do: "Server error occurred. Please try again."
   defp format_error(error), do: "Error: #{inspect(error)}"
 
   defp count_other_cards_with_rank(hand, clicked_card, clicked_index, selected_indices) do

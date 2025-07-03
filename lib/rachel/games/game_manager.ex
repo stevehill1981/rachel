@@ -72,6 +72,12 @@ defmodule Rachel.Games.GameManager do
         :exit, {:noproc, _} ->
           # Game process is dead, skip it
           nil
+        :exit, {:timeout, _} ->
+          # Game server not responding, skip it
+          nil
+        :exit, _ ->
+          # Other server errors, skip it
+          nil
       end
     end)
     |> Enum.reject(&is_nil/1)
@@ -98,6 +104,10 @@ defmodule Rachel.Games.GameManager do
       catch
         :exit, {:noproc, _} ->
           {:error, :game_not_found}
+        :exit, {:timeout, _} ->
+          {:error, :server_timeout}
+        :exit, _ ->
+          {:error, :server_error}
       end
     else
       {:error, :game_not_found}
