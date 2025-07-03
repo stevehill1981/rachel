@@ -4,9 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    <meta name="description" content="Play Rachel card game online with friends! Enjoy real-time multiplayer matches, intelligent AI opponents, and classic strategic gameplay. Easy game sharing, automatic reconnection, and smooth experience." />
+    <meta name="keywords" content="Rachel card game, online card game, multiplayer card game, real-time card game, play cards online, card game with friends" />
+    <meta property="og:title" content="Rachel Card Game - Play Online with Friends" />
+    <meta property="og:description" content="Strategic card game bringing friends together for over 30 years. Play multiplayer matches with real-time gameplay and smart AI opponents." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rachel Card Game - Play Online with Friends" />
+    <meta name="twitter:description" content="Strategic card game bringing friends together for over 30 years. Play multiplayer matches with real-time gameplay and smart AI opponents." />
     <.live_title default="Rachel">
       {assigns[:page_title]}
     </.live_title>
+    <link rel="icon" type="image/x-icon" href={~p"/favicon.ico"} />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
