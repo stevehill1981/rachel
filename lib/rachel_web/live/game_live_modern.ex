@@ -76,7 +76,7 @@ defmodule RachelWeb.GameLive.Modern do
             <% end %>
           </div>
         </div>
-
+        
     <!-- Deck and Current Card Display -->
         <div class="relative">
           <!-- AI Thinking Indicator -->
@@ -85,23 +85,26 @@ defmodule RachelWeb.GameLive.Modern do
               <.ai_thinking_indicator />
             </div>
           <% end %>
-          
+
           <div class="flex items-center justify-center gap-8 mb-8">
             <!-- Deck -->
             <div class="flex flex-col items-center">
               <div class="w-32 h-44">
-                <.deck_display 
+                <.deck_display
                   deck_size={Rachel.Games.Deck.size(@game.deck)}
-                  can_draw={current_player(@game) && current_player(@game).id == @player_id && !Game.has_valid_play?(@game, current_player(@game))}
+                  can_draw={
+                    current_player(@game) && current_player(@game).id == @player_id &&
+                      !Game.has_valid_play?(@game, current_player(@game))
+                  }
                 />
               </div>
             </div>
             
-            <!-- Current Card -->
+    <!-- Current Card -->
             <div class="flex flex-col items-center">
               <div class="w-32 h-44">
-                <.current_card_display 
-                  card={@game.current_card} 
+                <.current_card_display
+                  card={@game.current_card}
                   discard_pile_size={length(@game.discard_pile)}
                   pending_pickups={@game.pending_pickups}
                   pending_skips={@game.pending_skips}
@@ -120,28 +123,30 @@ defmodule RachelWeb.GameLive.Modern do
                   phx-click="play_cards"
                   class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
                 >
-                  Play {length(@selected_cards)} Card{if length(@selected_cards) == 1, do: "", else: "s"}
+                  Play {length(@selected_cards)} Card{if length(@selected_cards) == 1,
+                    do: "",
+                    else: "s"}
                 </button>
               </div>
             <% end %>
-
-            <!-- Game Messages -->
+            
+    <!-- Game Messages -->
             <%= if current_player(@game) && current_player(@game).id == @player_id && @game.pending_pickups > 0 && !Game.has_valid_play?(@game, current_player(@game)) && @game.status == :playing do %>
               <div class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse game-message">
                 <div class="text-center text-red-200 font-semibold">
-                  Drawing <%= @game.pending_pickups %> cards...
+                  Drawing {@game.pending_pickups} cards...
                 </div>
               </div>
             <% end %>
-            
+
             <%= if current_player(@game) && current_player(@game).id != @player_id && @game.status == :playing do %>
               <div class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30 game-message">
                 <div class="text-center text-gray-200 font-semibold">
-                  Waiting for <%= current_player(@game).name %>'s turn...
+                  Waiting for {current_player(@game).name}'s turn...
                 </div>
               </div>
             <% end %>
-            
+
             <%= if current_player(@game) && current_player(@game).id == @player_id && !Game.has_valid_play?(@game, current_player(@game)) && @game.pending_pickups == 0 && @game.status == :playing do %>
               <div class="mb-4 p-3 bg-yellow-500/20 rounded-lg border border-yellow-400/30 game-message">
                 <div class="text-center text-yellow-200 font-semibold">
@@ -150,16 +155,22 @@ defmodule RachelWeb.GameLive.Modern do
               </div>
             <% end %>
             
-            <!-- Nominated Suit Message -->
+    <!-- Nominated Suit Message -->
             <%= if @game.nominated_suit && @game.nominated_suit != :pending && current_player(@game) && current_player(@game).id == @player_id do %>
               <div class="mb-4 p-3 bg-purple-500/20 rounded-lg border border-purple-400/30 game-message">
                 <div class="text-center text-purple-200 font-semibold">
-                  Must play <%= case @game.nominated_suit do %>
-                    <% :hearts -> %><span class="text-red-400">♥ Hearts</span>
-                    <% :diamonds -> %><span class="text-red-400">♦ Diamonds</span>  
-                    <% :clubs -> %><span class="text-gray-300">♣ Clubs</span>
-                    <% :spades -> %><span class="text-gray-300">♠ Spades</span>
-                  <% end %> or an Ace
+                  Must play
+                  <%= case @game.nominated_suit do %>
+                    <% :hearts -> %>
+                      <span class="text-red-400">♥ Hearts</span>
+                    <% :diamonds -> %>
+                      <span class="text-red-400">♦ Diamonds</span>
+                    <% :clubs -> %>
+                      <span class="text-gray-300">♣ Clubs</span>
+                    <% :spades -> %>
+                      <span class="text-gray-300">♠ Spades</span>
+                  <% end %>
+                  or an Ace
                 </div>
               </div>
             <% end %>
@@ -170,9 +181,14 @@ defmodule RachelWeb.GameLive.Modern do
                   card={card}
                   selected={idx in @selected_cards}
                   disabled={
-                    current_player(@game) == nil || 
-                    current_player(@game).id != @player_id || 
-                    !can_select_card?(@game, card, @selected_cards, Enum.find(@game.players, fn p -> p.id == @player_id end).hand)
+                    current_player(@game) == nil ||
+                      current_player(@game).id != @player_id ||
+                      !can_select_card?(
+                        @game,
+                        card,
+                        @selected_cards,
+                        Enum.find(@game.players, fn p -> p.id == @player_id end).hand
+                      )
                   }
                   index={idx}
                   phx-click="select_card"

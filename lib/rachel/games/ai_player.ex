@@ -124,7 +124,8 @@ defmodule Rachel.Games.AIPlayer do
     # Choose the suit we have the most of
     case suit_counts do
       [{suit, _} | _] -> suit
-      [] -> :hearts  # Fallback, shouldn't happen
+      # Fallback, shouldn't happen
+      [] -> :hearts
     end
   end
 end

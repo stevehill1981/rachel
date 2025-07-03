@@ -2,6 +2,7 @@ defmodule RachelWeb.GameLive do
   use RachelWeb, :live_view
 
   alias Rachel.Games.{AIPlayer, Card, Game}
+  alias RachelWeb.GameLive.Modern
 
   @impl true
   def mount(_params, _session, socket) do
@@ -18,7 +19,7 @@ defmodule RachelWeb.GameLive do
 
     # Check if AI should start
     schedule_ai_move(game)
-    
+
     # Check if player needs to auto-draw
     socket = check_auto_draw(socket)
 
@@ -39,13 +40,15 @@ defmodule RachelWeb.GameLive do
       else
         # Check if we can add this card
         clicked_card = Enum.at(current_player.hand, index)
-        
-        if clicked_card && can_select_card?(socket.assigns.game, clicked_card, selected, current_player.hand) do
+
+        if clicked_card &&
+             can_select_card?(socket.assigns.game, clicked_card, selected, current_player.hand) do
           # Check for auto-play condition
-          if clicked_card && length(selected) == 0 do
+          if clicked_card && Enum.empty?(selected) do
             # Count other cards with same rank (excluding the clicked card)
-            other_same_rank = count_other_cards_with_rank(current_player.hand, clicked_card, index, selected)
-            
+            other_same_rank =
+              count_other_cards_with_rank(current_player.hand, clicked_card, index, selected)
+
             if other_same_rank == 0 do
               # Auto-play immediately - this is the only card of its rank
               case Game.play_card(socket.assigns.game, current_player.id, [index]) do
@@ -160,7 +163,6 @@ defmodule RachelWeb.GameLive do
     end
   end
 
-
   @impl true
   def handle_event("acknowledge_win", _, socket) do
     {:noreply, assign(socket, :show_winner_banner, false)}
@@ -228,35 +230,35 @@ defmodule RachelWeb.GameLive do
   def handle_info(:auto_draw_pending_cards, socket) do
     game = socket.assigns.game
     current_player = current_player(game)
-    
+
     # Double-check conditions are still met
-    if current_player && 
-       current_player.id == socket.assigns.player_id && 
-       game.pending_pickups > 0 && 
-       !Game.has_valid_play?(game, current_player) &&
-       game.status == :playing do
-      
+    if current_player &&
+         current_player.id == socket.assigns.player_id &&
+         game.pending_pickups > 0 &&
+         !Game.has_valid_play?(game, current_player) &&
+         game.status == :playing do
       pickup_count = game.pending_pickups
       pickup_type = game.pending_pickup_type
-      
+
       case Game.draw_card(game, current_player.id) do
         {:ok, new_game} ->
-          message = if pickup_type == :black_jacks do
-            "Drew #{pickup_count} cards from Black Jacks!"
-          else
-            "Drew #{pickup_count} cards from 2s!"
-          end
-          
+          message =
+            if pickup_type == :black_jacks do
+              "Drew #{pickup_count} cards from Black Jacks!"
+            else
+              "Drew #{pickup_count} cards from 2s!"
+            end
+
           socket =
             socket
             |> assign(:game, new_game)
             |> assign(:selected_cards, [])
             |> clear_flash()
             |> put_flash(:info, message)
-          
+
           schedule_ai_move(new_game)
           {:noreply, socket}
-          
+
         {:error, _} ->
           {:noreply, socket}
       end
@@ -287,16 +289,37 @@ defmodule RachelWeb.GameLive do
     end
   end
 
-
   @impl true
   def render(assigns) do
-    RachelWeb.GameLive.Modern.render(assigns)
+    Modern.render(assigns)
   end
 
   defp create_test_game do
-    ai_names = ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack", "Kate", "Liam", "Maya", "Noah", "Olivia", "Paul", "Quinn", "Ruby", "Sam", "Tara"]
+    ai_names = [
+      "Alice",
+      "Bob",
+      "Charlie",
+      "Diana",
+      "Eve",
+      "Frank",
+      "Grace",
+      "Henry",
+      "Ivy",
+      "Jack",
+      "Kate",
+      "Liam",
+      "Maya",
+      "Noah",
+      "Olivia",
+      "Paul",
+      "Quinn",
+      "Ruby",
+      "Sam",
+      "Tara"
+    ]
+
     selected_names = Enum.take_random(ai_names, 3)
-    
+
     Game.new()
     |> Game.add_player("human", "You", false)
     |> Game.add_player("ai1", Enum.at(selected_names, 0), true)
@@ -339,7 +362,6 @@ defmodule RachelWeb.GameLive do
     end
   end
 
-
   defp schedule_ai_move(%Game{} = game) do
     current = Game.current_player(game)
 
@@ -359,8 +381,6 @@ defmodule RachelWeb.GameLive do
   defp format_error(:can_only_stack_same_rank), do: "You can only stack cards of the same rank!"
   defp format_error(error), do: "Error: #{inspect(error)}"
 
-
-
   defp count_other_cards_with_rank(hand, clicked_card, clicked_index, selected_indices) do
     hand
     |> Enum.with_index()
@@ -369,16 +389,14 @@ defmodule RachelWeb.GameLive do
     end)
   end
 
-
-
   defp check_and_show_winner_banner(socket, game) do
     player_id = socket.assigns.player_id
-    
+
     # Check if the current player just won and hasn't acknowledged it yet
     if player_id in game.winners && !socket.assigns.winner_acknowledged do
       # Auto-hide the banner after 5 seconds
       Process.send_after(self(), :auto_hide_winner_banner, 5000)
-      
+
       socket
       |> assign(:show_winner_banner, true)
       |> assign(:winner_acknowledged, true)
@@ -390,14 +408,13 @@ defmodule RachelWeb.GameLive do
   defp check_auto_draw(socket) do
     game = socket.assigns.game
     current_player = current_player(game)
-    
+
     # Check if it's the human player's turn with pending pickups and no valid plays
-    if current_player && 
-       current_player.id == socket.assigns.player_id && 
-       game.pending_pickups > 0 && 
-       !Game.has_valid_play?(game, current_player) &&
-       game.status == :playing do
-      
+    if current_player &&
+         current_player.id == socket.assigns.player_id &&
+         game.pending_pickups > 0 &&
+         !Game.has_valid_play?(game, current_player) &&
+         game.status == :playing do
       # Schedule auto-draw after a delay
       Process.send_after(self(), :auto_draw_pending_cards, 2000)
       socket

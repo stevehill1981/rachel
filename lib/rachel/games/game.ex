@@ -129,7 +129,9 @@ defmodule Rachel.Games.Game do
          player <- Enum.at(game.players, player_index),
          false <- has_valid_play?(game, player) do
       count = max(1, game.pending_pickups)
-      {cards, new_deck, new_discard_pile} = draw_cards_with_reshuffle(game.deck, game.discard_pile, count)
+
+      {cards, new_deck, new_discard_pile} =
+        draw_cards_with_reshuffle(game.deck, game.discard_pile, count)
 
       new_game =
         game
@@ -300,7 +302,7 @@ defmodule Rachel.Games.Game do
 
   defp draw_cards_with_reshuffle(deck, discard_pile, count) do
     deck_size = Deck.size(deck)
-    
+
     if deck_size >= count do
       # Enough cards in deck
       {cards, new_deck} = Deck.draw(deck, count)
@@ -309,14 +311,14 @@ defmodule Rachel.Games.Game do
       # Need to reshuffle discard pile into deck
       # Create a new deck with the discarded cards added back and shuffled
       cards_to_reshuffle = discard_pile
-      
+
       # Create a new deck by adding discard pile cards to the existing deck
       all_cards = deck.cards ++ cards_to_reshuffle
       reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
-      
+
       # Clear discard pile since we reshuffled it
       new_discard_pile = []
-      
+
       # Now draw the required cards
       {cards, final_deck} = Deck.draw(reshuffled_deck, count)
       {cards, final_deck, new_discard_pile}
@@ -381,11 +383,11 @@ defmodule Rachel.Games.Game do
     player = Enum.at(game.players, player_index)
 
     if Enum.empty?(player.hand) do
-      new_game = 
+      new_game =
         game
         |> Map.put(:winners, game.winners ++ [player.id])
         |> record_winner(player.id)
-      
+
       # Check if only one player remains (who becomes the loser)
       check_for_game_end(new_game)
     else
@@ -395,7 +397,7 @@ defmodule Rachel.Games.Game do
 
   defp check_for_game_end(game) do
     active_players = Enum.reject(game.players, fn player -> player.id in game.winners end)
-    
+
     if length(active_players) <= 1 do
       # Game ends - set status to finished
       %{game | status: :finished}
@@ -414,23 +416,24 @@ defmodule Rachel.Games.Game do
   defp advance_turn(game) do
     game
     |> record_turn_advance()
-    |> Map.put(:last_action, nil)  # Clear any previous skip messages
+    # Clear any previous skip messages
+    |> Map.put(:last_action, nil)
     |> increment_turn()
     |> apply_pending_skips()
   end
-  
+
   defp apply_pending_skips(%__MODULE__{pending_skips: 0} = game), do: game
-  
+
   defp apply_pending_skips(%__MODULE__{pending_skips: skips} = game) when skips > 0 do
     current_player = current_player(game)
-    
+
     # Check if current player can play a 7
-    can_play_seven = 
+    can_play_seven =
       current_player.hand
-      |> Enum.any?(fn card -> 
+      |> Enum.any?(fn card ->
         card.rank == 7 && valid_play?(game, card)
       end)
-    
+
     if can_play_seven do
       # Player can defend with their own 7 - give them the chance
       game
@@ -518,11 +521,13 @@ defmodule Rachel.Games.Game do
   end
 
   defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: nil} = game, _cards), do: game
-  defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: :pending} = game, _cards), do: game
-  
+
+  defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: :pending} = game, _cards),
+    do: game
+
   defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: nominated_suit} = game, cards) do
     [first_card | _] = cards
-    
+
     # If the first card matches the nominated suit (not an Ace), clear the nomination
     if first_card.suit == nominated_suit && first_card.rank != :ace do
       %{game | nominated_suit: nil}

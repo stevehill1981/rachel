@@ -26,8 +26,8 @@ defmodule RachelWeb.GameComponents do
         @selected && "selected ring-4 ring-blue-500 -translate-y-4",
         @disabled && "opacity-50 cursor-not-allowed",
         !@disabled && "hover:shadow-xl cursor-pointer",
-        is_special_card?(@card) && "special-card-glow",
-        is_pickup_card?(@card) && "pickup-card-indicator"
+        special_card?(@card) && "special-card-glow",
+        pickup_card?(@card) && "pickup-card-indicator"
       ]}
       disabled={@disabled}
       data-effect={card_effect_text(@card)}
@@ -44,7 +44,7 @@ defmodule RachelWeb.GameComponents do
           ✓
         </span>
       <% end %>
-      <%= if is_special_card?(@card) && !@selected do %>
+      <%= if special_card?(@card) && !@selected do %>
         <span class="absolute -top-1 -left-1 text-xs opacity-70">
           {special_icon(@card)}
         </span>
@@ -67,7 +67,7 @@ defmodule RachelWeb.GameComponents do
       <!-- Discard pile stack effect - cards underneath (only show if pile has cards) -->
       <%= if @discard_pile_size > 0 do %>
         <%= for i <- 1..min(@discard_pile_size, 4) do %>
-          <div 
+          <div
             class="absolute w-full h-full bg-gray-200 rounded-2xl shadow-lg border border-gray-300"
             style={"top: #{(i-1) * 2}px; left: #{(i-1) * 2}px; transform: rotate(#{(i - 2) * 1}deg); z-index: #{5-i};"}
           >
@@ -78,7 +78,7 @@ defmodule RachelWeb.GameComponents do
         <% end %>
       <% end %>
       
-      <!-- Main current card -->
+    <!-- Main current card -->
       <div class="relative w-full h-full bg-white rounded-2xl shadow-2xl transform hover:rotate-3 transition-transform z-10 border border-gray-200">
         <%= if @card do %>
           <div class="w-full h-full flex flex-col items-center justify-center p-2">
@@ -97,14 +97,13 @@ defmodule RachelWeb.GameComponents do
         <% end %>
       </div>
       
-      
-      <!-- Pending effects indicators -->
+    <!-- Pending effects indicators -->
       <%= if @pending_pickups > 0 do %>
         <div class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-20 animate-pulse">
           +{@pending_pickups}
         </div>
       <% end %>
-      
+
       <%= if @pending_skips > 0 do %>
         <div class="absolute -top-2 -left-2 bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-20 animate-pulse">
           ⏭{@pending_skips}
@@ -129,7 +128,7 @@ defmodule RachelWeb.GameComponents do
       <!-- Deck stack effect - multiple card backs -->
       <%= if @deck_size > 0 do %>
         <%= for i <- 1..min(@deck_size, 4) do %>
-          <div 
+          <div
             class={"absolute w-full h-full bg-gray-800 rounded-2xl shadow-lg border border-gray-600 #{if i == 1, do: "z-10", else: "z-#{10-i}"}"}
             style={"top: #{(i-1) * 2}px; left: #{(i-1) * 2}px; transform: rotate(#{(i - 2) * 1}deg);"}
           >
@@ -146,7 +145,7 @@ defmodule RachelWeb.GameComponents do
         </div>
       <% end %>
       
-      <!-- Clickable overlay when can draw -->
+    <!-- Clickable overlay when can draw -->
       <%= if @can_draw && @deck_size > 0 do %>
         <button
           id="deck-draw-button"
@@ -156,14 +155,15 @@ defmodule RachelWeb.GameComponents do
           phx-hook="SoundEffect"
           data-sound="card-draw"
         >
-          <div class="absolute inset-0 bg-green-400/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="absolute inset-0 bg-green-400/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          </div>
           <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity">
             Click to Draw
           </div>
         </button>
       <% end %>
       
-      <!-- Deck count indicator -->
+    <!-- Deck count indicator -->
       <%= if @deck_size > 0 do %>
         <div class="absolute -bottom-2 -right-2 bg-gray-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-30">
           {@deck_size}
@@ -269,7 +269,7 @@ defmodule RachelWeb.GameComponents do
   def game_status(assigns) do
     ~H"""
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <!-- Pending Pickups -->
+      <!-- Pending Pickups -->
       <%= if @game.pending_pickups > 0 do %>
         <div class="bg-red-500/20 backdrop-blur rounded-xl p-4 text-center animate-pulse">
           <div class="text-sm text-red-300 mb-1">Pending</div>
@@ -360,25 +360,19 @@ defmodule RachelWeb.GameComponents do
   end
 
   defp card_display(card) do
-    rank =
-      case card.rank do
-        :ace -> "A"
-        :king -> "K"
-        :queen -> "Q"
-        :jack -> "J"
-        rank when is_integer(rank) -> to_string(rank)
-      end
-
-    suit =
-      case card.suit do
-        :hearts -> "♥"
-        :diamonds -> "♦"
-        :clubs -> "♣"
-        :spades -> "♠"
-      end
-
-    "#{rank}#{suit}"
+    "#{rank_to_string(card.rank)}#{suit_to_symbol(card.suit)}"
   end
+
+  defp rank_to_string(:ace), do: "A"
+  defp rank_to_string(:king), do: "K"
+  defp rank_to_string(:queen), do: "Q"
+  defp rank_to_string(:jack), do: "J"
+  defp rank_to_string(rank) when is_integer(rank), do: to_string(rank)
+
+  defp suit_to_symbol(:hearts), do: "♥"
+  defp suit_to_symbol(:diamonds), do: "♦"
+  defp suit_to_symbol(:clubs), do: "♣"
+  defp suit_to_symbol(:spades), do: "♠"
 
   defp format_suit(suit) do
     case suit do
@@ -391,7 +385,6 @@ defmodule RachelWeb.GameComponents do
 
   defp format_card_count(n), do: "#{n}"
 
-
   defp pluralize_skips(1), do: "1 skip"
   defp pluralize_skips(n), do: "#{n} skips"
 
@@ -403,20 +396,23 @@ defmodule RachelWeb.GameComponents do
     <div class="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur rounded-full">
       <div class="text-white/80 text-sm font-medium">AI is thinking</div>
       <div class="flex gap-1">
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 0ms">
+        </div>
+        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 150ms">
+        </div>
+        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 300ms">
+        </div>
       </div>
     </div>
     """
   end
 
   # Additional helper functions for special cards
-  defp is_special_card?(card) do
+  defp special_card?(card) do
     card.rank in [:ace, :queen, :jack, 7, 2]
   end
 
-  defp is_pickup_card?(card) do
+  defp pickup_card?(card) do
     card.rank == 2 || (card.rank == :jack && card.suit in [:clubs, :spades])
   end
 
