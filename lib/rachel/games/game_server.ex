@@ -21,6 +21,14 @@ defmodule Rachel.Games.GameServer do
   def join_game(game_id, player_id, player_name) do
     GenServer.call(via_tuple(game_id), {:join_game, player_id, player_name})
   end
+  
+  def player_connected(game_id, player_id, pid) do
+    GenServer.cast(via_tuple(game_id), {:player_connected, player_id, pid})
+  end
+  
+  def player_disconnected(game_id, player_id) do
+    GenServer.cast(via_tuple(game_id), {:player_disconnected, player_id})
+  end
 
   def leave_game(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:leave_game, player_id})
@@ -56,6 +64,7 @@ defmodule Rachel.Games.GameServer do
     initial_state = %{
       game: game,
       connected_players: %{},  # player_id => true/false
+      player_monitors: %{},    # pid => player_id
       created_at: DateTime.utc_now(),
       updated_at: DateTime.utc_now()
     }
@@ -241,6 +250,95 @@ defmodule Rachel.Games.GameServer do
   end
 
   @impl true
+  def handle_cast({:player_connected, player_id, pid}, state) do
+    # Monitor the player's process
+    Process.monitor(pid)
+    
+    new_state = %{state |
+      connected_players: Map.put(state.connected_players, player_id, true),
+      player_monitors: Map.put(state.player_monitors, pid, player_id),
+      updated_at: DateTime.utc_now()
+    }
+    
+    broadcast_player_reconnected(new_state, player_id)
+    {:noreply, new_state}
+  end
+  
+  @impl true
+  def handle_cast({:player_disconnected, player_id}, state) do
+    new_state = %{state |
+      connected_players: Map.put(state.connected_players, player_id, false),
+      updated_at: DateTime.utc_now()
+    }
+    
+    broadcast_player_disconnected(new_state, player_id)
+    
+    # Convert to AI if it's their turn and they disconnected
+    current_player = Enum.at(state.game.players, state.game.current_player_index)
+    if current_player && current_player.id == player_id && state.game.status == :playing do
+      Process.send_after(self(), :ai_turn, 5000) # Give them 5 seconds to reconnect
+    end
+    
+    {:noreply, new_state}
+  end
+  
+  @impl true
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
+    # A player process died - mark them as disconnected
+    case Map.get(state.player_monitors, pid) do
+      nil -> 
+        {:noreply, state}
+        
+      player_id ->
+        new_state = %{state |
+          connected_players: Map.put(state.connected_players, player_id, false),
+          player_monitors: Map.delete(state.player_monitors, pid),
+          updated_at: DateTime.utc_now()
+        }
+        
+        broadcast_player_disconnected(new_state, player_id)
+        
+        # Give them time to reconnect before converting to AI
+        current_player = Enum.at(state.game.players, state.game.current_player_index)
+        if current_player && current_player.id == player_id && state.game.status == :playing do
+          Process.send_after(self(), {:check_disconnected_player, player_id}, 10000) # 10 second grace period
+        end
+        
+        {:noreply, new_state}
+    end
+  end
+  
+  @impl true
+  def handle_info({:check_disconnected_player, player_id}, state) do
+    # Check if player is still disconnected after grace period
+    if Map.get(state.connected_players, player_id) == false && state.game.status == :playing do
+      # Convert to AI
+      new_players = Enum.map(state.game.players, fn player ->
+        if player.id == player_id do
+          %{player | is_ai: true}
+        else
+          player
+        end
+      end)
+      
+      new_game = %{state.game | players: new_players}
+      new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+      
+      broadcast_game_update(new_state)
+      
+      # If it's their turn, trigger AI move
+      current_player = Enum.at(new_game.players, new_game.current_player_index)
+      if current_player && current_player.id == player_id do
+        Process.send_after(self(), :ai_turn, 1000)
+      end
+      
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
+  end
+  
+  @impl true
   def handle_info(:ai_turn, state) do
     if state.game.status == :playing do
       current_player = Enum.at(state.game.players, state.game.current_player_index)
@@ -365,5 +463,10 @@ defmodule Rachel.Games.GameServer do
   defp broadcast_suit_nominated(state, player_id, suit) do
     PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
       {:suit_nominated, %{player_id: player_id, suit: suit, game: state.game}})
+  end
+  
+  defp broadcast_player_disconnected(state, player_id) do
+    PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
+      {:player_disconnected, %{player_id: player_id, game: state.game}})
   end
 end

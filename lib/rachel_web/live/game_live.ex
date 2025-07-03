@@ -16,6 +16,9 @@ defmodule RachelWeb.GameLive do
         # Subscribe to game updates
         PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
         
+        # Notify GameServer that we're connected
+        GameServer.player_connected(game_id, player_id, self())
+        
         socket =
           socket
           |> assign(:game, game)
@@ -198,6 +201,16 @@ defmodule RachelWeb.GameLive do
   def handle_event("acknowledge_win", _, socket) do
     {:noreply, assign(socket, :show_winner_banner, false)}
   end
+  
+  @impl true
+  def handle_event("copy_game_code", _, socket) do
+    if socket.assigns.game_id do
+      game_code = String.slice(socket.assigns.game_id, -6..-1)
+      {:noreply, put_flash(socket, :info, "Game code #{game_code} copied!")}
+    else
+      {:noreply, socket}
+    end
+  end
 
   @impl true
   def handle_info(:ai_move, socket) do
@@ -346,6 +359,19 @@ defmodule RachelWeb.GameLive do
     
     {:noreply, socket}
   end
+  
+  def handle_info({:player_disconnected, %{player_id: player_id, game: game}}, socket) do
+    socket = assign(socket, :game, game)
+    
+    socket = if player_id != socket.assigns.player_id do
+      player_name = get_player_name_by_id(game, player_id)
+      put_flash(socket, :info, "#{player_name} disconnected")
+    else
+      socket
+    end
+    
+    {:noreply, socket}
+  end
 
   def handle_info(:auto_draw_pending_cards, socket) do
     game = socket.assigns.game
@@ -412,6 +438,15 @@ defmodule RachelWeb.GameLive do
   def render(assigns) do
     Modern.render(assigns)
   end
+  
+  @impl true
+  def terminate(_reason, socket) do
+    # Notify GameServer that we're disconnecting (only for multiplayer)
+    if socket.assigns[:game_id] && socket.assigns[:player_id] do
+      GameServer.player_disconnected(socket.assigns.game_id, socket.assigns.player_id)
+    end
+    :ok
+  end
 
   defp create_test_game do
     ai_names = [
@@ -449,10 +484,7 @@ defmodule RachelWeb.GameLive do
   
   # Player identity and session management
   defp get_player_id(session) do
-    case Map.get(session, "player_id") do
-      nil -> "player_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
-      id -> id
-    end
+    Map.get(session, "player_id", "player_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}")
   end
   
   defp get_player_name(session) do

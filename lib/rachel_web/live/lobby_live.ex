@@ -8,13 +8,13 @@ defmodule RachelWeb.LobbyLive do
   alias Phoenix.PubSub
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     # Subscribe to lobby updates
     PubSub.subscribe(Rachel.PubSub, "lobby")
     
-    # Generate a random player ID and name for this session
-    player_id = generate_player_id()
-    player_name = generate_default_name()
+    # Get player info from session (set by PlayerSession plug)
+    player_id = Map.get(session, "player_id", generate_player_id())
+    player_name = Map.get(session, "player_name", generate_default_name())
     
     socket = 
       socket

@@ -8,6 +8,7 @@ defmodule RachelWeb.Router do
     plug :put_root_layout, html: {RachelWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug RachelWeb.Plugs.PlayerSession
   end
 
   pipeline :api do
