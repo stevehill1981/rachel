@@ -12,7 +12,7 @@ defmodule RachelWeb.Components.Game.PlayersDisplay do
     ~H"""
     <div class="bg-white/10 backdrop-blur rounded-2xl p-6 mb-8">
       <div class="flex flex-wrap gap-4 justify-center items-center">
-        <.direction_indicator direction={@game.direction} />
+        <.direction_indicator direction={Map.get(@game, :direction, :clockwise)} />
         
         <%= for {player, idx} <- Enum.with_index(@game.players) do %>
           <.player_card_horizontal
@@ -22,7 +22,7 @@ defmodule RachelWeb.Components.Game.PlayersDisplay do
           />
         <% end %>
         
-        <.direction_indicator direction={@game.direction} />
+        <.direction_indicator direction={Map.get(@game, :direction, :clockwise)} />
       </div>
     </div>
     """

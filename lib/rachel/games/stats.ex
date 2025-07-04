@@ -75,34 +75,44 @@ defmodule Rachel.Games.Stats do
   end
 
   def record_card_played(%__MODULE__{} = stats, player_id, cards) when is_list(cards) do
-    card_count = length(cards)
-    special_count = Enum.count(cards, &has_special_effect?/1)
+    # Return unchanged stats if player doesn't exist
+    if Map.has_key?(stats.player_stats, player_id) do
+      card_count = length(cards)
+      special_count = Enum.count(cards, &has_special_effect?/1)
 
-    updated_player_stats =
-      Map.update!(stats.player_stats, player_id, fn player_stats ->
-        player_stats
+      updated_player_stats =
+        Map.update!(stats.player_stats, player_id, fn player_stats ->
+          player_stats
+          |> Map.update!(:total_cards_played, &(&1 + card_count))
+          |> Map.update!(:special_cards_played, &(&1 + special_count))
+        end)
+
+      updated_game_stats =
+        stats.game_stats
         |> Map.update!(:total_cards_played, &(&1 + card_count))
-        |> Map.update!(:special_cards_played, &(&1 + special_count))
-      end)
+        |> Map.update!(:special_effects_triggered, &(&1 + special_count))
 
-    updated_game_stats =
-      stats.game_stats
-      |> Map.update!(:total_cards_played, &(&1 + card_count))
-      |> Map.update!(:special_effects_triggered, &(&1 + special_count))
-
-    %{stats | player_stats: updated_player_stats, game_stats: updated_game_stats}
+      %{stats | player_stats: updated_player_stats, game_stats: updated_game_stats}
+    else
+      stats
+    end
   end
 
   def record_card_drawn(%__MODULE__{} = stats, player_id, card_count) do
-    updated_player_stats =
-      Map.update!(stats.player_stats, player_id, fn player_stats ->
-        Map.update!(player_stats, :total_cards_drawn, &(&1 + card_count))
-      end)
+    # Return unchanged stats if player doesn't exist
+    if Map.has_key?(stats.player_stats, player_id) do
+      updated_player_stats =
+        Map.update!(stats.player_stats, player_id, fn player_stats ->
+          Map.update!(player_stats, :total_cards_drawn, &(&1 + card_count))
+        end)
 
-    updated_game_stats =
-      Map.update!(stats.game_stats, :total_cards_drawn, &(&1 + card_count))
+      updated_game_stats =
+        Map.update!(stats.game_stats, :total_cards_drawn, &(&1 + card_count))
 
-    %{stats | player_stats: updated_player_stats, game_stats: updated_game_stats}
+      %{stats | player_stats: updated_player_stats, game_stats: updated_game_stats}
+    else
+      stats
+    end
   end
 
   def record_turn_advance(%__MODULE__{} = stats) do
@@ -127,27 +137,40 @@ defmodule Rachel.Games.Stats do
   end
 
   def record_winner(%__MODULE__{} = stats, winner_id) do
-    end_time = DateTime.utc_now()
-    duration = DateTime.diff(end_time, stats.start_time)
+    # Calculate duration only if this is the first winner
+    {_duration, updated_game_stats} = if stats.game_stats.winner_id == nil do
+      end_time = DateTime.utc_now()
+      duration = DateTime.diff(end_time, stats.start_time)
+      {duration, Map.put(stats.game_stats, :game_duration_seconds, duration)}
+    else
+      {stats.game_stats.game_duration_seconds, stats.game_stats}
+    end
 
-    updated_player_stats =
-      Map.update!(stats.player_stats, winner_id, fn player_stats ->
-        turns = stats.game_stats.total_turns
-        _quickest = player_stats.quickest_win_turns
-
-        player_stats
-        |> Map.update!(:games_won, &(&1 + 1))
-        |> Map.update!(:quickest_win_turns, fn
-          nil -> turns
-          current -> min(current, turns)
-        end)
-        |> Map.update!(:longest_game_turns, &max(&1, turns))
+    # Update player stats
+    position = length(stats.game_stats.finish_positions) + 1
+    updated_player_stats = 
+      Map.update(stats.player_stats, winner_id, nil, fn player_stats ->
+        if player_stats do
+          turns = stats.game_stats.total_turns
+          
+          player_stats
+          |> Map.put(:position, position)
+          |> Map.update!(:games_won, fn wins -> if position == 1, do: wins + 1, else: wins end)
+          |> Map.update!(:quickest_win_turns, fn
+            nil -> if position == 1, do: turns, else: nil
+            current -> if position == 1, do: min(current, turns), else: current
+          end)
+          |> Map.update!(:longest_game_turns, &max(&1, turns))
+        else
+          player_stats
+        end
       end)
 
-    updated_game_stats =
-      stats.game_stats
-      |> Map.put(:winner_id, winner_id)
-      |> Map.put(:game_duration_seconds, duration)
+    # Update game stats with winner (first one only) and add to finish positions
+    updated_game_stats = 
+      updated_game_stats
+      |> Map.update!(:finish_positions, &(&1 ++ [winner_id]))
+      |> Map.update(:winner_id, winner_id, fn existing -> existing || winner_id end)
 
     %{stats | player_stats: updated_player_stats, game_stats: updated_game_stats}
   end
@@ -226,5 +249,73 @@ defmodule Rachel.Games.Stats do
     minutes = div(seconds, 60)
     remaining_seconds = rem(seconds, 60)
     "#{minutes}m #{remaining_seconds}s"
+  end
+
+  @doc """
+  Calculate stats from a completed game instance.
+  This is used for persisting stats when a game ends.
+  """
+  def calculate_stats(game) do
+    player_names = 
+      game.players
+      |> Enum.map(fn player -> {player.id, player.name} end)
+      |> Map.new()
+
+    # Extract basic game stats
+    game_stats = %{
+      winner_id: List.first(game.winners),
+      total_turns: if(game.stats, do: game.stats.game_stats.total_turns, else: 0),
+      total_cards_played: if(game.stats, do: game.stats.game_stats.total_cards_played, else: 0),
+      total_cards_drawn: if(game.stats, do: game.stats.game_stats.total_cards_drawn, else: 0),
+      special_effects_triggered: if(game.stats, do: game.stats.game_stats.special_effects_triggered, else: 0),
+      direction_changes: if(game.stats, do: game.stats.game_stats.direction_changes, else: 0),
+      suit_nominations: if(game.stats, do: game.stats.game_stats.suit_nominations, else: 0),
+      finish_positions: game.winners,
+      player_names: player_names
+    }
+
+    # Extract player-specific stats
+    player_stats = 
+      game.players
+      |> Enum.map(fn player ->
+        stats = if game.stats && Map.has_key?(game.stats.player_stats, player.id) do
+          game.stats.player_stats[player.id]
+        else
+          %{
+            total_cards_played: 0,
+            total_cards_drawn: 0,
+            special_cards_played: 0,
+            games_won: 0
+          }
+        end
+
+        finish_position = Enum.find_index(game.winners, &(&1 == player.id))
+        won = player.id in game.winners
+        score = calculate_player_score(stats, game_stats)
+
+        {player.id, %{
+          player_name: player.name,
+          finish_position: finish_position,
+          cards_played: stats.total_cards_played,
+          cards_drawn: stats.total_cards_drawn,
+          special_cards_played: stats.special_cards_played,
+          won: won,
+          score: score
+        }}
+      end)
+      |> Map.new()
+
+    %{
+      winner_id: game_stats.winner_id,
+      total_turns: game_stats.total_turns,
+      total_cards_played: game_stats.total_cards_played,
+      total_cards_drawn: game_stats.total_cards_drawn,
+      special_effects_triggered: game_stats.special_effects_triggered,
+      direction_changes: game_stats.direction_changes,
+      suit_nominations: game_stats.suit_nominations,
+      finish_positions: game_stats.finish_positions,
+      player_names: game_stats.player_names,
+      player_stats: player_stats
+    }
   end
 end

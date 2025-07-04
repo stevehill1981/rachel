@@ -97,11 +97,11 @@ defmodule Rachel.Games.AIPlayer do
         60
 
       :choose_suit ->
-        50
+        30  # Lower priority - save aces for last
 
       # Regular cards
       _ ->
-        40
+        50  # Higher priority - prefer regular cards
     end
   end
 

@@ -3,7 +3,31 @@
     "allow": [
       "Bash(grep:*)",
       "Bash(rg:*)",
-      "Bash(mix test:*)"
+      "Bash(mix test:*)",
+      "Bash(git push:*)",
+      "Bash(mix phx.gen.auth:*)",
+      "Bash(mix ecto.gen.migration:*)",
+      "Bash(export:*)",
+      "Bash(flyctl ssh console:*)",
+      "Bash(flyctl machine start:*)",
+      "Bash(flyctl postgres connect:*)",
+      "Bash(flyctl secrets list:*)",
+      "Bash(flyctl postgres list:*)",
+      "Bash(flyctl status:*)",
+      "Bash(flyctl apps restart:*)",
+      "Bash(flyctl mpg create:*)",
+      "Bash(flyctl postgres detach:*)",
+      "Bash(flyctl secrets set:*)",
+      "Bash(flyctl logs:*)",
+      "Bash(flyctl scale:*)",
+      "Bash(flyctl apps destroy:*)",
+      "Bash(flyctl platform:*)",
+      "Bash(flyctl deploy:*)",
+      "Bash(MIX_ENV=test mix ecto.drop)",
+      "Bash(MIX_ENV=test mix ecto.create)",
+      "Bash(MIX_ENV=test mix ecto.migrate)",
+      "Bash(find:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

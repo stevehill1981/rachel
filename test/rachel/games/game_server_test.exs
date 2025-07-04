@@ -366,7 +366,7 @@ defmodule Rachel.Games.GameServerTest do
       {:ok, _} = GameServer.start_game(game_id, "player1")
       
       # Simulate disconnect/reconnect
-      assert {:ok, _game} = GameServer.reconnect_player(game_id, "player1")
+      assert :ok = GameServer.reconnect_player(game_id, "player1")
       
       state = GameServer.get_state(game_id)
       player = Enum.find(state.players, &(&1.id == "player1"))

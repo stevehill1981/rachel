@@ -6,6 +6,7 @@ defmodule Rachel.Games.GameServer do
   use GenServer
 
   alias Rachel.Games.{Game, Player}
+  alias Rachel.Accounts.Stats, as: AccountsStats
   alias Phoenix.PubSub
 
   @max_players 8
@@ -15,7 +16,7 @@ defmodule Rachel.Games.GameServer do
 
   def start_link(opts) do
     game_id = Keyword.fetch!(opts, :game_id)
-    GenServer.start_link(__MODULE__, game_id, name: via_tuple(game_id))
+    GenServer.start_link(__MODULE__, opts, name: via_tuple(game_id))
   end
 
   def join_game(game_id, player_id, player_name) do
@@ -55,20 +56,47 @@ defmodule Rachel.Games.GameServer do
   end
 
   def get_state(game_id) do
-    GenServer.call(via_tuple(game_id), :get_state)
+    try do
+      GenServer.call(via_tuple(game_id), :get_state)
+    catch
+      :exit, {:noproc, _} -> nil
+      :exit, _ -> nil
+    end
+  end
+  
+  def add_ai_player(game_id, name) do
+    GenServer.call(via_tuple(game_id), {:add_ai_player, name})
+  end
+  
+  # Test helper to set state directly
+  def set_state(game_id, game) do
+    GenServer.call(via_tuple(game_id), {:set_state, game})
   end
 
   def reconnect_player(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:reconnect_player, player_id})
   end
-
+  
+  def disconnect_player(game_id, player_id) do
+    GenServer.call(via_tuple(game_id), {:disconnect_player, player_id})
+  end
+  
   # Server Callbacks
 
   @impl true
-  def init(game_id) do
+  def init(opts) when is_list(opts) do
+    game_id = Keyword.get(opts, :game_id)
+    timeout = Keyword.get(opts, :timeout, :infinity)
+    
     game = Game.new(game_id)
     
     # Enhanced state that tracks multiplayer-specific data
+    timeout_ref = if timeout != :infinity do
+      Process.send_after(self(), :timeout, timeout)
+    else
+      nil
+    end
+
     initial_state = %{
       game: game,
       connected_players: %{},  # player_id => true/false
@@ -76,10 +104,18 @@ defmodule Rachel.Games.GameServer do
       spectators: %{},        # spectator_id => %{name: name, connected: true/false}
       host_id: nil,           # player_id of the game creator/host
       created_at: DateTime.utc_now(),
-      updated_at: DateTime.utc_now()
+      updated_at: DateTime.utc_now(),
+      started_at: nil,        # When the game actually started playing
+      timeout: timeout,
+      timeout_ref: timeout_ref
     }
 
     {:ok, initial_state}
+  end
+  
+  @impl true
+  def init(game_id) when is_binary(game_id) do
+    init([game_id: game_id])
   end
 
   @impl true
@@ -181,7 +217,8 @@ defmodule Rachel.Games.GameServer do
         case validate_start(state.game) do
           :ok ->
             new_game = Game.start_game(state.game)
-            new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+            started_at = DateTime.utc_now()
+            new_state = %{state | game: new_game, updated_at: started_at, started_at: started_at}
             
             broadcast_game_started(new_state)
             
@@ -220,6 +257,11 @@ defmodule Rachel.Games.GameServer do
               broadcast_winner(new_state, player_id)
             end
             
+            # Check if game just finished and record stats
+            if state.game.status != :finished and new_game.status == :finished do
+              record_game_stats(new_state)
+            end
+            
             # Schedule AI turn if next player is AI
             schedule_ai_turn_if_needed(new_state)
             
@@ -242,6 +284,11 @@ defmodule Rachel.Games.GameServer do
       {:ok, new_game} ->
         new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
         broadcast_card_drawn(new_state, player_id)
+        
+        # Check if game just finished and record stats
+        if state.game.status != :finished and new_game.status == :finished do
+          record_game_stats(new_state)
+        end
         
         # Schedule AI turn if next player is AI
         schedule_ai_turn_if_needed(new_state)
@@ -294,7 +341,9 @@ defmodule Rachel.Games.GameServer do
       spectators: state.spectators
     })
     
-    {:reply, combined_state, state}
+    # Reset timeout on activity
+    new_state = reset_timeout(state)
+    {:reply, combined_state, new_state}
   end
 
   @impl true
@@ -305,7 +354,45 @@ defmodule Rachel.Games.GameServer do
     }
     
     broadcast_player_reconnected(new_state, player_id)
-    {:reply, {:ok, new_state.game}, new_state}
+    {:reply, :ok, new_state}
+  end
+  
+  @impl true
+  def handle_call({:disconnect_player, player_id}, _from, state) do
+    new_state = %{state | 
+      connected_players: Map.put(state.connected_players, player_id, false),
+      updated_at: DateTime.utc_now()
+    }
+    
+    broadcast_player_disconnected(new_state, player_id)
+    {:reply, :ok, new_state}
+  end
+  
+  @impl true
+  def handle_call({:add_ai_player, name}, _from, state) do
+    if length(state.game.players) < @max_players and state.game.status == :waiting do
+      ai_id = "ai-#{System.unique_integer()}"
+      ai_player = Player.new(ai_id, name, is_ai: true, connected: true)
+      
+      new_players = state.game.players ++ [ai_player]
+      new_game = %{state.game | players: new_players}
+      new_state = %{state | 
+        game: new_game,
+        connected_players: Map.put(state.connected_players, ai_id, true),
+        updated_at: DateTime.utc_now()
+      }
+      
+      broadcast_game_update(new_state)
+      {:reply, {:ok, new_state.game}, new_state}
+    else
+      {:reply, {:error, :cannot_add_ai}, state}
+    end
+  end
+  
+  @impl true
+  def handle_call({:set_state, game}, _from, state) do
+    new_state = %{state | game: game, updated_at: DateTime.utc_now()}
+    {:reply, :ok, new_state}
   end
 
   @impl true
@@ -399,6 +486,78 @@ defmodule Rachel.Games.GameServer do
   
   @impl true
   def handle_info(:ai_turn, state) do
+    current_player = Enum.at(state.game.players, state.game.current_player_index)
+    
+    if current_player && current_player.is_ai && state.game.status == :playing do
+      # Get AI decision
+      action = Rachel.Games.AIPlayer.make_move(state.game, current_player.id)
+      
+      # Execute AI action
+      new_state = case action do
+        {:play, card_index} ->
+          case Game.play_card(state.game, current_player.id, [card_index]) do
+            {:ok, new_game} ->
+              new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+              played_card = Enum.at(current_player.hand, card_index)
+              broadcast_cards_played(new_state, current_player.id, [played_card])
+              
+              # Check if game finished
+              if state.game.status != :finished and new_game.status == :finished do
+                record_game_stats(new_state)
+              end
+              
+              # Schedule next AI turn if needed
+              schedule_ai_turn_if_needed(new_state)
+              new_state
+              
+            {:error, _} ->
+              # AI made invalid play, force draw
+              Process.send_after(self(), :ai_turn, 100)
+              state
+          end
+          
+        {:draw, _} ->
+          case Game.draw_card(state.game, current_player.id) do
+            {:ok, new_game} ->
+              new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+              broadcast_card_drawn(new_state, current_player.id)
+              
+              # Check if game finished
+              if state.game.status != :finished and new_game.status == :finished do
+                record_game_stats(new_state)
+              end
+              
+              # Schedule next AI turn if needed
+              schedule_ai_turn_if_needed(new_state)
+              new_state
+              
+            {:error, _} ->
+              state
+          end
+          
+        {:nominate, suit} ->
+          case Game.nominate_suit(state.game, current_player.id, suit) do
+            {:ok, new_game} ->
+              new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+              broadcast_suit_nominated(new_state, current_player.id, suit)
+              
+              # Schedule next AI turn if needed
+              schedule_ai_turn_if_needed(new_state)
+              new_state
+              
+            {:error, _} ->
+              state
+          end
+      end
+      
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
+  end
+  
+  @impl true
+  def handle_info(:ai_timeout, state) do
     if state.game.status == :playing do
       current_player = Enum.at(state.game.players, state.game.current_player_index)
       
@@ -453,11 +612,32 @@ defmodule Rachel.Games.GameServer do
       {:noreply, state}
     end
   end
+  
+  @impl true
+  def handle_info(:timeout, state) do
+    {:stop, :normal, state}
+  end
 
   # Helper Functions
 
   defp via_tuple(game_id) do
     {:via, Registry, {Rachel.GameRegistry, game_id}}
+  end
+  
+  defp reset_timeout(state) do
+    # Only handle timeout if state has timeout field
+    if Map.has_key?(state, :timeout) and state.timeout != :infinity do
+      # Cancel previous timeout if it exists
+      if Map.get(state, :timeout_ref) do
+        Process.cancel_timer(state.timeout_ref)
+      end
+      
+      # Set new timeout
+      new_timeout_ref = Process.send_after(self(), :timeout, state.timeout)
+      %{state | updated_at: DateTime.utc_now(), timeout_ref: new_timeout_ref}
+    else
+      %{state | updated_at: DateTime.utc_now()}
+    end
   end
 
   defp validate_join(game, player_id) do
@@ -498,6 +678,27 @@ defmodule Rachel.Games.GameServer do
     end
   end
 
+  # Stats recording
+
+  defp record_game_stats(state) do
+    if state.started_at do
+      ended_at = DateTime.utc_now()
+      game_id = state.game.id
+      
+      # Record stats asynchronously to avoid blocking the game
+      Task.start(fn ->
+        try do
+          AccountsStats.record_game(state.game, game_id, state.started_at, ended_at)
+        rescue
+          error ->
+            # Log error but don't crash the game server
+            require Logger
+            Logger.error("Failed to record game stats for game #{game_id}: #{inspect(error)}")
+        end
+      end)
+    end
+  end
+
   # Broadcasting
 
   defp broadcast_game_update(state) do
@@ -509,8 +710,11 @@ defmodule Rachel.Games.GameServer do
   end
 
   defp broadcast_cards_played(state, player_id, cards) do
+    player = Enum.find(state.game.players, &(&1.id == player_id))
+    player_name = if player, do: player.name, else: "Unknown"
+    
     PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
-      {:cards_played, %{player_id: player_id, cards: cards, game: state.game}})
+      {:cards_played, %{player_id: player_id, player_name: player_name, cards: cards, game: state.game}})
   end
 
   defp broadcast_card_drawn(state, player_id) do
@@ -519,13 +723,24 @@ defmodule Rachel.Games.GameServer do
   end
 
   defp broadcast_winner(state, player_id) do
+    player = Enum.find(state.game.players, &(&1.id == player_id))
+    player_name = if player, do: player.name, else: "Unknown"
+    # Position is 1-based index in the winners list
+    position = case Enum.find_index(state.game.winners, &(&1 == player_id)) do
+      nil -> length(state.game.winners) + 1  # New winner
+      index -> index + 1  # Already in list
+    end
+    
     PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
-      {:player_won, %{player_id: player_id, game: state.game}})
+      {:player_won, %{player_id: player_id, player_name: player_name, position: position}})
   end
 
   defp broadcast_player_reconnected(state, player_id) do
+    player = Enum.find(state.game.players, &(&1.id == player_id))
+    player_name = if player, do: player.name, else: "Unknown"
+    
     PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
-      {:player_reconnected, %{player_id: player_id, game: state.game}})
+      {:player_reconnected, %{player_id: player_id, player_name: player_name}})
   end
 
   defp broadcast_suit_nominated(state, player_id, suit) do
@@ -534,8 +749,11 @@ defmodule Rachel.Games.GameServer do
   end
   
   defp broadcast_player_disconnected(state, player_id) do
+    player = Enum.find(state.game.players, &(&1.id == player_id))
+    player_name = if player, do: player.name, else: "Unknown"
+    
     PubSub.broadcast(Rachel.PubSub, "game:#{state.game.id}", 
-      {:player_disconnected, %{player_id: player_id, game: state.game}})
+      {:player_disconnected, %{player_id: player_id, player_name: player_name}})
   end
 
   defp broadcast_spectator_joined(state, spectator_id, spectator_name) do

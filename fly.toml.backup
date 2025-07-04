@@ -1,0 +1,52 @@
+# fly.toml app configuration file generated for rachel-card-game on 2025-01-03T14:58:37Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = 'rachel-game'
+primary_region = 'lhr'
+console_command = '/app/bin/rachel remote'
+
+[build]
+  dockerfile = "Dockerfile"
+  
+[build.args]
+  BUILDPLATFORM = "linux/amd64"
+  TARGETPLATFORM = "linux/amd64"
+
+[env]
+  PHX_HOST = 'rachel-game.fly.dev'
+  PORT = '8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "10s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/"
+    protocol = "http"
+    timeout = "2s"
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

@@ -70,15 +70,17 @@ defmodule RachelWeb.GameLive do
   end
   
   # Fallback for single-player mode (no game_id)
-  def mount(_params, _session, socket) do
-    game = create_test_game()
+  def mount(_params, session, socket) do
+    # Get player identity for single-player mode
+    player_name = get_player_name(session)
+    game = create_test_game(player_name)
     
     socket =
       socket
       |> assign(:game, game)
       |> assign(:game_id, nil)
       |> assign(:player_id, "human")
-      |> assign(:player_name, "You")
+      |> assign(:player_name, player_name)
       |> assign(:selected_cards, [])
       |> assign(:show_ai_thinking, false)
       |> assign(:show_winner_banner, false)
@@ -166,6 +168,12 @@ defmodule RachelWeb.GameLive do
             |> check_and_show_winner_banner(new_game)
 
           socket = check_auto_draw(socket)
+          
+          # Schedule AI move for single-player games
+          if socket.assigns.game_id == nil do
+            schedule_ai_move(new_game)
+          end
+          
           {:noreply, socket}
 
         {:error, reason} ->
@@ -188,6 +196,11 @@ defmodule RachelWeb.GameLive do
             |> assign(:selected_cards, [])
             |> clear_flash()
             |> put_flash(:info, "Card drawn!")
+          
+          # Schedule AI move for single-player games
+          if socket.assigns.game_id == nil do
+            schedule_ai_move(new_game)
+          end
 
           {:noreply, socket}
 
@@ -212,6 +225,11 @@ defmodule RachelWeb.GameLive do
             |> assign(:game, new_game)
             |> clear_flash()
             |> put_flash(:info, "Suit nominated: #{suit}")
+          
+          # Schedule AI move for single-player games
+          if socket.assigns.game_id == nil do
+            schedule_ai_move(new_game)
+          end
 
           {:noreply, socket}
 
@@ -335,7 +353,7 @@ defmodule RachelWeb.GameLive do
     {:noreply, socket}
   end
   
-  def handle_info({:cards_played, %{player_id: player_id, cards: cards, game: game}}, socket) do
+  def handle_info({:cards_played, %{player_id: player_id, cards: cards, game: game} = msg}, socket) do
     socket = 
       socket
       |> assign(:game, game)
@@ -343,7 +361,8 @@ defmodule RachelWeb.GameLive do
       |> check_and_show_winner_banner(game)
       
     socket = if player_id != socket.assigns.player_id do
-      player_name = get_player_name_by_id(game, player_id)
+      # Use player_name from message if available, otherwise look it up
+      player_name = Map.get(msg, :player_name) || get_player_name_by_id(game, player_id)
       card_count = length(cards)
       message = "#{player_name} played #{card_count} card#{if card_count == 1, do: "", else: "s"}"
       put_flash(socket, :info, message)
@@ -394,11 +413,8 @@ defmodule RachelWeb.GameLive do
     {:noreply, socket}
   end
   
-  def handle_info({:player_reconnected, %{player_id: player_id, game: game}}, socket) do
-    socket = assign(socket, :game, game)
-    
+  def handle_info({:player_reconnected, %{player_id: player_id, player_name: player_name}}, socket) do
     socket = if player_id != socket.assigns.player_id do
-      player_name = get_player_name_by_id(game, player_id)
       put_flash(socket, :info, "#{player_name} reconnected")
     else
       socket
@@ -407,11 +423,8 @@ defmodule RachelWeb.GameLive do
     {:noreply, socket}
   end
   
-  def handle_info({:player_disconnected, %{player_id: player_id, game: game}}, socket) do
-    socket = assign(socket, :game, game)
-    
+  def handle_info({:player_disconnected, %{player_id: player_id, player_name: player_name}}, socket) do
     socket = if player_id != socket.assigns.player_id do
-      player_name = get_player_name_by_id(game, player_id)
       put_flash(socket, :info, "#{player_name} disconnected")
     else
       socket
@@ -500,7 +513,7 @@ defmodule RachelWeb.GameLive do
     :ok
   end
 
-  defp create_test_game do
+  defp create_test_game(player_name \\ "You") do
     ai_names = [
       "Alice",
       "Bob",
@@ -527,7 +540,7 @@ defmodule RachelWeb.GameLive do
     selected_names = Enum.take_random(ai_names, 3)
 
     Game.new()
-    |> Game.add_player("human", "You", false)
+    |> Game.add_player("human", player_name, false)
     |> Game.add_player("ai1", Enum.at(selected_names, 0), true)
     |> Game.add_player("ai2", Enum.at(selected_names, 1), true)
     |> Game.add_player("ai3", Enum.at(selected_names, 2), true)
@@ -552,7 +565,10 @@ defmodule RachelWeb.GameLive do
           if player_in_game?(game, player_id) do
             # Player is already in game - reconnect
             case GameServer.reconnect_player(game_id, player_id) do
-              {:ok, updated_game} -> {:ok, updated_game}
+              :ok -> 
+                # Reconnection successful, get updated game state
+                updated_game = GameServer.get_state(game_id)
+                {:ok, updated_game}
               {:error, reason} -> {:error, reason}
             end
           else
@@ -670,6 +686,8 @@ defmodule RachelWeb.GameLive do
   def current_player(%Game{} = game) do
     Game.current_player(game)
   end
+  
+  def current_player(_), do: nil
 
   def current_player_name(%Game{} = game) do
     case Game.current_player(game) do
@@ -737,6 +755,8 @@ defmodule RachelWeb.GameLive do
     end)
   end
 
+  defp check_and_show_winner_banner(socket, nil), do: socket
+  
   defp check_and_show_winner_banner(socket, game) do
     player_id = socket.assigns.player_id
 

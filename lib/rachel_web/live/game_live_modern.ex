@@ -16,16 +16,19 @@ defmodule RachelWeb.GameLive.Modern do
       
       <!-- Main Game Area -->
       <main class="relative z-10 p-4 max-w-7xl mx-auto">
-        <%= if @game.status == :waiting do %>
-          <.waiting_room game={@game} game_id={@game_id} player_id={@player_id} />
-        <% else %>
-          <.game_in_progress 
-            game={@game}
-            player_id={@player_id}
-            selected_cards={@selected_cards}
-            show_ai_thinking={@show_ai_thinking}
-            is_spectator={Map.get(assigns, :is_spectator, false)}
-          />
+        <%= cond do %>
+          <% !@game -> %>
+            <div class="text-center text-white">Loading game...</div>
+          <% @game.status == :waiting -> %>
+            <.waiting_room game={@game} game_id={@game_id} player_id={@player_id} />
+          <% true -> %>
+            <.game_in_progress 
+              game={@game}
+              player_id={@player_id}
+              selected_cards={@selected_cards}
+              show_ai_thinking={@show_ai_thinking}
+              is_spectator={Map.get(assigns, :is_spectator, false)}
+            />
         <% end %>
       </main>
       

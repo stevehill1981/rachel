@@ -36,7 +36,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
       />
       
       <!-- Suit Nomination -->
-      <%= if !@is_spectator && @game.nominated_suit == :pending && @current_player && @current_player.id == @player_id do %>
+      <%= if !@is_spectator && Map.get(@game, :nominated_suit) == :pending && @current_player && @current_player.id == @player_id do %>
         <.suit_selector />
       <% end %>
     </div>

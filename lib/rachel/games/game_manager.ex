@@ -47,7 +47,14 @@ defmodule Rachel.Games.GameManager do
   """
   def join_game(game_id, player_id, player_name) do
     if game_exists?(game_id) do
-      GameServer.join_game(game_id, player_id, player_name)
+      try do
+        GameServer.join_game(game_id, player_id, player_name)
+      catch
+        :exit, {:noproc, _} ->
+          {:error, :game_not_found}
+        :exit, _ ->
+          {:error, :game_not_found}
+      end
     else
       {:error, :game_not_found}
     end
@@ -61,13 +68,18 @@ defmodule Rachel.Games.GameManager do
     |> Enum.map(fn game_id ->
       try do
         state = GameServer.get_state(game_id)
-        %{
-          id: game_id,
-          status: state.status,
-          player_count: length(state.players),
-          players: Enum.map(state.players, fn p -> %{id: p.id, name: p.name, is_ai: p.is_ai} end),
-          created_at: DateTime.utc_now() # We could track this in GameServer if needed
-        }
+        case state do
+          nil -> nil
+          state when is_map(state) ->
+            %{
+              id: game_id,
+              status: state.status,
+              player_count: length(state.players),
+              players: Enum.map(state.players, fn p -> %{id: p.id, name: p.name, is_ai: p.is_ai} end),
+              created_at: DateTime.utc_now() # We could track this in GameServer if needed
+            }
+          _ -> nil
+        end
       catch
         :exit, {:noproc, _} ->
           # Game process is dead, skip it
@@ -90,17 +102,24 @@ defmodule Rachel.Games.GameManager do
     if game_exists?(game_id) do
       try do
         state = GameServer.get_state(game_id)
-        {:ok, %{
-          id: game_id,
-          status: state.status,
-          player_count: length(state.players),
-          max_players: 8, # Could be configurable
-          players: Enum.map(state.players, fn p -> 
-            %{id: p.id, name: p.name, is_ai: p.is_ai, connected: p.connected} 
-          end),
-          current_player_id: state.current_player_id,
-          can_join: state.status == :waiting and length(state.players) < 8
-        }}
+        case state do
+          nil ->
+            {:error, :game_not_found}
+          state when is_map(state) ->
+            {:ok, %{
+              id: game_id,
+              status: state.status,
+              player_count: length(state.players),
+              max_players: 8, # Could be configurable
+              players: Enum.map(state.players, fn p -> 
+                %{id: p.id, name: p.name, is_ai: p.is_ai, connected: p.connected} 
+              end),
+              current_player_id: state.current_player_id,
+              can_join: state.status == :waiting and length(state.players) < 8
+            }}
+          _ ->
+            {:error, :server_error}
+        end
       catch
         :exit, {:noproc, _} ->
           {:error, :game_not_found}
@@ -162,8 +181,16 @@ defmodule Rachel.Games.GameManager do
       game.player_count == 0 or game.status == :finished
     end)
     |> Enum.each(fn game ->
-      stop_game(game.id)
+      try do
+        stop_game(game.id)
+      rescue
+        _ -> :ok  # Any other error, continue cleanup
+      catch
+        :exit, _ -> :ok  # Process already dead, that's fine
+      end
     end)
+    
+    :ok
   end
 
   # Private helper functions

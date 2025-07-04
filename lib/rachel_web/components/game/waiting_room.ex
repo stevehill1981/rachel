@@ -18,7 +18,7 @@ defmodule RachelWeb.Components.Game.WaitingRoom do
         <p class="text-white/80 mb-2">Share this game code with friends:</p>
         <div class="inline-flex items-center gap-3 bg-white/20 rounded-lg px-6 py-3">
           <span class="text-3xl font-mono font-bold text-white">
-            {String.slice(@game_id, -6..-1)}
+            {if @game_id, do: String.slice(@game_id, -6..-1), else: "------"}
           </span>
           <button 
             phx-click="copy_game_code" 

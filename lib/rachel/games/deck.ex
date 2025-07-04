@@ -27,7 +27,14 @@ defmodule Rachel.Games.Deck do
   end
 
   def draw(%__MODULE__{cards: cards} = deck, count) when length(cards) < count do
-    reshuffle_and_draw(deck, count)
+    # Try to reshuffle first, but if no discarded cards, return what we have
+    case reshuffle_and_draw(deck, count) do
+      {[], _deck} -> 
+        # No discarded cards to reshuffle, return all available cards
+        {cards, %{deck | cards: []}}
+      result -> 
+        result
+    end
   end
 
   def draw(%__MODULE__{cards: cards} = deck, count) do
