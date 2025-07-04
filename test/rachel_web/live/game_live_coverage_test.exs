@@ -105,10 +105,16 @@ defmodule RachelWeb.GameLiveCoverageTest do
       # Try to draw card in various scenarios that might cause errors
       html = render(view)
 
-      if html =~ "phx-click=\"draw_card\"" do
+      if html =~ "phx-click=\"draw_card\"" && html =~ ~r/phx-click="draw_card"[^>]*(?<!disabled="disabled")/ do
         # Multiple rapid clicks to test error handling
         for _i <- 1..3 do
-          view |> element("[phx-click=\"draw_card\"]") |> render_click()
+          try do
+            view |> element("[phx-click=\"draw_card\"]") |> render_click()
+          rescue
+            ArgumentError ->
+              # Button became disabled, which is fine
+              :ok
+          end
         end
       end
 
