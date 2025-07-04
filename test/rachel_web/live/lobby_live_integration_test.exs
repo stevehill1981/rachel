@@ -305,11 +305,11 @@ defmodule RachelWeb.LobbyLiveIntegrationTest do
         GameManager.join_game(full_game, "p#{i}", "Player#{i}")
       end
       
-      {:ok, view, html} = live(conn, "/lobby")
+      {:ok, _view, html} = live(conn, "/lobby")
       
       # Check that only the waiting game has a join button
       waiting_game_short = String.slice(waiting_game, -6..-1)
-      full_game_short = String.slice(full_game, -6..-1)
+      _full_game_short = String.slice(full_game, -6..-1)
       
       # The waiting game section should have a join button
       assert html =~ waiting_game_short

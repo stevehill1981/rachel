@@ -518,7 +518,7 @@ defmodule RachelWeb.GameLive do
     :ok
   end
 
-  defp create_test_game(player_name \\ "You") do
+  defp create_test_game(player_name) do
     ai_names = [
       "Alice",
       "Bob",

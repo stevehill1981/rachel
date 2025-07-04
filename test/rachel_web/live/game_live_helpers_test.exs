@@ -6,7 +6,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
 
-  alias Rachel.Games.{Card, Deck, Player}
+  alias Rachel.Games.{Game, Card, Deck, Player}
 
   describe "helper functions" do
     test "get_player_name_by_id with existing player" do
@@ -161,13 +161,13 @@ defmodule RachelWeb.GameLiveHelpersTest do
           status: :playing,
           players: [
             %Player{id: "human", name: "Human", hand: [
-              %Card{suit: :clubs, rank: :two}  # Can't play on hearts ace
+              %Card{suit: :clubs, rank: 2}  # Can't play on hearts ace
             ], is_ai: false}
           ],
           current_player_index: 0,
           direction: :clockwise,
           winners: [],
-          deck: %Deck{cards: [%Card{suit: :hearts, rank: :three}], discarded: []},
+          deck: %Deck{cards: [%Card{suit: :hearts, rank: 3}], discarded: []},
           discard_pile: [],
           pending_pickups: 0,
           pending_skips: 0,
@@ -179,7 +179,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
           status: :playing,
           players: [
             %Player{id: "human", name: "Human", hand: [
-              %Card{suit: :hearts, rank: :three}
+              %Card{suit: :hearts, rank: 3}
             ], is_ai: false}
           ],
           current_player_index: 0,
@@ -189,7 +189,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
           discard_pile: [],
           pending_pickups: 2,
           pending_skips: 0,
-          current_card: %Card{suit: :hearts, rank: :two}
+          current_card: %Card{suit: :hearts, rank: 2}
         }
       ]
       
@@ -231,7 +231,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
         discard_pile: [],
         pending_pickups: 0,
         pending_skips: 0,
-        current_card: %Card{suit: :hearts, rank: :two}
+        current_card: %Card{suit: :hearts, rank: 2}
       }
       
       send(view.pid, {:game_updated, ai_game})
@@ -255,7 +255,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
             %Card{suit: :hearts, rank: :king}
           ], is_ai: false},
           %Player{id: "ai", name: "AI", hand: [
-            %Card{suit: :clubs, rank: :three}  # Can't play on hearts ace
+            %Card{suit: :clubs, rank: 3}  # Can't play on hearts ace
           ], is_ai: true}
         ],
         current_player_index: 1,  # AI's turn
@@ -299,7 +299,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
         discard_pile: [],
         pending_pickups: 0,
         pending_skips: 0,
-        current_card: %Card{suit: :hearts, rank: :two}
+        current_card: %Card{suit: :hearts, rank: 2}
       }
       
       send(view.pid, {:game_updated, ai_game})

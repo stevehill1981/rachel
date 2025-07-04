@@ -12,7 +12,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
   
-  alias Rachel.Games.{GameManager, GameServer, Game, Card, Player, Deck}
+  alias Rachel.Games.{Card, Player, Deck}
 
   describe "mount variations and edge cases" do
     test "handles mount with invalid game_id format" do
@@ -132,7 +132,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
       if game && game.players do
         human_player = Enum.find(game.players, &(!&1.is_ai))
         if human_player && length(human_player.hand) > 0 do
-          first_card = hd(human_player.hand)
+          _first_card = hd(human_player.hand)
           
           # Try to select the card (testing card selection logic)
           if render(view) =~ "phx-value-index='0'" do

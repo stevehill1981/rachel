@@ -1,7 +1,7 @@
 defmodule AIDebugTest do
   use ExUnit.Case, async: false
 
-  alias Rachel.Games.{GameServer, Game, Player, Card, AIPlayer}
+  alias Rachel.Games.{GameServer, AIPlayer}
 
   test "debug AI turn - simple case" do
     # Use GameManager to create game properly
@@ -78,7 +78,7 @@ defmodule AIDebugTest do
       # If we played an ace, nominate a suit
       if card_to_play.rank == :ace do
         IO.puts("Played ace, nominating suit...")
-        {:ok, after_human} = GameServer.nominate_suit(game_id, "human-1", :hearts)
+        {:ok, ^after_human} = GameServer.nominate_suit(game_id, "human-1", :hearts)
       end 
       
       ai_player = Enum.at(after_human.players, after_human.current_player_index)

@@ -9,8 +9,7 @@ defmodule Test.GameServerBuilder do
         |> GameServerBuilder.play_valid_card("alice")
   """
   
-  alias Rachel.Games.{GameServer, Card}
-  alias Test.GameBuilder
+  alias Rachel.Games.GameServer
   
   @doc "Starts a new GameServer with unique ID and returns {game_id, pid}"
   def start_server(opts \\ []) do

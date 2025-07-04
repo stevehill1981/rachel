@@ -11,7 +11,7 @@ defmodule Rachel.Games.GameManagerTest do
   """
   use ExUnit.Case, async: true
   
-  alias Rachel.Games.{GameManager, GameServer}
+  alias Rachel.Games.GameManager
 
   describe "create_game error handling" do
     test "handles DynamicSupervisor failures gracefully" do
@@ -292,7 +292,7 @@ defmodule Rachel.Games.GameManagerTest do
 
     test "handles cleanup failures gracefully" do
       # Create multiple games
-      games = for i <- 1..3 do
+      games = for _i <- 1..3 do
         {:ok, game_id} = GameManager.create_game()
         game_id
       end
@@ -313,7 +313,7 @@ defmodule Rachel.Games.GameManagerTest do
 
     test "handles large numbers of games" do
       # Create many games to test cleanup performance
-      games = for i <- 1..10 do
+      games = for _i <- 1..10 do
         {:ok, game_id} = GameManager.create_game()
         game_id
       end

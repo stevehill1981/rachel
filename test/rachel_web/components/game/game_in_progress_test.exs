@@ -1,7 +1,6 @@
 defmodule RachelWeb.Components.Game.GameInProgressTest do
   use RachelWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
-  import Phoenix.Component
   alias RachelWeb.Components.Game.GameInProgress
   alias Rachel.Games.{Game, Card, Player, Deck}
   

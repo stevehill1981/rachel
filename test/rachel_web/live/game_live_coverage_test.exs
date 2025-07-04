@@ -55,7 +55,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
         "Generic join error"
       ]
       
-      for error <- join_errors do
+      for _error <- join_errors do
         conn = build_conn()
         |> put_req_cookie("player_id", "test_player")
         |> put_req_cookie("player_name", "Test Player")
@@ -201,7 +201,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
       |> fetch_cookies()
       
       case live(conn, ~p"/game/#{game_id}") do
-        {:ok, view, html} ->
+        {:ok, view, _html} ->
           # Check if start game button exists (only for host)
           if has_element?(view, "[phx-click=\"start_game\"]") do
             view |> element("[phx-click=\"start_game\"]") |> render_click()
@@ -615,7 +615,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
       |> fetch_cookies()
       
       case live(conn, ~p"/game/#{game_id}") do
-        {:ok, view, html} ->
+        {:ok, _view, html} ->
           # Should be in spectator mode
           assert html =~ "Rachel"
           assert html =~ "Spectator" || html =~ "spectator"

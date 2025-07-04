@@ -11,7 +11,7 @@ defmodule Test.GameBuilder do
         |> GameBuilder.give_cards("p1", [%Card{suit: :hearts, rank: 7}])
   """
   
-  alias Rachel.Games.{Game, Card, Deck}
+  alias Rachel.Games.{Game, Card}
   
   @doc "Creates a new game with optional ID"
   def new(id \\ "test-game") do
