@@ -619,10 +619,10 @@ defmodule RachelWeb.GameLive do
 
       _ ->
         {:error, :game_not_found}
-    catch
-      :exit, _ ->
-        {:error, :game_not_found}
     end
+  catch
+    :exit, _ ->
+      {:error, :game_not_found}
   end
 
   defp player_in_game?(game, player_id) do

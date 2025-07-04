@@ -28,7 +28,10 @@
       "Bash(MIX_ENV=test mix ecto.migrate)",
       "Bash(find:*)",
       "Bash(git add:*)",
-      "Bash(mix format)"
+      "Bash(mix format)",
+      "Bash(mix credo:*)",
+      "Bash(echo:*)",
+      "Bash(mix compile:*)"
     ],
     "deny": []
   }
