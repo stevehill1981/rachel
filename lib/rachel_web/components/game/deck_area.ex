@@ -14,10 +14,10 @@ defmodule RachelWeb.Components.Game.DeckArea do
   def deck_area(assigns) do
     # Provide safe defaults for missing data
     game = assigns[:game]
-    
-    assigns = 
+
+    assigns =
       assigns
-      |> assign_new(:deck_size, fn -> 
+      |> assign_new(:deck_size, fn ->
         case game do
           %{deck: deck} -> Rachel.Games.Deck.size(deck)
           _ -> 0
@@ -29,19 +29,19 @@ defmodule RachelWeb.Components.Game.DeckArea do
           _ -> 0
         end
       end)
-      |> assign_new(:pending_pickups, fn -> 
+      |> assign_new(:pending_pickups, fn ->
         case game do
           %{pending_pickups: pickups} -> pickups
           _ -> 0
         end
       end)
-      |> assign_new(:pending_skips, fn -> 
+      |> assign_new(:pending_skips, fn ->
         case game do
           %{pending_skips: skips} -> skips
           _ -> 0
         end
       end)
-      |> assign_new(:current_card, fn -> 
+      |> assign_new(:current_card, fn ->
         case game do
           %{current_card: card} -> card
           _ -> nil
@@ -50,11 +50,12 @@ defmodule RachelWeb.Components.Game.DeckArea do
       |> assign_new(:can_draw, fn ->
         current_player = assigns[:current_player]
         player_id = assigns[:player_id]
-        
+
         case {game, current_player} do
           {%Game{} = g, %{id: cp_id}} when cp_id == player_id ->
             !Game.has_valid_play?(g, current_player)
-          _ -> 
+
+          _ ->
             false
         end
       end)
@@ -72,10 +73,7 @@ defmodule RachelWeb.Components.Game.DeckArea do
         <!-- Deck -->
         <div class="flex flex-col items-center">
           <div class="w-32 h-44">
-            <.deck_display
-              deck_size={@deck_size}
-              can_draw={@can_draw}
-            />
+            <.deck_display deck_size={@deck_size} can_draw={@can_draw} />
           </div>
         </div>
         
