@@ -64,12 +64,16 @@ defmodule AIDebugTest do
       {:ok, after_human} = GameServer.play_cards(game_id, "human-1", [card_to_play])
 
       # If we played an ace, nominate a suit
-      if card_to_play.rank == :ace do
-        IO.puts("Played ace, nominating suit...")
-        {:ok, ^after_human} = GameServer.nominate_suit(game_id, "human-1", :hearts)
-      end
+      after_nomination = 
+        if card_to_play.rank == :ace do
+          IO.puts("Played ace, nominating suit...")
+          {:ok, game_after_nomination} = GameServer.nominate_suit(game_id, "human-1", :hearts)
+          game_after_nomination
+        else
+          after_human
+        end
 
-      ai_player = Enum.at(after_human.players, after_human.current_player_index)
+      ai_player = Enum.at(after_nomination.players, after_nomination.current_player_index)
 
       if ai_player.is_ai do
         IO.puts("Now AI's turn - waiting...")

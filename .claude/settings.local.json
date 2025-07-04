@@ -31,7 +31,8 @@
       "Bash(mix format)",
       "Bash(mix credo:*)",
       "Bash(echo:*)",
-      "Bash(mix compile:*)"
+      "Bash(mix compile:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": []
   }
