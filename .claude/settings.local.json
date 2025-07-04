@@ -32,7 +32,10 @@
       "Bash(mix credo:*)",
       "Bash(echo:*)",
       "Bash(mix compile:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(gh run list:*)",
+      "Bash(git commit:*)",
+      "Bash(mix coveralls:*)"
     ],
     "deny": []
   }

@@ -100,145 +100,44 @@ defmodule RachelWeb.GameLive do
   @impl true
   def handle_event("select_card", %{"index" => index_str}, socket) do
     index = String.to_integer(index_str)
-    current_player = current_player(socket.assigns.game)
 
-    if current_player && current_player.id == socket.assigns.player_id do
-      selected = socket.assigns.selected_cards
+    case validate_player_turn(socket) do
+      {:ok, current_player} ->
+        handle_card_selection(socket, current_player, index)
 
-      # If clicking on a selected card, deselect it
-      if index in selected do
-        {:noreply, assign(socket, :selected_cards, List.delete(selected, index))}
-      else
-        # Check if we can add this card
-        clicked_card = Enum.at(current_player.hand, index)
-
-        if clicked_card &&
-             can_select_card?(socket.assigns.game, clicked_card, selected, current_player.hand) do
-          # Check for auto-play condition
-          if clicked_card && Enum.empty?(selected) do
-            # Count other cards with same rank (excluding the clicked card)
-            other_same_rank =
-              count_other_cards_with_rank(current_player.hand, clicked_card, index, selected)
-
-            if other_same_rank == 0 do
-              # Auto-play immediately - this is the only card of its rank
-              case play_cards_action(socket, [index]) do
-                {:ok, new_game} ->
-                  socket =
-                    socket
-                    |> assign(:game, normalize_game_data(new_game))
-                    |> assign(:selected_cards, [])
-                    |> check_and_show_winner_banner(new_game)
-
-                  socket = check_auto_draw(socket)
-                  {:noreply, socket}
-
-                {:error, reason} ->
-                  {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
-              end
-            else
-              # Can stack with other cards - add to selection
-              {:noreply, assign(socket, :selected_cards, selected ++ [index])}
-            end
-          else
-            # Either cards are already selected or clicked_card is nil - add to selection
-            {:noreply, assign(socket, :selected_cards, selected ++ [index])}
-          end
-        else
-          # Can't select this card
-          {:noreply, socket}
-        end
-      end
-    else
-      {:noreply, socket}
+      :not_player_turn ->
+        {:noreply, socket}
     end
   end
 
   def handle_event("play_cards", _, socket) do
-    current_player = current_player(socket.assigns.game)
+    case validate_play_cards_request(socket) do
+      :ok ->
+        execute_play_cards(socket, socket.assigns.selected_cards)
 
-    if current_player &&
-         current_player.id == socket.assigns.player_id &&
-         length(socket.assigns.selected_cards) > 0 do
-      case play_cards_action(socket, socket.assigns.selected_cards) do
-        {:ok, new_game} ->
-          socket =
-            socket
-            |> assign(:game, normalize_game_data(new_game))
-            |> assign(:selected_cards, [])
-            |> check_and_show_winner_banner(new_game)
-
-          socket = check_auto_draw(socket)
-
-          # Schedule AI move for single-player games
-          if socket.assigns.game_id == nil do
-            schedule_ai_move(new_game)
-          end
-
-          {:noreply, socket}
-
-        {:error, reason} ->
-          {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
-      end
-    else
-      {:noreply, socket}
+      :invalid ->
+        {:noreply, socket}
     end
   end
 
   def handle_event("draw_card", _, socket) do
-    current_player = current_player(socket.assigns.game)
+    case validate_player_turn(socket) do
+      {:ok, _current_player} ->
+        execute_draw_card(socket)
 
-    if current_player && current_player.id == socket.assigns.player_id do
-      case draw_card_action(socket) do
-        {:ok, new_game} ->
-          socket =
-            socket
-            |> assign(:game, normalize_game_data(new_game))
-            |> assign(:selected_cards, [])
-            |> clear_flash()
-            |> put_flash(:info, "Card drawn!")
-
-          # Schedule AI move for single-player games
-          if socket.assigns.game_id == nil do
-            schedule_ai_move(new_game)
-          end
-
-          {:noreply, socket}
-
-        {:error, reason} ->
-          {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
-      end
-    else
-      {:noreply, socket}
+      :not_player_turn ->
+        {:noreply, socket}
     end
   end
 
   def handle_event("nominate_suit", %{"suit" => suit}, socket) do
-    current_player = current_player(socket.assigns.game)
+    case validate_player_turn(socket) do
+      {:ok, _current_player} ->
+        suit_atom = String.to_existing_atom(suit)
+        execute_nominate_suit(socket, suit_atom, suit)
 
-    if current_player && current_player.id == socket.assigns.player_id do
-      suit_atom = String.to_existing_atom(suit)
-
-      case nominate_suit_action(socket, suit_atom) do
-        {:ok, new_game} ->
-          socket =
-            socket
-            |> assign(:game, normalize_game_data(new_game))
-            |> clear_flash()
-            |> put_flash(:info, "Suit nominated: #{suit}")
-
-          # Schedule AI move for single-player games
-          if socket.assigns.game_id == nil do
-            schedule_ai_move(new_game)
-          end
-
-          {:noreply, socket}
-
-        {:error, reason} ->
-          {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
-      end
-    else
-      {:noreply, socket}
+      :not_player_turn ->
+        {:noreply, socket}
     end
   end
 
@@ -285,57 +184,7 @@ defmodule RachelWeb.GameLive do
     if socket.assigns.game_id do
       {:noreply, socket}
     else
-      game = socket.assigns.game
-      current = Game.current_player(game)
-
-      # Double-check it's still AI's turn
-      if current && current.is_ai && game.status == :playing do
-        socket = assign(socket, :show_ai_thinking, true)
-
-        # Get AI's move
-        case AIPlayer.make_move(game, current.id) do
-          {:play, cards} ->
-            case Game.play_card(game, current.id, cards) do
-              {:ok, new_game} ->
-                socket =
-                  socket
-                  |> assign(:game, normalize_game_data(new_game))
-                  |> assign(:show_ai_thinking, false)
-
-                schedule_ai_move(new_game)
-                socket = check_auto_draw(socket)
-                {:noreply, socket}
-
-              _ ->
-                # If play fails, try drawing
-                handle_ai_draw(socket, game, current.id)
-            end
-
-          {:nominate, suit} ->
-            case Game.nominate_suit(game, current.id, suit) do
-              {:ok, new_game} ->
-                socket =
-                  socket
-                  |> assign(:game, normalize_game_data(new_game))
-                  |> assign(:show_ai_thinking, false)
-
-                schedule_ai_move(new_game)
-                socket = check_auto_draw(socket)
-                {:noreply, socket}
-
-              _ ->
-                {:noreply, socket}
-            end
-
-          {:draw, _} ->
-            handle_ai_draw(socket, game, current.id)
-
-          _ ->
-            {:noreply, socket}
-        end
-      else
-        {:noreply, socket}
-      end
+      handle_single_player_ai_move(socket)
     end
   end
 
@@ -588,35 +437,7 @@ defmodule RachelWeb.GameLive do
   defp handle_game_join(game_id, player_id, player_name) do
     case GameServer.get_state(game_id) do
       game when is_map(game) ->
-        # Game exists - try to join or reconnect
-        if player_in_game?(game, player_id) do
-          # Player is already in game - reconnect
-          case GameServer.reconnect_player(game_id, player_id) do
-            :ok ->
-              # Reconnection successful, get updated game state
-              updated_game = GameServer.get_state(game_id)
-              {:ok, updated_game}
-
-            {:error, reason} ->
-              {:error, reason}
-          end
-        else
-          # Try to join the game
-          case GameServer.join_game(game_id, player_id, player_name) do
-            {:ok, updated_game} ->
-              {:ok, updated_game}
-
-            {:error, :game_started} ->
-              # Game already started, try to join as spectator
-              case GameServer.join_as_spectator(game_id, player_id, player_name) do
-                {:ok, updated_game} -> {:ok, updated_game, :spectator}
-                {:error, reason} -> {:error, reason}
-              end
-
-            {:error, reason} ->
-              {:error, reason}
-          end
-        end
+        join_or_reconnect_player(game_id, game, player_id, player_name)
 
       _ ->
         {:error, :game_not_found}
@@ -624,6 +445,48 @@ defmodule RachelWeb.GameLive do
   catch
     :exit, _ ->
       {:error, :game_not_found}
+  end
+
+  defp join_or_reconnect_player(game_id, game, player_id, player_name) do
+    if player_in_game?(game, player_id) do
+      reconnect_existing_player(game_id, player_id)
+    else
+      join_new_player(game_id, player_id, player_name)
+    end
+  end
+
+  defp reconnect_existing_player(game_id, player_id) do
+    case GameServer.reconnect_player(game_id, player_id) do
+      :ok ->
+        updated_game = GameServer.get_state(game_id)
+        {:ok, updated_game}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp join_new_player(game_id, player_id, player_name) do
+    case GameServer.join_game(game_id, player_id, player_name) do
+      {:ok, updated_game} ->
+        {:ok, updated_game}
+
+      {:error, :game_started} ->
+        try_join_as_spectator(game_id, player_id, player_name)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp try_join_as_spectator(game_id, player_id, player_name) do
+    case GameServer.join_as_spectator(game_id, player_id, player_name) do
+      {:ok, updated_game} ->
+        {:ok, updated_game, :spectator}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   defp player_in_game?(game, player_id) do
@@ -823,6 +686,221 @@ defmodule RachelWeb.GameLive do
       socket
     else
       socket
+    end
+  end
+
+  # Card selection helper functions
+  defp validate_player_turn(socket) do
+    current_player = current_player(socket.assigns.game)
+
+    if current_player && current_player.id == socket.assigns.player_id do
+      {:ok, current_player}
+    else
+      :not_player_turn
+    end
+  end
+
+  defp handle_card_selection(socket, current_player, index) do
+    selected = socket.assigns.selected_cards
+
+    if index in selected do
+      # Deselect the card
+      {:noreply, assign(socket, :selected_cards, List.delete(selected, index))}
+    else
+      handle_card_click(socket, current_player, index, selected)
+    end
+  end
+
+  defp handle_card_click(socket, current_player, index, selected) do
+    clicked_card = Enum.at(current_player.hand, index)
+
+    if clicked_card &&
+         can_select_card?(socket.assigns.game, clicked_card, selected, current_player.hand) do
+      handle_valid_card_click(socket, current_player, clicked_card, index, selected)
+    else
+      # Can't select this card
+      {:noreply, socket}
+    end
+  end
+
+  defp handle_valid_card_click(socket, current_player, clicked_card, index, selected) do
+    if Enum.empty?(selected) && should_auto_play?(current_player.hand, clicked_card, index) do
+      # Auto-play the single card
+      auto_play_card(socket, index)
+    else
+      # Add to selection for multi-card play
+      {:noreply, assign(socket, :selected_cards, selected ++ [index])}
+    end
+  end
+
+  defp should_auto_play?(hand, clicked_card, index) do
+    other_same_rank = count_other_cards_with_rank(hand, clicked_card, index, [])
+    other_same_rank == 0
+  end
+
+  # Play cards helpers
+  defp validate_play_cards_request(socket) do
+    current_player = current_player(socket.assigns.game)
+
+    if current_player &&
+         current_player.id == socket.assigns.player_id &&
+         length(socket.assigns.selected_cards) > 0 do
+      :ok
+    else
+      :invalid
+    end
+  end
+
+  defp execute_play_cards(socket, selected_cards) do
+    case play_cards_action(socket, selected_cards) do
+      {:ok, new_game} ->
+        socket =
+          socket
+          |> assign(:game, normalize_game_data(new_game))
+          |> assign(:selected_cards, [])
+          |> check_and_show_winner_banner(new_game)
+          |> check_auto_draw()
+
+        # Schedule AI move for single-player games
+        if socket.assigns.game_id == nil do
+          schedule_ai_move(new_game)
+        end
+
+        {:noreply, socket}
+
+      {:error, reason} ->
+        {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
+    end
+  end
+
+  # Draw card helpers
+  defp execute_draw_card(socket) do
+    case draw_card_action(socket) do
+      {:ok, new_game} ->
+        socket =
+          socket
+          |> assign(:game, normalize_game_data(new_game))
+          |> assign(:selected_cards, [])
+          |> clear_flash()
+          |> put_flash(:info, "Card drawn!")
+
+        # Schedule AI move for single-player games
+        if socket.assigns.game_id == nil do
+          schedule_ai_move(new_game)
+        end
+
+        {:noreply, socket}
+
+      {:error, reason} ->
+        {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
+    end
+  end
+
+  # Nominate suit helpers
+  defp execute_nominate_suit(socket, suit_atom, suit_string) do
+    case nominate_suit_action(socket, suit_atom) do
+      {:ok, new_game} ->
+        socket =
+          socket
+          |> assign(:game, normalize_game_data(new_game))
+          |> clear_flash()
+          |> put_flash(:info, "Suit nominated: #{suit_string}")
+
+        # Schedule AI move for single-player games
+        if socket.assigns.game_id == nil do
+          schedule_ai_move(new_game)
+        end
+
+        {:noreply, socket}
+
+      {:error, reason} ->
+        {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
+    end
+  end
+
+  # AI move helpers
+  defp handle_single_player_ai_move(socket) do
+    game = socket.assigns.game
+    current = Game.current_player(game)
+
+    if should_process_ai_move?(game, current) do
+      process_ai_move(socket, game, current)
+    else
+      {:noreply, socket}
+    end
+  end
+
+  defp should_process_ai_move?(game, current) do
+    current && current.is_ai && game.status == :playing
+  end
+
+  defp process_ai_move(socket, game, current) do
+    socket = assign(socket, :show_ai_thinking, true)
+
+    case AIPlayer.make_move(game, current.id) do
+      {:play, cards} ->
+        execute_ai_play(socket, game, current.id, cards)
+
+      {:nominate, suit} ->
+        execute_ai_nominate(socket, game, current.id, suit)
+
+      {:draw, _} ->
+        handle_ai_draw(socket, game, current.id)
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  defp execute_ai_play(socket, game, ai_id, cards) do
+    case Game.play_card(game, ai_id, cards) do
+      {:ok, new_game} ->
+        socket =
+          socket
+          |> assign(:game, normalize_game_data(new_game))
+          |> assign(:show_ai_thinking, false)
+
+        schedule_ai_move(new_game)
+        socket = check_auto_draw(socket)
+        {:noreply, socket}
+
+      _ ->
+        # If play fails, try drawing
+        handle_ai_draw(socket, game, ai_id)
+    end
+  end
+
+  defp execute_ai_nominate(socket, game, ai_id, suit) do
+    case Game.nominate_suit(game, ai_id, suit) do
+      {:ok, new_game} ->
+        socket =
+          socket
+          |> assign(:game, normalize_game_data(new_game))
+          |> assign(:show_ai_thinking, false)
+
+        schedule_ai_move(new_game)
+        socket = check_auto_draw(socket)
+        {:noreply, socket}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  defp auto_play_card(socket, index) do
+    case play_cards_action(socket, [index]) do
+      {:ok, new_game} ->
+        socket =
+          socket
+          |> assign(:game, normalize_game_data(new_game))
+          |> assign(:selected_cards, [])
+          |> check_and_show_winner_banner(new_game)
+          |> check_auto_draw()
+
+        {:noreply, socket}
+
+      {:error, reason} ->
+        {:noreply, socket |> clear_flash() |> put_flash(:error, format_error(reason))}
     end
   end
 
