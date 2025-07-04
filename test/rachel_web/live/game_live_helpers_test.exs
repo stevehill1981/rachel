@@ -239,7 +239,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
       {:ok, view, _html} = live(build_conn(), ~p"/play")
 
       # Set up game where AI is current player
-      ai_game = %{
+      ai_game = %Game{
         id: "ai-game",
         status: :playing,
         players: [
@@ -285,7 +285,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
       {:ok, view, _html} = live(build_conn(), ~p"/play")
 
       # Set up game where AI has no playable cards
-      ai_draw_game = %{
+      ai_draw_game = %Game{
         id: "ai-draw-game",
         status: :playing,
         players: [
@@ -331,7 +331,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
       {:ok, view, _html} = live(build_conn(), ~p"/play")
 
       # Set up game with AI player
-      ai_game = %{
+      ai_game = %Game{
         id: "ai-thinking",
         status: :playing,
         players: [
