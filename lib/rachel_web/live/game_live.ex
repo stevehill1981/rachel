@@ -70,9 +70,10 @@ defmodule RachelWeb.GameLive do
   end
 
   # Fallback for single-player mode (no game_id)
-  def mount(_params, session, socket) do
+  def mount(_params, _session, socket) do
     # Get player identity for single-player mode
-    player_name = get_player_name(session)
+    # In single-player practice mode, use "You" for better UX
+    player_name = "You"
     game = create_test_game(player_name)
 
     socket =

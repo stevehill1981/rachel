@@ -49,7 +49,8 @@ defmodule RachelWeb.GameLiveScenariosTest do
       {:ok, view, html} = live(conn, ~p"/play")
 
       assert html =~ "Rachel"
-      assert html =~ "Test Player"
+      # In single-player mode, we always use "You" as the player name
+      assert html =~ "You"
 
       # Should create practice game with AI players
       view_state = :sys.get_state(view.pid)
