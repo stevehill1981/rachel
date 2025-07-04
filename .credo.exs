@@ -18,7 +18,7 @@
       },
       plugins: [],
       requires: [],
-      strict: true,
+      strict: false,
       parse_timeout: 5000,
       color: true,
       checks: %{

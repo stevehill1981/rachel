@@ -133,9 +133,7 @@ defmodule RachelWeb.LobbyLive do
   end
 
   defp format_player_list(players) do
-    players
-    |> Enum.map(& &1.name)
-    |> Enum.join(", ")
+    Enum.map_join(players, ", ", & &1.name)
   end
 
   defp game_status_badge(status) do

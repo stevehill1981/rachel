@@ -189,7 +189,7 @@ defmodule Test.GameBuilder do
   end
 
   def card(spec) when is_binary(spec) do
-    # Parse strings like "7H", "AS", "KC" 
+    # Parse strings like "7H", "AS", "KC"
     case String.split_at(spec, -1) do
       {rank_str, suit_str} ->
         rank = parse_rank(rank_str)
