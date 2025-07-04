@@ -6,8 +6,8 @@ defmodule RachelWeb.Components.Game.GameInProgress do
   import RachelWeb.Components.Game.{PlayersDisplay, DeckArea, PlayerHand}
   import RachelWeb.GameComponents
 
-  # Import the current_player function from GameLive
-  import RachelWeb.GameLive, only: [current_player: 1]
+  # Import the current_player function from StateManager
+  alias RachelWeb.GameLive.StateManager
 
   attr :game, :map, required: true
   attr :player_id, :string, required: true
@@ -16,7 +16,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
   attr :is_spectator, :boolean, default: false
 
   def game_in_progress(assigns) do
-    assigns = assign(assigns, :current_player, current_player(assigns.game))
+    assigns = assign(assigns, :current_player, StateManager.current_player(assigns.game))
 
     ~H"""
     <div>

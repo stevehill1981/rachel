@@ -121,7 +121,12 @@ defmodule RachelWeb.Components.Game.PlayerHand do
               disabled={
                 @current_player == nil ||
                   @current_player.id != @player_id ||
-                  !RachelWeb.GameLive.can_select_card?(@game, card, @selected_cards, @player.hand)
+                  !RachelWeb.GameLive.EventHandlers.can_select_card?(
+                    @game,
+                    card,
+                    @selected_cards,
+                    @player.hand
+                  )
               }
               phx-click="select_card"
               phx-value-index={idx}

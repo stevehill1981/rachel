@@ -137,44 +137,56 @@ defmodule Rachel.Games.Stats do
   end
 
   def record_winner(%__MODULE__{} = stats, winner_id) do
-    # Calculate duration only if this is the first winner
-    {_duration, updated_game_stats} =
-      if stats.game_stats.winner_id == nil do
-        end_time = DateTime.utc_now()
-        duration = DateTime.diff(end_time, stats.start_time)
-        {duration, Map.put(stats.game_stats, :game_duration_seconds, duration)}
-      else
-        {stats.game_stats.game_duration_seconds, stats.game_stats}
-      end
-
-    # Update player stats
+    updated_game_stats = calculate_game_duration_if_first_winner(stats)
     position = length(stats.game_stats.finish_positions) + 1
 
-    updated_player_stats =
-      Map.update(stats.player_stats, winner_id, nil, fn player_stats ->
-        if player_stats do
-          turns = stats.game_stats.total_turns
+    updated_player_stats = update_player_stats_for_winner(stats, winner_id, position)
+    final_game_stats = finalize_game_stats_with_winner(updated_game_stats, winner_id)
 
-          player_stats
-          |> Map.put(:position, position)
-          |> Map.update!(:games_won, fn wins -> if position == 1, do: wins + 1, else: wins end)
-          |> Map.update!(:quickest_win_turns, fn
-            nil -> if position == 1, do: turns, else: nil
-            current -> if position == 1, do: min(current, turns), else: current
-          end)
-          |> Map.update!(:longest_game_turns, &max(&1, turns))
-        else
-          player_stats
-        end
-      end)
+    %{stats | player_stats: updated_player_stats, game_stats: final_game_stats}
+  end
 
-    # Update game stats with winner (first one only) and add to finish positions
-    updated_game_stats =
-      updated_game_stats
-      |> Map.update!(:finish_positions, &(&1 ++ [winner_id]))
-      |> Map.update(:winner_id, winner_id, fn existing -> existing || winner_id end)
+  defp calculate_game_duration_if_first_winner(stats) do
+    if stats.game_stats.winner_id == nil do
+      end_time = DateTime.utc_now()
+      duration = DateTime.diff(end_time, stats.start_time)
+      Map.put(stats.game_stats, :game_duration_seconds, duration)
+    else
+      stats.game_stats
+    end
+  end
 
-    %{stats | player_stats: updated_player_stats, game_stats: updated_game_stats}
+  defp update_player_stats_for_winner(stats, winner_id, position) do
+    Map.update(stats.player_stats, winner_id, nil, fn player_stats ->
+      if player_stats do
+        update_winner_player_stats(player_stats, stats.game_stats.total_turns, position)
+      else
+        player_stats
+      end
+    end)
+  end
+
+  defp update_winner_player_stats(player_stats, total_turns, position) do
+    is_first_place = position == 1
+
+    player_stats
+    |> Map.put(:position, position)
+    |> Map.update!(:games_won, fn wins -> if is_first_place, do: wins + 1, else: wins end)
+    |> update_quickest_win_turns(total_turns, is_first_place)
+    |> Map.update!(:longest_game_turns, &max(&1, total_turns))
+  end
+
+  defp update_quickest_win_turns(player_stats, total_turns, is_first_place) do
+    Map.update!(player_stats, :quickest_win_turns, fn
+      nil -> if is_first_place, do: total_turns, else: nil
+      current -> if is_first_place, do: min(current, total_turns), else: current
+    end)
+  end
+
+  defp finalize_game_stats_with_winner(game_stats, winner_id) do
+    game_stats
+    |> Map.update!(:finish_positions, &(&1 ++ [winner_id]))
+    |> Map.update(:winner_id, winner_id, fn existing -> existing || winner_id end)
   end
 
   def record_finish_position(%__MODULE__{} = stats, player_id) do

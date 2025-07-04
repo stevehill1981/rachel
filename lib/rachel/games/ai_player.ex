@@ -7,28 +7,42 @@ defmodule Rachel.Games.AIPlayer do
   alias Rachel.Games.{Card, Game}
 
   def make_move(%Game{} = game, player_id) do
-    player = Game.current_player(game)
+    case validate_ai_turn(game, player_id) do
+      {:ok, player} ->
+        determine_ai_action(game, player)
 
-    if player && player.id == player_id do
-      # Check if we need to nominate a suit
-      if game.nominated_suit == :pending do
-        # Choose the suit we have the most of
+      :error ->
+        {:error, :not_ai_turn}
+    end
+  end
+
+  defp validate_ai_turn(game, player_id) do
+    case Game.current_player(game) do
+      nil -> :error
+      player when player.id != player_id -> :error
+      player -> {:ok, player}
+    end
+  end
+
+  defp determine_ai_action(game, player) do
+    cond do
+      game.nominated_suit == :pending ->
         suit = choose_best_suit(player.hand)
         {:nominate, suit}
-      else
-        valid_plays = Game.get_valid_plays(game, player)
 
-        if Enum.empty?(valid_plays) do
-          # Must draw
-          {:draw, nil}
-        else
-          # Choose best card to play
-          {_card, index} = choose_best_play(game, valid_plays)
-          {:play, index}
-        end
-      end
-    else
-      {:error, :not_ai_turn}
+      true ->
+        execute_ai_turn(game, player)
+    end
+  end
+
+  defp execute_ai_turn(game, player) do
+    case Game.get_valid_plays(game, player) do
+      [] ->
+        {:draw, nil}
+
+      valid_plays ->
+        {_card, index} = choose_best_play(game, valid_plays)
+        {:play, index}
     end
   end
 
