@@ -7,7 +7,7 @@ defmodule Rachel.Repo.Migrations.CreatePlayerProfiles do
       add :user_id, references(:users, on_delete: :delete_all), null: true
       add :player_id, :string, null: false
       add :display_name, :string, null: false
-      
+
       # Aggregate stats
       add :total_games_played, :integer, null: false, default: 0
       add :total_games_won, :integer, null: false, default: 0
@@ -24,7 +24,7 @@ defmodule Rachel.Repo.Migrations.CreatePlayerProfiles do
       add :best_streak, :integer, null: false, default: 0
       add :last_played_at, :utc_datetime
       add :rank, :integer
-      
+
       timestamps()
     end
 

@@ -18,7 +18,7 @@ defmodule Rachel.Repo.Migrations.CreateGameRecords do
       add :player_names, :map, default: %{}
       add :started_at, :utc_datetime
       add :ended_at, :utc_datetime
-      
+
       timestamps()
     end
 

@@ -27,9 +27,16 @@ defmodule Rachel.Accounts.PlayerStats do
   def changeset(player_stats, attrs) do
     player_stats
     |> cast(attrs, [
-      :player_id, :player_name, :finish_position, :cards_played,
-      :cards_drawn, :special_cards_played, :won, :score,
-      :user_id, :game_record_id
+      :player_id,
+      :player_name,
+      :finish_position,
+      :cards_played,
+      :cards_drawn,
+      :special_cards_played,
+      :won,
+      :score,
+      :user_id,
+      :game_record_id
     ])
     |> validate_required([:player_id, :player_name, :game_record_id])
     |> foreign_key_constraint(:user_id)

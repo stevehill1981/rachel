@@ -11,13 +11,13 @@ defmodule Rachel.Games.GameManager do
   """
   def create_game(_creator_name \\ "Host") do
     game_id = generate_game_id()
-    
+
     case DynamicSupervisor.start_child(Rachel.GameSupervisor, {GameServer, game_id: game_id}) do
       {:ok, _pid} ->
         # Optionally auto-join the creator
         # GameServer.join_game(game_id, creator_id, creator_name)
         {:ok, game_id}
-        
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -30,13 +30,15 @@ defmodule Rachel.Games.GameManager do
     case create_game() do
       {:ok, game_id} ->
         case GameServer.join_game(game_id, creator_id, creator_name) do
-          {:ok, _game} -> {:ok, game_id}
-          {:error, reason} -> 
+          {:ok, _game} ->
+            {:ok, game_id}
+
+          {:error, reason} ->
             # Clean up the game if join fails
             stop_game(game_id)
             {:error, reason}
         end
-        
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -52,6 +54,7 @@ defmodule Rachel.Games.GameManager do
       catch
         :exit, {:noproc, _} ->
           {:error, :game_not_found}
+
         :exit, _ ->
           {:error, :game_not_found}
       end
@@ -68,25 +71,34 @@ defmodule Rachel.Games.GameManager do
     |> Enum.map(fn game_id ->
       try do
         state = GameServer.get_state(game_id)
+
         case state do
-          nil -> nil
+          nil ->
+            nil
+
           state when is_map(state) ->
             %{
               id: game_id,
               status: state.status,
               player_count: length(state.players),
-              players: Enum.map(state.players, fn p -> %{id: p.id, name: p.name, is_ai: p.is_ai} end),
-              created_at: DateTime.utc_now() # We could track this in GameServer if needed
+              players:
+                Enum.map(state.players, fn p -> %{id: p.id, name: p.name, is_ai: p.is_ai} end),
+              # We could track this in GameServer if needed
+              created_at: DateTime.utc_now()
             }
-          _ -> nil
+
+          _ ->
+            nil
         end
       catch
         :exit, {:noproc, _} ->
           # Game process is dead, skip it
           nil
+
         :exit, {:timeout, _} ->
           # Game server not responding, skip it
           nil
+
         :exit, _ ->
           # Other server errors, skip it
           nil
@@ -102,29 +114,37 @@ defmodule Rachel.Games.GameManager do
     if game_exists?(game_id) do
       try do
         state = GameServer.get_state(game_id)
+
         case state do
           nil ->
             {:error, :game_not_found}
+
           state when is_map(state) ->
-            {:ok, %{
-              id: game_id,
-              status: state.status,
-              player_count: length(state.players),
-              max_players: 8, # Could be configurable
-              players: Enum.map(state.players, fn p -> 
-                %{id: p.id, name: p.name, is_ai: p.is_ai, connected: p.connected} 
-              end),
-              current_player_id: state.current_player_id,
-              can_join: state.status == :waiting and length(state.players) < 8
-            }}
+            {:ok,
+             %{
+               id: game_id,
+               status: state.status,
+               player_count: length(state.players),
+               # Could be configurable
+               max_players: 8,
+               players:
+                 Enum.map(state.players, fn p ->
+                   %{id: p.id, name: p.name, is_ai: p.is_ai, connected: p.connected}
+                 end),
+               current_player_id: state.current_player_id,
+               can_join: state.status == :waiting and length(state.players) < 8
+             }}
+
           _ ->
             {:error, :server_error}
         end
       catch
         :exit, {:noproc, _} ->
           {:error, :game_not_found}
+
         :exit, {:timeout, _} ->
           {:error, :server_timeout}
+
         :exit, _ ->
           {:error, :server_error}
       end
@@ -143,7 +163,7 @@ defmodule Rachel.Games.GameManager do
           :ok -> :ok
           {:error, :not_found} -> {:error, :game_not_found}
         end
-        
+
       [] ->
         {:error, :game_not_found}
     end
@@ -184,12 +204,14 @@ defmodule Rachel.Games.GameManager do
       try do
         stop_game(game.id)
       rescue
-        _ -> :ok  # Any other error, continue cleanup
+        # Any other error, continue cleanup
+        _ -> :ok
       catch
-        :exit, _ -> :ok  # Process already dead, that's fine
+        # Process already dead, that's fine
+        :exit, _ -> :ok
       end
     end)
-    
+
     :ok
   end
 

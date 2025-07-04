@@ -3,18 +3,17 @@ defmodule RachelWeb.Components.Inputs.Select do
   Select dropdown input component.
   """
   use RachelWeb.Components.Inputs.Base
-  
+
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
-  attr :rest, :global,
-    include: ~w(disabled form required size)
-  
+  attr :rest, :global, include: ~w(disabled form required size)
+
   @doc """
   Renders a select input.
-  
+
   ## Examples
-  
+
       <.select name="country" options={["USA", "Canada", "Mexico"]} />
       <.select field={@form[:role]} options={[Admin: "admin", User: "user"]} />
   """
@@ -22,7 +21,7 @@ defmodule RachelWeb.Components.Inputs.Select do
     process_field(assigns.field, assigns)
     |> select()
   end
-  
+
   def select(assigns) do
     ~H"""
     <fieldset class="fieldset mb-2">

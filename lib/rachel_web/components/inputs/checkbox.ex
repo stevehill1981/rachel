@@ -3,18 +3,17 @@ defmodule RachelWeb.Components.Inputs.Checkbox do
   Checkbox input component.
   """
   use RachelWeb.Components.Inputs.Base
-  
+
   alias Phoenix.HTML.Form
-  
+
   attr :checked, :boolean, doc: "the checked flag for checkbox inputs"
-  attr :rest, :global,
-    include: ~w(disabled form required)
-  
+  attr :rest, :global, include: ~w(disabled form required)
+
   @doc """
   Renders a checkbox input.
-  
+
   ## Examples
-  
+
       <.checkbox name="terms" label="I agree to the terms" />
       <.checkbox field={@form[:subscribe]} label="Subscribe to newsletter" />
   """
@@ -22,13 +21,13 @@ defmodule RachelWeb.Components.Inputs.Checkbox do
     process_field(assigns.field, assigns)
     |> checkbox()
   end
-  
+
   def checkbox(assigns) do
     assigns =
       assign_new(assigns, :checked, fn ->
         Form.normalize_value("checkbox", assigns[:value])
       end)
-    
+
     ~H"""
     <fieldset class="fieldset mb-2">
       <label>

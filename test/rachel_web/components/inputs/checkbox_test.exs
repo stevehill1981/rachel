@@ -2,7 +2,7 @@ defmodule RachelWeb.Components.Inputs.CheckboxTest do
   use ExUnit.Case, async: true
   import Phoenix.LiveViewTest
   alias RachelWeb.Components.Inputs.Checkbox
-  
+
   describe "checkbox/1" do
     test "renders unchecked checkbox" do
       assigns = %{
@@ -13,21 +13,21 @@ defmodule RachelWeb.Components.Inputs.CheckboxTest do
         errors: [],
         rest: %{}
       }
-      
+
       html = render_component(&Checkbox.checkbox/1, assigns)
-      
+
       assert html =~ ~s(type="checkbox")
       assert html =~ ~s(name="subscribe")
       assert html =~ ~s(id="subscribe-checkbox")
       assert html =~ ~s(value="true")
       refute html =~ ~s(checked)
       assert html =~ "Subscribe to newsletter"
-      
+
       # Hidden input for false value
       assert html =~ ~s(type="hidden")
       assert html =~ ~s(value="false")
     end
-    
+
     test "renders checked checkbox" do
       assigns = %{
         name: "terms",
@@ -38,13 +38,13 @@ defmodule RachelWeb.Components.Inputs.CheckboxTest do
         errors: [],
         rest: %{}
       }
-      
+
       html = render_component(&Checkbox.checkbox/1, assigns)
-      
+
       assert html =~ ~s(checked)
       assert html =~ "I agree to the terms"
     end
-    
+
     test "renders with errors" do
       assigns = %{
         name: "terms",
@@ -54,13 +54,13 @@ defmodule RachelWeb.Components.Inputs.CheckboxTest do
         errors: ["must be accepted"],
         rest: %{}
       }
-      
+
       html = render_component(&Checkbox.checkbox/1, assigns)
-      
+
       assert html =~ "must be accepted"
       assert html =~ "text-error"
     end
-    
+
     test "handles disabled state" do
       assigns = %{
         name: "locked",
@@ -71,9 +71,9 @@ defmodule RachelWeb.Components.Inputs.CheckboxTest do
         errors: [],
         rest: %{disabled: true}
       }
-      
+
       html = render_component(&Checkbox.checkbox/1, assigns)
-      
+
       assert html =~ ~s(disabled)
     end
   end

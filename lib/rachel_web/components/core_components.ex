@@ -31,7 +31,7 @@ defmodule RachelWeb.CoreComponents do
   use Gettext, backend: RachelWeb.Gettext
 
   alias Phoenix.LiveView.JS
-  
+
   # Import our new input components
   alias RachelWeb.Components.Inputs.{Checkbox, Select, Textarea, TextField}
   alias RachelWeb.Components.JSCommands

@@ -13,7 +13,7 @@ defmodule TestHelper do
         _ -> :ok
       end
     end)
-    
+
     # Give processes time to shut down
     Process.sleep(100)
   end

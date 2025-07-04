@@ -10,7 +10,7 @@ defmodule Rachel.Accounts.PlayerProfile do
   schema "player_profiles" do
     field :player_id, :string
     field :display_name, :string
-    
+
     # Aggregate stats
     field :total_games_played, :integer, default: 0
     field :total_games_won, :integer, default: 0
@@ -37,11 +37,24 @@ defmodule Rachel.Accounts.PlayerProfile do
   def changeset(player_profile, attrs) do
     player_profile
     |> cast(attrs, [
-      :player_id, :display_name, :total_games_played, :total_games_won,
-      :total_score, :average_score, :win_rate, :total_cards_played,
-      :total_cards_drawn, :total_special_cards_played, :quickest_win_turns,
-      :longest_game_turns, :favorite_special_card, :current_streak,
-      :best_streak, :last_played_at, :rank, :user_id
+      :player_id,
+      :display_name,
+      :total_games_played,
+      :total_games_won,
+      :total_score,
+      :average_score,
+      :win_rate,
+      :total_cards_played,
+      :total_cards_drawn,
+      :total_special_cards_played,
+      :quickest_win_turns,
+      :longest_game_turns,
+      :favorite_special_card,
+      :current_streak,
+      :best_streak,
+      :last_played_at,
+      :rank,
+      :user_id
     ])
     |> validate_required([:player_id, :display_name])
     |> unique_constraint(:player_id)
@@ -50,11 +63,13 @@ defmodule Rachel.Accounts.PlayerProfile do
   end
 
   def calculate_derived_stats(changeset) do
-    case {get_field(changeset, :total_games_played), get_field(changeset, :total_games_won), get_field(changeset, :total_score)} do
+    case {get_field(changeset, :total_games_played), get_field(changeset, :total_games_won),
+          get_field(changeset, :total_score)} do
       {games, wins, score} when is_integer(games) and games > 0 ->
         changeset
         |> put_change(:win_rate, wins / games * 100)
         |> put_change(:average_score, score / games)
+
       _ ->
         changeset
     end

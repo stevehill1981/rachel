@@ -3,9 +3,9 @@ defmodule RachelWeb.Components.JSCommands do
   JavaScript command builders for Phoenix LiveView.
   Extracted from CoreComponents for better testability and reusability.
   """
-  
+
   alias Phoenix.LiveView.JS
-  
+
   @doc """
   JS commands to show an element with animation.
   """
@@ -19,7 +19,7 @@ defmodule RachelWeb.Components.JSCommands do
          "opacity-100 translate-y-0 sm:scale-100"}
     )
   end
-  
+
   @doc """
   JS commands to hide an element with animation.
   """
@@ -33,7 +33,7 @@ defmodule RachelWeb.Components.JSCommands do
          "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"}
     )
   end
-  
+
   @doc """
   JS commands to show a modal.
   """
@@ -49,7 +49,7 @@ defmodule RachelWeb.Components.JSCommands do
     |> JS.add_class("overflow-hidden", to: "body")
     |> JS.focus_first(to: "##{id}-content")
   end
-  
+
   @doc """
   JS commands to hide a modal.
   """
@@ -65,7 +65,7 @@ defmodule RachelWeb.Components.JSCommands do
     |> JS.remove_class("overflow-hidden", to: "body")
     |> JS.pop_focus()
   end
-  
+
   @doc """
   JS command to dismiss a flash message.
   """

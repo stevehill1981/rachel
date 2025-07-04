@@ -2,7 +2,7 @@ defmodule RachelWeb.Components.Inputs.TextFieldTest do
   use ExUnit.Case, async: true
   import Phoenix.LiveViewTest
   alias RachelWeb.Components.Inputs.TextField
-  
+
   describe "text_field/1" do
     test "renders basic text input" do
       assigns = %{
@@ -14,16 +14,16 @@ defmodule RachelWeb.Components.Inputs.TextFieldTest do
         errors: [],
         rest: %{}
       }
-      
+
       html = render_component(&TextField.text_field/1, assigns)
-      
+
       assert html =~ ~s(type="email")
       assert html =~ ~s(name="email")
       assert html =~ ~s(id="user-email")
       assert html =~ ~s(value="test@example.com")
       assert html =~ "Email Address"
     end
-    
+
     test "renders with errors" do
       assigns = %{
         name: "password",
@@ -34,14 +34,14 @@ defmodule RachelWeb.Components.Inputs.TextFieldTest do
         errors: ["must be at least 8 characters"],
         rest: %{}
       }
-      
+
       html = render_component(&TextField.text_field/1, assigns)
-      
+
       assert html =~ "input-error"
       assert html =~ "must be at least 8 characters"
       assert html =~ "text-error"
     end
-    
+
     test "renders number input with constraints" do
       assigns = %{
         name: "age",
@@ -52,15 +52,15 @@ defmodule RachelWeb.Components.Inputs.TextFieldTest do
         errors: [],
         rest: %{min: "0", max: "120", step: "1"}
       }
-      
+
       html = render_component(&TextField.text_field/1, assigns)
-      
+
       assert html =~ ~s(type="number")
       assert html =~ ~s(min="0")
       assert html =~ ~s(max="120")
       assert html =~ ~s(step="1")
     end
-    
+
     test "applies custom CSS classes" do
       assigns = %{
         name: "custom",
@@ -72,9 +72,9 @@ defmodule RachelWeb.Components.Inputs.TextFieldTest do
         class: "custom-input-class",
         rest: %{}
       }
-      
+
       html = render_component(&TextField.text_field/1, assigns)
-      
+
       assert html =~ "custom-input-class"
       refute html =~ "w-full input"
     end

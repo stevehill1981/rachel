@@ -11,12 +11,12 @@ defmodule RachelWeb.LobbyLive do
   def mount(_params, session, socket) do
     # Subscribe to lobby updates
     PubSub.subscribe(Rachel.PubSub, "lobby")
-    
+
     # Get player info from session (set by PlayerSession plug)
     player_id = Map.get(session, "player_id", generate_player_id())
     player_name = Map.get(session, "player_name", generate_default_name())
-    
-    socket = 
+
+    socket =
       socket
       |> assign(:player_id, player_id)
       |> assign(:player_name, player_name)
@@ -25,7 +25,7 @@ defmodule RachelWeb.LobbyLive do
       |> assign(:joining_game, nil)
       |> assign(:join_code, "")
       |> assign(:error_message, nil)
-    
+
     {:ok, socket}
   end
 
@@ -35,10 +35,10 @@ defmodule RachelWeb.LobbyLive do
       {:ok, game_id} ->
         # Broadcast lobby update
         broadcast_lobby_update()
-        
+
         # Redirect to the game
         {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
-        
+
       {:error, reason} ->
         {:noreply, assign(socket, :error_message, "Failed to create game: #{reason}")}
     end
@@ -50,18 +50,20 @@ defmodule RachelWeb.LobbyLive do
       {:ok, _game} ->
         # Broadcast lobby update
         broadcast_lobby_update()
-        
+
         # Redirect to the game
         {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
-        
+
       {:error, reason} ->
-        error_msg = case reason do
-          :game_not_found -> "Game not found"
-          :game_full -> "Game is full"
-          :already_joined -> "You're already in this game"
-          :game_started -> "Game has already started"
-          _ -> "Failed to join game: #{reason}"
-        end
+        error_msg =
+          case reason do
+            :game_not_found -> "Game not found"
+            :game_full -> "Game is full"
+            :already_joined -> "You're already in this game"
+            :game_started -> "Game has already started"
+            _ -> "Failed to join game: #{reason}"
+          end
+
         {:noreply, assign(socket, :error_message, error_msg)}
     end
   end
@@ -74,15 +76,17 @@ defmodule RachelWeb.LobbyLive do
       {:ok, _game} ->
         broadcast_lobby_update()
         {:noreply, push_navigate(socket, to: ~p"/game/#{code}")}
-        
+
       {:error, reason} ->
-        error_msg = case reason do
-          :game_not_found -> "Invalid game code"
-          :game_full -> "Game is full"
-          :already_joined -> "You're already in this game"
-          :game_started -> "Game has already started"
-          _ -> "Failed to join game: #{reason}"
-        end
+        error_msg =
+          case reason do
+            :game_not_found -> "Invalid game code"
+            :game_full -> "Game is full"
+            :already_joined -> "You're already in this game"
+            :game_started -> "Game has already started"
+            _ -> "Failed to join game: #{reason}"
+          end
+
         {:noreply, assign(socket, :error_message, error_msg)}
     end
   end
@@ -117,10 +121,10 @@ defmodule RachelWeb.LobbyLive do
   defp generate_default_name do
     adjectives = ["Swift", "Clever", "Bold", "Lucky", "Wise", "Brave", "Quick", "Sharp"]
     nouns = ["Fox", "Eagle", "Wolf", "Bear", "Lion", "Tiger", "Hawk", "Owl"]
-    
+
     adjective = Enum.random(adjectives)
     noun = Enum.random(nouns)
-    
+
     "#{adjective}#{noun}"
   end
 

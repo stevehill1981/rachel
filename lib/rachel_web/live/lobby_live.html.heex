@@ -5,25 +5,33 @@
       <h1 class="text-4xl font-bold text-gray-900 mb-2">Rachel Card Game</h1>
       <p class="text-lg text-gray-600">Join a game or create your own!</p>
     </div>
-
-    <!-- Error Message -->
+    
+<!-- Error Message -->
     <%= if @error_message do %>
       <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
         <div class="flex items-center justify-between">
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd"
+                />
               </svg>
             </div>
             <div class="ml-3">
-              <p class="text-sm text-red-800"><%= @error_message %></p>
+              <p class="text-sm text-red-800">{@error_message}</p>
             </div>
           </div>
           <button phx-click="clear_error" class="text-red-400 hover:text-red-600">
             <span class="sr-only">Dismiss</span>
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              <path
+                fill-rule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clip-rule="evenodd"
+              />
             </svg>
           </button>
         </div>
@@ -35,7 +43,7 @@
       <div class="lg:col-span-1">
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Your Player Info</h2>
-          
+
           <div class="space-y-4">
             <div>
               <label for="player_name" class="block text-sm font-medium text-gray-700 mb-1">
@@ -51,17 +59,17 @@
                 placeholder="Enter your name"
               />
             </div>
-            
+
             <div class="text-xs text-gray-500">
-              Player ID: <%= @player_id %>
+              Player ID: {@player_id}
             </div>
           </div>
         </div>
-
-        <!-- Quick Actions -->
+        
+<!-- Quick Actions -->
         <div class="bg-white rounded-lg shadow-md p-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          
+
           <div class="space-y-4">
             <!-- Create Game -->
             <button
@@ -71,7 +79,7 @@
               Create New Game
             </button>
             
-            <!-- Join by Code -->
+<!-- Join by Code -->
             <div>
               <label for="join_code" class="block text-sm font-medium text-gray-700 mb-1">
                 Join by Game Code
@@ -96,8 +104,8 @@
           </div>
         </div>
       </div>
-
-      <!-- Available Games -->
+      
+<!-- Available Games -->
       <div class="lg:col-span-2">
         <div class="bg-white rounded-lg shadow-md p-6">
           <div class="flex items-center justify-between mb-6">
@@ -112,8 +120,18 @@
 
           <%= if Enum.empty?(@games) do %>
             <div class="text-center py-12">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <svg
+                class="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
               </svg>
               <h3 class="mt-2 text-sm font-medium text-gray-900">No games available</h3>
               <p class="mt-1 text-sm text-gray-500">Create a new game to get started!</p>
@@ -126,30 +144,30 @@
                     <div class="flex-1">
                       <div class="flex items-center space-x-3 mb-2">
                         <h3 class="text-lg font-medium text-gray-900">
-                          Game <%= String.slice(game.id, -6..-1) %>
+                          Game {String.slice(game.id, -6..-1)}
                         </h3>
                         <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{game_status_badge(game.status)}"}>
-                          <%= String.capitalize(to_string(game.status)) %>
+                          {String.capitalize(to_string(game.status))}
                         </span>
                       </div>
-                      
+
                       <div class="text-sm text-gray-600 space-y-1">
                         <div>
-                          <span class="font-medium">Players:</span> 
-                          <%= game.player_count %>/8
+                          <span class="font-medium">Players:</span>
+                          {game.player_count}/8
                         </div>
                         <%= if not Enum.empty?(game.players) do %>
                           <div>
                             <span class="font-medium">In game:</span>
-                            <%= format_player_list(game.players) %>
+                            {format_player_list(game.players)}
                           </div>
                         <% end %>
                         <div class="text-xs text-gray-500">
-                          Game ID: <%= game.id %>
+                          Game ID: {game.id}
                         </div>
                       </div>
                     </div>
-                    
+
                     <div class="ml-4">
                       <%= if can_join_game?(game) do %>
                         <button
@@ -161,7 +179,7 @@
                         </button>
                       <% else %>
                         <span class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-500">
-                          <%= if game.status == :playing, do: "In Progress", else: "Full" %>
+                          {if game.status == :playing, do: "In Progress", else: "Full"}
                         </span>
                       <% end %>
                     </div>
@@ -173,8 +191,8 @@
         </div>
       </div>
     </div>
-
-    <!-- Footer -->
+    
+<!-- Footer -->
     <div class="text-center mt-12 text-sm text-gray-500">
       <p>Rachel Card Game - Multiplayer Online</p>
     </div>

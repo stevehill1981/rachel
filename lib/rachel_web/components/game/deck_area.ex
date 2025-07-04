@@ -5,12 +5,12 @@ defmodule RachelWeb.Components.Game.DeckArea do
   use Phoenix.Component
   import RachelWeb.GameComponents
   alias Rachel.Games.Game
-  
+
   attr :game, :map, required: true
   attr :player_id, :string, required: true
   attr :show_ai_thinking, :boolean, default: false
   attr :current_player, :any, required: true
-  
+
   def deck_area(assigns) do
     ~H"""
     <div class="relative">
@@ -35,7 +35,7 @@ defmodule RachelWeb.Components.Game.DeckArea do
           </div>
         </div>
         
-        <!-- Current Card -->
+    <!-- Current Card -->
         <div class="flex flex-col items-center">
           <div class="w-32 h-44">
             <.current_card_display

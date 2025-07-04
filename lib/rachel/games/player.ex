@@ -13,13 +13,13 @@ defmodule Rachel.Games.Player do
   ]
 
   @type t :: %__MODULE__{
-    id: String.t(),
-    name: String.t(),
-    hand: list(Rachel.Games.Card.t()),
-    is_ai: boolean(),
-    connected: boolean(),
-    has_drawn: boolean()
-  }
+          id: String.t(),
+          name: String.t(),
+          hand: list(Rachel.Games.Card.t()),
+          is_ai: boolean(),
+          connected: boolean(),
+          has_drawn: boolean()
+        }
 
   def new(id, name, opts \\ []) do
     %__MODULE__{

@@ -225,14 +225,16 @@ defmodule RachelWeb.GameComponents do
 
   def player_card_horizontal(assigns) do
     ~H"""
-    <div class={[
-      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 min-w-max relative",
-      @is_current &&
-        "current-player bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg ring-2 ring-white/30",
-      !@is_current && "bg-white/10 hover:bg-white/20",
-      # Add disconnected styling
-      Map.get(@player, :connected, true) == false && "opacity-60"
-    ]}>
+    <div class={
+      [
+        "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 min-w-max relative",
+        @is_current &&
+          "current-player bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg ring-2 ring-white/30",
+        !@is_current && "bg-white/10 hover:bg-white/20",
+        # Add disconnected styling
+        Map.get(@player, :connected, true) == false && "opacity-60"
+      ]
+    }>
       <div class={[
         "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
         @is_current && "bg-white text-blue-600",

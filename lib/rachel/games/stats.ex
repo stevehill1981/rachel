@@ -138,21 +138,23 @@ defmodule Rachel.Games.Stats do
 
   def record_winner(%__MODULE__{} = stats, winner_id) do
     # Calculate duration only if this is the first winner
-    {_duration, updated_game_stats} = if stats.game_stats.winner_id == nil do
-      end_time = DateTime.utc_now()
-      duration = DateTime.diff(end_time, stats.start_time)
-      {duration, Map.put(stats.game_stats, :game_duration_seconds, duration)}
-    else
-      {stats.game_stats.game_duration_seconds, stats.game_stats}
-    end
+    {_duration, updated_game_stats} =
+      if stats.game_stats.winner_id == nil do
+        end_time = DateTime.utc_now()
+        duration = DateTime.diff(end_time, stats.start_time)
+        {duration, Map.put(stats.game_stats, :game_duration_seconds, duration)}
+      else
+        {stats.game_stats.game_duration_seconds, stats.game_stats}
+      end
 
     # Update player stats
     position = length(stats.game_stats.finish_positions) + 1
-    updated_player_stats = 
+
+    updated_player_stats =
       Map.update(stats.player_stats, winner_id, nil, fn player_stats ->
         if player_stats do
           turns = stats.game_stats.total_turns
-          
+
           player_stats
           |> Map.put(:position, position)
           |> Map.update!(:games_won, fn wins -> if position == 1, do: wins + 1, else: wins end)
@@ -167,7 +169,7 @@ defmodule Rachel.Games.Stats do
       end)
 
     # Update game stats with winner (first one only) and add to finish positions
-    updated_game_stats = 
+    updated_game_stats =
       updated_game_stats
       |> Map.update!(:finish_positions, &(&1 ++ [winner_id]))
       |> Map.update(:winner_id, winner_id, fn existing -> existing || winner_id end)
@@ -256,7 +258,7 @@ defmodule Rachel.Games.Stats do
   This is used for persisting stats when a game ends.
   """
   def calculate_stats(game) do
-    player_names = 
+    player_names =
       game.players
       |> Enum.map(fn player -> {player.id, player.name} end)
       |> Map.new()
@@ -267,7 +269,8 @@ defmodule Rachel.Games.Stats do
       total_turns: if(game.stats, do: game.stats.game_stats.total_turns, else: 0),
       total_cards_played: if(game.stats, do: game.stats.game_stats.total_cards_played, else: 0),
       total_cards_drawn: if(game.stats, do: game.stats.game_stats.total_cards_drawn, else: 0),
-      special_effects_triggered: if(game.stats, do: game.stats.game_stats.special_effects_triggered, else: 0),
+      special_effects_triggered:
+        if(game.stats, do: game.stats.game_stats.special_effects_triggered, else: 0),
       direction_changes: if(game.stats, do: game.stats.game_stats.direction_changes, else: 0),
       suit_nominations: if(game.stats, do: game.stats.game_stats.suit_nominations, else: 0),
       finish_positions: game.winners,
@@ -275,33 +278,35 @@ defmodule Rachel.Games.Stats do
     }
 
     # Extract player-specific stats
-    player_stats = 
+    player_stats =
       game.players
       |> Enum.map(fn player ->
-        stats = if game.stats && Map.has_key?(game.stats.player_stats, player.id) do
-          game.stats.player_stats[player.id]
-        else
-          %{
-            total_cards_played: 0,
-            total_cards_drawn: 0,
-            special_cards_played: 0,
-            games_won: 0
-          }
-        end
+        stats =
+          if game.stats && Map.has_key?(game.stats.player_stats, player.id) do
+            game.stats.player_stats[player.id]
+          else
+            %{
+              total_cards_played: 0,
+              total_cards_drawn: 0,
+              special_cards_played: 0,
+              games_won: 0
+            }
+          end
 
         finish_position = Enum.find_index(game.winners, &(&1 == player.id))
         won = player.id in game.winners
         score = calculate_player_score(stats, game_stats)
 
-        {player.id, %{
-          player_name: player.name,
-          finish_position: finish_position,
-          cards_played: stats.total_cards_played,
-          cards_drawn: stats.total_cards_drawn,
-          special_cards_played: stats.special_cards_played,
-          won: won,
-          score: score
-        }}
+        {player.id,
+         %{
+           player_name: player.name,
+           finish_position: finish_position,
+           cards_played: stats.total_cards_played,
+           cards_drawn: stats.total_cards_drawn,
+           special_cards_played: stats.special_cards_played,
+           won: won,
+           score: score
+         }}
       end)
       |> Map.new()
 

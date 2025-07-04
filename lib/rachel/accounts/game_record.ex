@@ -30,10 +30,20 @@ defmodule Rachel.Accounts.GameRecord do
   def changeset(game_record, attrs) do
     game_record
     |> cast(attrs, [
-      :game_id, :status, :winner_id, :total_turns, :total_cards_played,
-      :total_cards_drawn, :special_effects_triggered, :direction_changes,
-      :suit_nominations, :game_duration_seconds, :finish_positions,
-      :player_names, :started_at, :ended_at
+      :game_id,
+      :status,
+      :winner_id,
+      :total_turns,
+      :total_cards_played,
+      :total_cards_drawn,
+      :special_effects_triggered,
+      :direction_changes,
+      :suit_nominations,
+      :game_duration_seconds,
+      :finish_positions,
+      :player_names,
+      :started_at,
+      :ended_at
     ])
     |> validate_required([:game_id, :status])
     |> validate_inclusion(:status, ["completed", "abandoned"])

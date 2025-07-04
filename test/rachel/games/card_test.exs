@@ -30,12 +30,12 @@ defmodule Rachel.Games.CardTest do
     test "returns all 13 ranks" do
       ranks = Card.ranks()
       assert length(ranks) == 13
-      
+
       # Check numbered ranks
       for n <- 2..10 do
         assert n in ranks
       end
-      
+
       # Check face card ranks
       assert :jack in ranks
       assert :queen in ranks
@@ -99,7 +99,7 @@ defmodule Rachel.Games.CardTest do
     test "other cards have no effect" do
       card = Card.new(:hearts, 3)
       assert Card.special_effect(card) == nil
-      
+
       card = Card.new(:spades, :king)
       assert Card.special_effect(card) == nil
     end

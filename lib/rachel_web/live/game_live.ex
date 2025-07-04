@@ -10,12 +10,12 @@ defmodule RachelWeb.GameLive do
     # Generate or get player identity
     player_id = get_player_id(session)
     player_name = get_player_name(session)
-    
+
     case handle_game_join(game_id, player_id, player_name) do
       {:ok, game} ->
         # Subscribe to game updates
         PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
-        
+
         # Notify GameServer that we're connected
         try do
           GameServer.player_connected(game_id, player_id, self())
@@ -23,7 +23,7 @@ defmodule RachelWeb.GameLive do
           # Continue even if GameServer notification fails
           :exit, _ -> :ok
         end
-        
+
         socket =
           socket
           |> assign(:game, game)
@@ -36,13 +36,13 @@ defmodule RachelWeb.GameLive do
           |> assign(:winner_acknowledged, false)
           |> assign(:connection_status, :connected)
           |> assign(:is_spectator, false)
-        
+
         {:ok, socket}
 
       {:ok, game, :spectator} ->
         # Subscribe to game updates as spectator
         PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
-        
+
         socket =
           socket
           |> assign(:game, game)
@@ -56,25 +56,25 @@ defmodule RachelWeb.GameLive do
           |> assign(:connection_status, :connected)
           |> assign(:is_spectator, true)
           |> put_flash(:info, "Joined as spectator - watching the game!")
-        
+
         {:ok, socket}
-        
+
       {:error, reason} ->
-        socket = 
+        socket =
           socket
           |> put_flash(:error, format_join_error(reason))
           |> push_navigate(to: "/lobby")
-        
+
         {:ok, socket}
     end
   end
-  
+
   # Fallback for single-player mode (no game_id)
   def mount(_params, session, socket) do
     # Get player identity for single-player mode
     player_name = get_player_name(session)
     game = create_test_game(player_name)
-    
+
     socket =
       socket
       |> assign(:game, game)
@@ -86,13 +86,13 @@ defmodule RachelWeb.GameLive do
       |> assign(:show_winner_banner, false)
       |> assign(:winner_acknowledged, false)
       |> assign(:connection_status, :offline)
-    
+
     # Check if AI should start
     schedule_ai_move(game)
-    
+
     # Check if player needs to auto-draw
     socket = check_auto_draw(socket)
-    
+
     {:ok, socket}
   end
 
@@ -168,12 +168,12 @@ defmodule RachelWeb.GameLive do
             |> check_and_show_winner_banner(new_game)
 
           socket = check_auto_draw(socket)
-          
+
           # Schedule AI move for single-player games
           if socket.assigns.game_id == nil do
             schedule_ai_move(new_game)
           end
-          
+
           {:noreply, socket}
 
         {:error, reason} ->
@@ -196,7 +196,7 @@ defmodule RachelWeb.GameLive do
             |> assign(:selected_cards, [])
             |> clear_flash()
             |> put_flash(:info, "Card drawn!")
-          
+
           # Schedule AI move for single-player games
           if socket.assigns.game_id == nil do
             schedule_ai_move(new_game)
@@ -225,7 +225,7 @@ defmodule RachelWeb.GameLive do
             |> assign(:game, new_game)
             |> clear_flash()
             |> put_flash(:info, "Suit nominated: #{suit}")
-          
+
           # Schedule AI move for single-player games
           if socket.assigns.game_id == nil do
             schedule_ai_move(new_game)
@@ -245,7 +245,7 @@ defmodule RachelWeb.GameLive do
   def handle_event("acknowledge_win", _, socket) do
     {:noreply, assign(socket, :show_winner_banner, false)}
   end
-  
+
   @impl true
   def handle_event("copy_game_code", _, socket) do
     if socket.assigns.game_id do
@@ -255,20 +255,20 @@ defmodule RachelWeb.GameLive do
       {:noreply, socket}
     end
   end
-  
+
   @impl true
   def handle_event("start_game", _, socket) do
     if socket.assigns.game_id && socket.assigns.player_id do
       case GameServer.start_game(socket.assigns.game_id, socket.assigns.player_id) do
         {:ok, _game} ->
           {:noreply, put_flash(socket, :info, "Game started!")}
-          
+
         {:error, :not_host} ->
           {:noreply, put_flash(socket, :error, "Only the host can start the game")}
-          
+
         {:error, :not_enough_players} ->
           {:noreply, put_flash(socket, :error, "Need at least 2 players to start")}
-          
+
         {:error, reason} ->
           {:noreply, put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
       end
@@ -289,49 +289,49 @@ defmodule RachelWeb.GameLive do
 
       # Double-check it's still AI's turn
       if current && current.is_ai && game.status == :playing do
-      socket = assign(socket, :show_ai_thinking, true)
+        socket = assign(socket, :show_ai_thinking, true)
 
-      # Get AI's move
-      case AIPlayer.make_move(game, current.id) do
-        {:play, cards} ->
-          case Game.play_card(game, current.id, cards) do
-            {:ok, new_game} ->
-              socket =
-                socket
-                |> assign(:game, new_game)
-                |> assign(:show_ai_thinking, false)
+        # Get AI's move
+        case AIPlayer.make_move(game, current.id) do
+          {:play, cards} ->
+            case Game.play_card(game, current.id, cards) do
+              {:ok, new_game} ->
+                socket =
+                  socket
+                  |> assign(:game, new_game)
+                  |> assign(:show_ai_thinking, false)
 
-              schedule_ai_move(new_game)
-              socket = check_auto_draw(socket)
-              {:noreply, socket}
+                schedule_ai_move(new_game)
+                socket = check_auto_draw(socket)
+                {:noreply, socket}
 
-            _ ->
-              # If play fails, try drawing
-              handle_ai_draw(socket, game, current.id)
-          end
+              _ ->
+                # If play fails, try drawing
+                handle_ai_draw(socket, game, current.id)
+            end
 
-        {:nominate, suit} ->
-          case Game.nominate_suit(game, current.id, suit) do
-            {:ok, new_game} ->
-              socket =
-                socket
-                |> assign(:game, new_game)
-                |> assign(:show_ai_thinking, false)
+          {:nominate, suit} ->
+            case Game.nominate_suit(game, current.id, suit) do
+              {:ok, new_game} ->
+                socket =
+                  socket
+                  |> assign(:game, new_game)
+                  |> assign(:show_ai_thinking, false)
 
-              schedule_ai_move(new_game)
-              socket = check_auto_draw(socket)
-              {:noreply, socket}
+                schedule_ai_move(new_game)
+                socket = check_auto_draw(socket)
+                {:noreply, socket}
 
-            _ ->
-              {:noreply, socket}
-          end
+              _ ->
+                {:noreply, socket}
+            end
 
-        {:draw, _} ->
-          handle_ai_draw(socket, game, current.id)
+          {:draw, _} ->
+            handle_ai_draw(socket, game, current.id)
 
-        _ ->
-          {:noreply, socket}
-      end
+          _ ->
+            {:noreply, socket}
+        end
       else
         {:noreply, socket}
       end
@@ -344,92 +344,109 @@ defmodule RachelWeb.GameLive do
 
   # PubSub event handlers for multiplayer games
   def handle_info({:game_updated, game}, socket) do
-    socket = 
+    socket =
       socket
       |> assign(:game, game)
       |> assign(:selected_cards, [])
       |> check_and_show_winner_banner(game)
-    
+
     {:noreply, socket}
   end
-  
-  def handle_info({:cards_played, %{player_id: player_id, cards: cards, game: game} = msg}, socket) do
-    socket = 
+
+  def handle_info(
+        {:cards_played, %{player_id: player_id, cards: cards, game: game} = msg},
+        socket
+      ) do
+    socket =
       socket
       |> assign(:game, game)
       |> assign(:selected_cards, [])
       |> check_and_show_winner_banner(game)
-      
-    socket = if player_id != socket.assigns.player_id do
-      # Use player_name from message if available, otherwise look it up
-      player_name = Map.get(msg, :player_name) || get_player_name_by_id(game, player_id)
-      card_count = length(cards)
-      message = "#{player_name} played #{card_count} card#{if card_count == 1, do: "", else: "s"}"
-      put_flash(socket, :info, message)
-    else
-      socket
-    end
-    
+
+    socket =
+      if player_id != socket.assigns.player_id do
+        # Use player_name from message if available, otherwise look it up
+        player_name = Map.get(msg, :player_name) || get_player_name_by_id(game, player_id)
+        card_count = length(cards)
+
+        message =
+          "#{player_name} played #{card_count} card#{if card_count == 1, do: "", else: "s"}"
+
+        put_flash(socket, :info, message)
+      else
+        socket
+      end
+
     {:noreply, socket}
   end
-  
+
   def handle_info({:card_drawn, %{player_id: player_id, game: game}}, socket) do
     socket = assign(socket, :game, game)
-    
-    socket = if player_id != socket.assigns.player_id do
-      player_name = get_player_name_by_id(game, player_id)
-      put_flash(socket, :info, "#{player_name} drew a card")
-    else
-      socket
-    end
-    
+
+    socket =
+      if player_id != socket.assigns.player_id do
+        player_name = get_player_name_by_id(game, player_id)
+        put_flash(socket, :info, "#{player_name} drew a card")
+      else
+        socket
+      end
+
     {:noreply, socket}
   end
-  
+
   def handle_info({:suit_nominated, %{player_id: player_id, suit: suit, game: game}}, socket) do
     socket = assign(socket, :game, game)
-    
-    socket = if player_id != socket.assigns.player_id do
-      player_name = get_player_name_by_id(game, player_id)
-      put_flash(socket, :info, "#{player_name} nominated suit: #{suit}")
-    else
-      socket
-    end
-    
+
+    socket =
+      if player_id != socket.assigns.player_id do
+        player_name = get_player_name_by_id(game, player_id)
+        put_flash(socket, :info, "#{player_name} nominated suit: #{suit}")
+      else
+        socket
+      end
+
     {:noreply, socket}
   end
-  
+
   def handle_info({:player_won, %{player_id: _player_id, game: game}}, socket) do
-    socket = 
+    socket =
       socket
       |> assign(:game, game)
       |> check_and_show_winner_banner(game)
-    
+
     {:noreply, socket}
   end
-  
+
   def handle_info({:game_started, game}, socket) do
     socket = assign(socket, :game, game)
     {:noreply, socket}
   end
-  
-  def handle_info({:player_reconnected, %{player_id: player_id, player_name: player_name}}, socket) do
-    socket = if player_id != socket.assigns.player_id do
-      put_flash(socket, :info, "#{player_name} reconnected")
-    else
-      socket
-    end
-    
+
+  def handle_info(
+        {:player_reconnected, %{player_id: player_id, player_name: player_name}},
+        socket
+      ) do
+    socket =
+      if player_id != socket.assigns.player_id do
+        put_flash(socket, :info, "#{player_name} reconnected")
+      else
+        socket
+      end
+
     {:noreply, socket}
   end
-  
-  def handle_info({:player_disconnected, %{player_id: player_id, player_name: player_name}}, socket) do
-    socket = if player_id != socket.assigns.player_id do
-      put_flash(socket, :info, "#{player_name} disconnected")
-    else
-      socket
-    end
-    
+
+  def handle_info(
+        {:player_disconnected, %{player_id: player_id, player_name: player_name}},
+        socket
+      ) do
+    socket =
+      if player_id != socket.assigns.player_id do
+        put_flash(socket, :info, "#{player_name} disconnected")
+      else
+        socket
+      end
+
     {:noreply, socket}
   end
 
@@ -503,7 +520,7 @@ defmodule RachelWeb.GameLive do
   def render(assigns) do
     Modern.render(assigns)
   end
-  
+
   @impl true
   def terminate(_reason, socket) do
     # Notify GameServer that we're disconnecting (only for multiplayer)
@@ -515,6 +532,7 @@ defmodule RachelWeb.GameLive do
         :exit, _ -> :ok
       end
     end
+
     :ok
   end
 
@@ -551,16 +569,20 @@ defmodule RachelWeb.GameLive do
     |> Game.add_player("ai3", Enum.at(selected_names, 2), true)
     |> Game.start_game()
   end
-  
+
   # Player identity and session management
   defp get_player_id(session) do
-    Map.get(session, "player_id", "player_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}")
+    Map.get(
+      session,
+      "player_id",
+      "player_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
+    )
   end
-  
+
   defp get_player_name(session) do
     Map.get(session, "player_name", "Anonymous")
   end
-  
+
   # Game joining logic
   defp handle_game_join(game_id, player_id, player_name) do
     try do
@@ -570,26 +592,32 @@ defmodule RachelWeb.GameLive do
           if player_in_game?(game, player_id) do
             # Player is already in game - reconnect
             case GameServer.reconnect_player(game_id, player_id) do
-              :ok -> 
+              :ok ->
                 # Reconnection successful, get updated game state
                 updated_game = GameServer.get_state(game_id)
                 {:ok, updated_game}
-              {:error, reason} -> {:error, reason}
+
+              {:error, reason} ->
+                {:error, reason}
             end
           else
             # Try to join the game
             case GameServer.join_game(game_id, player_id, player_name) do
-              {:ok, updated_game} -> {:ok, updated_game}
-              {:error, :game_started} -> 
+              {:ok, updated_game} ->
+                {:ok, updated_game}
+
+              {:error, :game_started} ->
                 # Game already started, try to join as spectator
                 case GameServer.join_as_spectator(game_id, player_id, player_name) do
                   {:ok, updated_game} -> {:ok, updated_game, :spectator}
                   {:error, reason} -> {:error, reason}
                 end
-              {:error, reason} -> {:error, reason}
+
+              {:error, reason} ->
+                {:error, reason}
             end
           end
-          
+
         _ ->
           {:error, :game_not_found}
       end
@@ -598,21 +626,23 @@ defmodule RachelWeb.GameLive do
         {:error, :game_not_found}
     end
   end
-  
+
   defp player_in_game?(game, player_id) do
     Enum.any?(game.players, &(&1.id == player_id))
   end
-  
+
   # Action helpers - determine if multiplayer or single-player
   defp play_cards_action(socket, card_indices) do
     if socket.assigns.game_id do
       # Multiplayer - use GameServer (convert indices to cards)
       current_player = current_player(socket.assigns.game)
+
       if current_player do
-        cards = card_indices
+        cards =
+          card_indices
           |> Enum.map(fn index -> Enum.at(current_player.hand, index) end)
           |> Enum.reject(&is_nil/1)
-        
+
         try do
           case GameServer.play_cards(socket.assigns.game_id, socket.assigns.player_id, cards) do
             {:ok, game} -> {:ok, game}
@@ -631,7 +661,7 @@ defmodule RachelWeb.GameLive do
       Game.play_card(socket.assigns.game, socket.assigns.player_id, card_indices)
     end
   end
-  
+
   defp draw_card_action(socket) do
     if socket.assigns.game_id do
       # Multiplayer - use GameServer
@@ -650,7 +680,7 @@ defmodule RachelWeb.GameLive do
       Game.draw_card(socket.assigns.game, socket.assigns.player_id)
     end
   end
-  
+
   defp nominate_suit_action(socket, suit) do
     if socket.assigns.game_id do
       # Multiplayer - use GameServer
@@ -669,7 +699,7 @@ defmodule RachelWeb.GameLive do
       Game.nominate_suit(socket.assigns.game, socket.assigns.player_id, suit)
     end
   end
-  
+
   # Helper to get player name by ID
   defp get_player_name_by_id(game, player_id) do
     case Enum.find(game.players, &(&1.id == player_id)) do
@@ -677,7 +707,7 @@ defmodule RachelWeb.GameLive do
       _ -> "Unknown"
     end
   end
-  
+
   # Error formatting
   defp format_join_error(:game_not_found), do: "Game not found"
   defp format_join_error(:game_started), do: "Game has already started"
@@ -691,7 +721,7 @@ defmodule RachelWeb.GameLive do
   def current_player(%Game{} = game) do
     Game.current_player(game)
   end
-  
+
   def current_player(_), do: nil
 
   def current_player_name(%Game{} = game) do
@@ -761,7 +791,7 @@ defmodule RachelWeb.GameLive do
   end
 
   defp check_and_show_winner_banner(socket, nil), do: socket
-  
+
   defp check_and_show_winner_banner(socket, game) do
     player_id = socket.assigns.player_id
     winners = Map.get(game, :winners, [])

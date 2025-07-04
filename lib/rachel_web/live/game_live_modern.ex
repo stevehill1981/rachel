@@ -11,10 +11,10 @@ defmodule RachelWeb.GameLive.Modern do
     <div class="game-board min-h-screen">
       <.game_header game_id={@game_id} />
       
-      <!-- Flash Messages -->
+    <!-- Flash Messages -->
       <.flash_messages flash={@flash} />
       
-      <!-- Main Game Area -->
+    <!-- Main Game Area -->
       <main class="relative z-10 p-4 max-w-7xl mx-auto">
         <%= cond do %>
           <% !@game -> %>
@@ -22,7 +22,7 @@ defmodule RachelWeb.GameLive.Modern do
           <% @game.status == :waiting -> %>
             <.waiting_room game={@game} game_id={@game_id} player_id={@player_id} />
           <% true -> %>
-            <.game_in_progress 
+            <.game_in_progress
               game={@game}
               player_id={@player_id}
               selected_cards={@selected_cards}
@@ -32,16 +32,16 @@ defmodule RachelWeb.GameLive.Modern do
         <% end %>
       </main>
       
-      <!-- Confetti for winners -->
+    <!-- Confetti for winners -->
       <%= if @show_winner_banner do %>
         <div id="confetti-container" class="winner-celebration" phx-hook="WinnerCelebration"></div>
       <% end %>
     </div>
     """
   end
-  
+
   attr :flash, :map, required: true
-  
+
   defp flash_messages(assigns) do
     ~H"""
     <%= if Phoenix.Flash.get(@flash, :info) do %>

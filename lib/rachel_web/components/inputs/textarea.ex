@@ -3,15 +3,15 @@ defmodule RachelWeb.Components.Inputs.Textarea do
   Textarea input component.
   """
   use RachelWeb.Components.Inputs.Base
-  
+
   attr :rest, :global,
     include: ~w(cols disabled form maxlength minlength placeholder readonly required rows)
-  
+
   @doc """
   Renders a textarea input.
-  
+
   ## Examples
-  
+
       <.textarea name="description" label="Description" rows="4" />
       <.textarea field={@form[:message]} placeholder="Enter your message..." />
   """
@@ -19,7 +19,7 @@ defmodule RachelWeb.Components.Inputs.Textarea do
     process_field(assigns.field, assigns)
     |> textarea()
   end
-  
+
   def textarea(assigns) do
     ~H"""
     <fieldset class="fieldset mb-2">

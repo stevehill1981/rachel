@@ -2,7 +2,7 @@ defmodule RachelWeb.Components.Inputs.SelectTest do
   use ExUnit.Case, async: true
   import Phoenix.LiveViewTest
   alias RachelWeb.Components.Inputs.Select
-  
+
   describe "select/1" do
     test "renders basic select" do
       assigns = %{
@@ -16,9 +16,9 @@ defmodule RachelWeb.Components.Inputs.SelectTest do
         prompt: nil,
         rest: %{}
       }
-      
+
       html = render_component(&Select.select/1, assigns)
-      
+
       assert html =~ ~s(<select)
       assert html =~ ~s(name="country")
       assert html =~ ~s(id="country-select")
@@ -30,7 +30,7 @@ defmodule RachelWeb.Components.Inputs.SelectTest do
       assert html =~ ~s(value="CA")
       assert html =~ ~s(value="MX")
     end
-    
+
     test "renders with prompt" do
       assigns = %{
         name: "role",
@@ -43,12 +43,12 @@ defmodule RachelWeb.Components.Inputs.SelectTest do
         multiple: false,
         rest: %{}
       }
-      
+
       html = render_component(&Select.select/1, assigns)
-      
+
       assert html =~ ~s(<option value="">Choose a role</option>)
     end
-    
+
     test "renders multiple select" do
       assigns = %{
         name: "tags",
@@ -61,12 +61,12 @@ defmodule RachelWeb.Components.Inputs.SelectTest do
         prompt: nil,
         rest: %{}
       }
-      
+
       html = render_component(&Select.select/1, assigns)
-      
+
       assert html =~ ~s(multiple)
     end
-    
+
     test "renders with errors" do
       assigns = %{
         name: "category",
@@ -79,9 +79,9 @@ defmodule RachelWeb.Components.Inputs.SelectTest do
         prompt: nil,
         rest: %{}
       }
-      
+
       html = render_component(&Select.select/1, assigns)
-      
+
       assert html =~ "select-error"
       assert html =~ "is required"
     end

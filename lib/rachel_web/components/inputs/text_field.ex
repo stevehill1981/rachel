@@ -4,21 +4,21 @@ defmodule RachelWeb.Components.Inputs.TextField do
   Handles text, email, password, number, date, and other HTML5 input types.
   """
   use RachelWeb.Components.Inputs.Base
-  
+
   attr :type, :string,
     default: "text",
     values: ~w(color date datetime-local email file month number password
                search tel text time url week)
-  
+
   attr :rest, :global,
     include: ~w(accept autocomplete capture disabled form list max maxlength min minlength
                 pattern placeholder readonly required size step)
-  
+
   @doc """
   Renders a text-based input field.
-  
+
   ## Examples
-  
+
       <.text_field name="email" type="email" label="Email Address" />
       <.text_field field={@form[:password]} type="password" />
       <.text_field name="age" type="number" min="0" max="120" />
@@ -27,7 +27,7 @@ defmodule RachelWeb.Components.Inputs.TextField do
     process_field(assigns.field, assigns)
     |> text_field()
   end
-  
+
   def text_field(assigns) do
     ~H"""
     <fieldset class="fieldset mb-2">
