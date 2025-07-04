@@ -16,8 +16,7 @@ defmodule RachelWeb.Components.Inputs.Textarea do
       <.textarea field={@form[:message]} placeholder="Enter your message..." />
   """
   def textarea(%{field: %Phoenix.HTML.FormField{}} = assigns) do
-    assigns
-    |> process_field(assigns)
+    process_field(assigns.field, assigns)
     |> textarea()
   end
   

@@ -472,6 +472,11 @@ defmodule RachelWeb.GameLive do
     end
   end
 
+  # Catch-all handler for unmatched messages (including error tuples)
+  def handle_info(_msg, socket) do
+    {:noreply, socket}
+  end
+
   defp handle_ai_draw(socket, game, ai_id) do
     case AIPlayer.make_move(game, ai_id) do
       {:draw, _} ->
@@ -759,9 +764,10 @@ defmodule RachelWeb.GameLive do
   
   defp check_and_show_winner_banner(socket, game) do
     player_id = socket.assigns.player_id
+    winners = Map.get(game, :winners, [])
 
     # Check if the current player just won and hasn't acknowledged it yet
-    if player_id in game.winners && !socket.assigns.winner_acknowledged do
+    if player_id in winners && !socket.assigns.winner_acknowledged do
       # Auto-hide the banner after 5 seconds
       Process.send_after(self(), :auto_hide_winner_banner, 5000)
 

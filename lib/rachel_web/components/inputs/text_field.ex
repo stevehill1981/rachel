@@ -24,8 +24,7 @@ defmodule RachelWeb.Components.Inputs.TextField do
       <.text_field name="age" type="number" min="0" max="120" />
   """
   def text_field(%{field: %Phoenix.HTML.FormField{}} = assigns) do
-    assigns
-    |> process_field(assigns)
+    process_field(assigns.field, assigns)
     |> text_field()
   end
   

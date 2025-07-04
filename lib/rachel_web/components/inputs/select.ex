@@ -19,8 +19,7 @@ defmodule RachelWeb.Components.Inputs.Select do
       <.select field={@form[:role]} options={[Admin: "admin", User: "user"]} />
   """
   def select(%{field: %Phoenix.HTML.FormField{}} = assigns) do
-    assigns
-    |> process_field(assigns)
+    process_field(assigns.field, assigns)
     |> select()
   end
   

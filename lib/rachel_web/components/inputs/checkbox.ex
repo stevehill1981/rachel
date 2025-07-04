@@ -19,8 +19,7 @@ defmodule RachelWeb.Components.Inputs.Checkbox do
       <.checkbox field={@form[:subscribe]} label="Subscribe to newsletter" />
   """
   def checkbox(%{field: %Phoenix.HTML.FormField{}} = assigns) do
-    assigns
-    |> process_field(assigns)
+    process_field(assigns.field, assigns)
     |> checkbox()
   end
   
