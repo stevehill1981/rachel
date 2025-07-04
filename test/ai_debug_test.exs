@@ -64,7 +64,7 @@ defmodule AIDebugTest do
       {:ok, after_human} = GameServer.play_cards(game_id, "human-1", [card_to_play])
 
       # If we played an ace, nominate a suit
-      after_nomination = 
+      after_nomination =
         if card_to_play.rank == :ace do
           IO.puts("Played ace, nominating suit...")
           {:ok, game_after_nomination} = GameServer.nominate_suit(game_id, "human-1", :hearts)
