@@ -26,7 +26,7 @@ defmodule RachelWeb.GameLive do
 
         socket =
           socket
-          |> assign(:game, game)
+          |> assign(:game, normalize_game_data(game))
           |> assign(:game_id, game_id)
           |> assign(:player_id, player_id)
           |> assign(:player_name, player_name)
@@ -45,7 +45,7 @@ defmodule RachelWeb.GameLive do
 
         socket =
           socket
-          |> assign(:game, game)
+          |> assign(:game, normalize_game_data(game))
           |> assign(:game_id, game_id)
           |> assign(:player_id, player_id)
           |> assign(:player_name, player_name)
@@ -72,13 +72,13 @@ defmodule RachelWeb.GameLive do
   # Fallback for single-player mode (no game_id)
   def mount(_params, _session, socket) do
     # Get player identity for single-player mode
-    # In single-player practice mode, use "You" for better UX
+    # For single-player practice games, always use "You" for better UX
     player_name = "You"
     game = create_test_game(player_name)
 
     socket =
       socket
-      |> assign(:game, game)
+      |> assign(:game, normalize_game_data(game))
       |> assign(:game_id, nil)
       |> assign(:player_id, "human")
       |> assign(:player_name, player_name)
@@ -126,7 +126,7 @@ defmodule RachelWeb.GameLive do
                 {:ok, new_game} ->
                   socket =
                     socket
-                    |> assign(:game, new_game)
+                    |> assign(:game, normalize_game_data(new_game))
                     |> assign(:selected_cards, [])
                     |> check_and_show_winner_banner(new_game)
 
@@ -164,7 +164,7 @@ defmodule RachelWeb.GameLive do
         {:ok, new_game} ->
           socket =
             socket
-            |> assign(:game, new_game)
+            |> assign(:game, normalize_game_data(new_game))
             |> assign(:selected_cards, [])
             |> check_and_show_winner_banner(new_game)
 
@@ -193,7 +193,7 @@ defmodule RachelWeb.GameLive do
         {:ok, new_game} ->
           socket =
             socket
-            |> assign(:game, new_game)
+            |> assign(:game, normalize_game_data(new_game))
             |> assign(:selected_cards, [])
             |> clear_flash()
             |> put_flash(:info, "Card drawn!")
@@ -223,7 +223,7 @@ defmodule RachelWeb.GameLive do
         {:ok, new_game} ->
           socket =
             socket
-            |> assign(:game, new_game)
+            |> assign(:game, normalize_game_data(new_game))
             |> clear_flash()
             |> put_flash(:info, "Suit nominated: #{suit}")
 
@@ -299,7 +299,7 @@ defmodule RachelWeb.GameLive do
               {:ok, new_game} ->
                 socket =
                   socket
-                  |> assign(:game, new_game)
+                  |> assign(:game, normalize_game_data(new_game))
                   |> assign(:show_ai_thinking, false)
 
                 schedule_ai_move(new_game)
@@ -316,7 +316,7 @@ defmodule RachelWeb.GameLive do
               {:ok, new_game} ->
                 socket =
                   socket
-                  |> assign(:game, new_game)
+                  |> assign(:game, normalize_game_data(new_game))
                   |> assign(:show_ai_thinking, false)
 
                 schedule_ai_move(new_game)
@@ -347,7 +347,7 @@ defmodule RachelWeb.GameLive do
   def handle_info({:game_updated, game}, socket) do
     socket =
       socket
-      |> assign(:game, game)
+      |> assign(:game, normalize_game_data(game))
       |> assign(:selected_cards, [])
       |> check_and_show_winner_banner(game)
 
@@ -360,7 +360,7 @@ defmodule RachelWeb.GameLive do
       ) do
     socket =
       socket
-      |> assign(:game, game)
+      |> assign(:game, normalize_game_data(game))
       |> assign(:selected_cards, [])
       |> check_and_show_winner_banner(game)
 
@@ -412,7 +412,7 @@ defmodule RachelWeb.GameLive do
   def handle_info({:player_won, %{player_id: _player_id, game: game}}, socket) do
     socket =
       socket
-      |> assign(:game, game)
+      |> assign(:game, normalize_game_data(game))
       |> check_and_show_winner_banner(game)
 
     {:noreply, socket}
@@ -475,7 +475,7 @@ defmodule RachelWeb.GameLive do
 
           socket =
             socket
-            |> assign(:game, new_game)
+            |> assign(:game, normalize_game_data(new_game))
             |> assign(:selected_cards, [])
             |> clear_flash()
             |> put_flash(:info, message)
@@ -502,7 +502,7 @@ defmodule RachelWeb.GameLive do
           {:ok, new_game} ->
             socket =
               socket
-              |> assign(:game, new_game)
+              |> assign(:game, normalize_game_data(new_game))
               |> assign(:show_ai_thinking, false)
 
             schedule_ai_move(new_game)
@@ -825,4 +825,44 @@ defmodule RachelWeb.GameLive do
       socket
     end
   end
+
+  # Normalize game data to ensure all required fields are present
+  # This prevents defensive programming in components
+  defp normalize_game_data(nil), do: nil
+
+  defp normalize_game_data(%Game{} = game) do
+    # Game struct should already have all fields, just ensure they're not nil
+    %{
+      game
+      | deck: game.deck || %Rachel.Games.Deck{cards: [], discarded: []},
+        discard_pile: game.discard_pile || [],
+        players: game.players || [],
+        current_card: game.current_card,
+        pending_pickups: game.pending_pickups || 0,
+        pending_skips: game.pending_skips || 0,
+        winners: game.winners || []
+    }
+  end
+
+  defp normalize_game_data(game) when is_map(game) do
+    # Convert plain maps to proper Game structs with defaults
+    %Game{
+      id: Map.get(game, :id),
+      status: Map.get(game, :status, :waiting),
+      players: Map.get(game, :players, []),
+      current_player_index: Map.get(game, :current_player_index, 0),
+      current_card: Map.get(game, :current_card),
+      deck: Map.get(game, :deck, %Rachel.Games.Deck{cards: [], discarded: []}),
+      discard_pile: Map.get(game, :discard_pile, []),
+      direction: Map.get(game, :direction, :clockwise),
+      pending_pickups: Map.get(game, :pending_pickups, 0),
+      pending_pickup_type: Map.get(game, :pending_pickup_type),
+      pending_skips: Map.get(game, :pending_skips, 0),
+      nominated_suit: Map.get(game, :nominated_suit),
+      winners: Map.get(game, :winners, []),
+      stats: Map.get(game, :stats, %Rachel.Games.Stats{})
+    }
+  end
+
+  defp normalize_game_data(_), do: nil
 end

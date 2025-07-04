@@ -11,6 +11,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
   """
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
+  import RachelWeb.LiveViewTestHelpers
 
   alias Rachel.Games.{GameManager, GameServer, Game, Card, Player}
 
@@ -332,15 +333,19 @@ defmodule RachelWeb.GameLiveAdvancedTest do
 
       # Check if any cards are present
       if html =~ "phx-value-index" do
-        # Try to click a card - it may be disabled if it's not player's turn
-        try do
-          view |> element("[phx-value-index='0']") |> render_click()
-          updated_html = render(view)
-          assert updated_html =~ "Rachel"
-        rescue
-          ArgumentError ->
+        # Try to click a card - use helper that handles disabled state
+        case click_if_enabled(view, "[phx-value-index='0']") do
+          {:ok, :clicked} ->
+            updated_html = render(view)
+            assert updated_html =~ "Rachel"
+
+          {:ok, :disabled} ->
             # Card is disabled, which is expected when it's not player's turn
             # or when the card can't be selected for other reasons
+            assert html =~ "Rachel"
+
+          {:error, :not_found} ->
+            # Element not found - also acceptable in some states
             assert html =~ "Rachel"
         end
       else

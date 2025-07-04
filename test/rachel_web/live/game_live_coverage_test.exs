@@ -5,6 +5,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
   """
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
+  import RachelWeb.LiveViewTestHelpers
 
   alias Rachel.Games.{GameManager, Card, Player, Deck}
 
@@ -105,16 +106,11 @@ defmodule RachelWeb.GameLiveCoverageTest do
       # Try to draw card in various scenarios that might cause errors
       html = render(view)
 
-      if html =~ "phx-click=\"draw_card\"" && html =~ ~r/phx-click="draw_card"[^>]*(?<!disabled="disabled")/ do
+      if html =~ "phx-click=\"draw_card\"" do
         # Multiple rapid clicks to test error handling
         for _i <- 1..3 do
-          try do
-            view |> element("[phx-click=\"draw_card\"]") |> render_click()
-          rescue
-            ArgumentError ->
-              # Button became disabled, which is fine
-              :ok
-          end
+          # Use helper that handles disabled buttons gracefully
+          click_if_enabled(view, "[phx-click=\"draw_card\"]")
         end
       end
 

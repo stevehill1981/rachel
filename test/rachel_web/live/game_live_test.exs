@@ -9,7 +9,14 @@ defmodule RachelWeb.GameLiveTest do
       {:ok, view, html} = live(conn, ~p"/play")
 
       assert html =~ "Rachel"
+
+      # Check game state to debug player names
+      view_state = :sys.get_state(view.pid)
+      game = view_state.socket.assigns.game
+      human_player = Enum.find(game.players, &(&1.id == "human"))
+
       # Practice game should start immediately with 4 players
+      assert human_player.name == "You"
       assert html =~ "You"
 
       # Should have 3 AI computer players

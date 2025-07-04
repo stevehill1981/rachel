@@ -43,13 +43,11 @@ defmodule RachelWeb.GameLiveScenariosTest do
       conn =
         build_conn()
         |> Phoenix.ConnTest.init_test_session(%{})
-        |> put_session(:player_id, "human")
-        |> put_session(:player_name, "Test Player")
 
       {:ok, view, html} = live(conn, ~p"/play")
 
       assert html =~ "Rachel"
-      # In single-player mode, we always use "You" as the player name
+      # In single-player mode, we default to "You" as the player name
       assert html =~ "You"
 
       # Should create practice game with AI players

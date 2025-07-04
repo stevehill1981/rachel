@@ -12,51 +12,34 @@ defmodule RachelWeb.Components.Game.DeckArea do
   attr :current_player, :any, required: true
 
   def deck_area(assigns) do
-    # Provide safe defaults for missing data
-    game = assigns[:game]
+    # With normalized game data, we can access fields directly
+    game = assigns.game
 
     assigns =
       assigns
       |> assign_new(:deck_size, fn ->
-        case game do
-          %{deck: deck} -> Rachel.Games.Deck.size(deck)
-          _ -> 0
-        end
+        Rachel.Games.Deck.size(game.deck)
       end)
       |> assign_new(:discard_pile_size, fn ->
-        case game do
-          %{discard_pile: pile} when is_list(pile) -> length(pile)
-          _ -> 0
-        end
+        length(game.discard_pile)
       end)
       |> assign_new(:pending_pickups, fn ->
-        case game do
-          %{pending_pickups: pickups} -> pickups
-          _ -> 0
-        end
+        game.pending_pickups
       end)
       |> assign_new(:pending_skips, fn ->
-        case game do
-          %{pending_skips: skips} -> skips
-          _ -> 0
-        end
+        game.pending_skips
       end)
       |> assign_new(:current_card, fn ->
-        case game do
-          %{current_card: card} -> card
-          _ -> nil
-        end
+        game.current_card
       end)
       |> assign_new(:can_draw, fn ->
-        current_player = assigns[:current_player]
-        player_id = assigns[:player_id]
+        current_player = assigns.current_player
+        player_id = assigns.player_id
 
-        case {game, current_player} do
-          {%Game{} = g, %{id: cp_id}} when cp_id == player_id ->
-            !Game.has_valid_play?(g, current_player)
-
-          _ ->
-            false
+        if current_player && current_player.id == player_id do
+          !Game.has_valid_play?(game, current_player)
+        else
+          false
         end
       end)
 
