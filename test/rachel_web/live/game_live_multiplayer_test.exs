@@ -53,13 +53,13 @@ defmodule RachelWeb.GameLiveMultiplayerTest do
 
       # Should show the single-player game
       assert html =~ "Rachel"
-      
+
       # Wait a moment for the game to initialize
       :timer.sleep(100)
-      
+
       # Get the updated HTML after initialization
       html = render(view)
-      
+
       # Check for game content - single player should have game elements
       assert html =~ "card" || html =~ "deck" || html =~ "hand"
     end
