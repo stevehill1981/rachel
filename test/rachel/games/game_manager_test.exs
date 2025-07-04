@@ -404,7 +404,7 @@ defmodule Rachel.Games.GameManagerTest do
     end
 
     test "handles invalid game_id formats" do
-      invalid_ids = ["", nil, "invalid-format", 12345]
+      invalid_ids = ["", nil, "invalid-format", 12_345]
 
       Enum.each(invalid_ids, fn invalid_id ->
         # Should handle gracefully without crashing

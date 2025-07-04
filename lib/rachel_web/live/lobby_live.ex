@@ -4,8 +4,8 @@ defmodule RachelWeb.LobbyLive do
   """
   use RachelWeb, :live_view
 
-  alias Rachel.Games.GameManager
   alias Phoenix.PubSub
+  alias Rachel.Games.GameManager
 
   @impl true
   def mount(_params, session, socket) do

@@ -21,7 +21,6 @@ defmodule PracticeAITest do
 
       # AI should be able to make a move
       action = AIPlayer.make_move(game, current_player.id)
-      IO.inspect(action, label: "AI decision")
 
       # Execute AI move
       new_game =
@@ -68,8 +67,7 @@ defmodule PracticeAITest do
           IO.puts("✅ Turn correctly passed to AI player")
 
           # Verify AI can make a move
-          ai_action = AIPlayer.make_move(new_game, next_player.id)
-          IO.inspect(ai_action, label: "AI should be able to")
+          _ai_action = AIPlayer.make_move(new_game, next_player.id)
         else
           IO.puts("❌ Turn did not pass to AI player")
         end
@@ -106,7 +104,6 @@ defmodule PracticeAITest do
 
       # Check what AI would do
       action = AIPlayer.make_move(game, ai_player.id)
-      IO.inspect(action, label: "AI decision")
 
       # Verify it's a valid decision
       case action do
@@ -118,7 +115,7 @@ defmodule PracticeAITest do
         {:draw, _} ->
           IO.puts("AI wants to draw")
           valid_plays = Game.get_valid_plays(game, ai_player)
-          assert length(valid_plays) == 0, "AI should only draw when no valid plays"
+          assert Enum.empty?(valid_plays), "AI should only draw when no valid plays"
 
         {:nominate, suit} ->
           IO.puts("AI wants to nominate suit: #{suit}")

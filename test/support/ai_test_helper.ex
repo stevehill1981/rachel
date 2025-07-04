@@ -7,7 +7,7 @@ defmodule Test.AITestHelper do
       assert AITestHelper.ai_chooses_play(game, "ai", 0)
   """
 
-  alias Rachel.Games.{Card, AIPlayer}
+  alias Rachel.Games.{AIPlayer, Card}
   alias Test.GameBuilder
 
   @doc "Creates a game where it's the AI's turn"

@@ -1,9 +1,9 @@
 defmodule RachelWeb.GameLive do
   use RachelWeb, :live_view
 
+  alias Phoenix.PubSub
   alias Rachel.Games.{AIPlayer, Card, Game, GameServer}
   alias RachelWeb.GameLive.Modern
-  alias Phoenix.PubSub
 
   @impl true
   def mount(%{"game_id" => game_id}, session, socket) do
@@ -585,42 +585,40 @@ defmodule RachelWeb.GameLive do
 
   # Game joining logic
   defp handle_game_join(game_id, player_id, player_name) do
-    try do
-      case GameServer.get_state(game_id) do
-        game when is_map(game) ->
-          # Game exists - try to join or reconnect
-          if player_in_game?(game, player_id) do
-            # Player is already in game - reconnect
-            case GameServer.reconnect_player(game_id, player_id) do
-              :ok ->
-                # Reconnection successful, get updated game state
-                updated_game = GameServer.get_state(game_id)
-                {:ok, updated_game}
+    case GameServer.get_state(game_id) do
+      game when is_map(game) ->
+        # Game exists - try to join or reconnect
+        if player_in_game?(game, player_id) do
+          # Player is already in game - reconnect
+          case GameServer.reconnect_player(game_id, player_id) do
+            :ok ->
+              # Reconnection successful, get updated game state
+              updated_game = GameServer.get_state(game_id)
+              {:ok, updated_game}
 
-              {:error, reason} ->
-                {:error, reason}
-            end
-          else
-            # Try to join the game
-            case GameServer.join_game(game_id, player_id, player_name) do
-              {:ok, updated_game} ->
-                {:ok, updated_game}
-
-              {:error, :game_started} ->
-                # Game already started, try to join as spectator
-                case GameServer.join_as_spectator(game_id, player_id, player_name) do
-                  {:ok, updated_game} -> {:ok, updated_game, :spectator}
-                  {:error, reason} -> {:error, reason}
-                end
-
-              {:error, reason} ->
-                {:error, reason}
-            end
+            {:error, reason} ->
+              {:error, reason}
           end
+        else
+          # Try to join the game
+          case GameServer.join_game(game_id, player_id, player_name) do
+            {:ok, updated_game} ->
+              {:ok, updated_game}
 
-        _ ->
-          {:error, :game_not_found}
-      end
+            {:error, :game_started} ->
+              # Game already started, try to join as spectator
+              case GameServer.join_as_spectator(game_id, player_id, player_name) do
+                {:ok, updated_game} -> {:ok, updated_game, :spectator}
+                {:error, reason} -> {:error, reason}
+              end
+
+            {:error, reason} ->
+              {:error, reason}
+          end
+        end
+
+      _ ->
+        {:error, :game_not_found}
     catch
       :exit, _ ->
         {:error, :game_not_found}

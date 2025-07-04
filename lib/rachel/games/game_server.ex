@@ -5,9 +5,9 @@ defmodule Rachel.Games.GameServer do
   """
   use GenServer
 
-  alias Rachel.Games.{Game, Player}
-  alias Rachel.Accounts.Stats, as: AccountsStats
   alias Phoenix.PubSub
+  alias Rachel.Accounts.Stats, as: AccountsStats
+  alias Rachel.Games.{Game, Player}
 
   @max_players 8
   @min_players 2
@@ -56,12 +56,10 @@ defmodule Rachel.Games.GameServer do
   end
 
   def get_state(game_id) do
-    try do
-      GenServer.call(via_tuple(game_id), :get_state)
-    catch
-      :exit, {:noproc, _} -> nil
-      :exit, _ -> nil
-    end
+    GenServer.call(via_tuple(game_id), :get_state)
+  catch
+    :exit, {:noproc, _} -> nil
+    :exit, _ -> nil
   end
 
   def add_ai_player(game_id, name) do
@@ -480,7 +478,7 @@ defmodule Rachel.Games.GameServer do
 
         if current_player && current_player.id == player_id && state.game.status == :playing do
           # 10 second grace period
-          Process.send_after(self(), {:check_disconnected_player, player_id}, 10000)
+          Process.send_after(self(), {:check_disconnected_player, player_id}, 10_000)
         end
 
         {:noreply, new_state}
