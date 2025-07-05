@@ -90,9 +90,14 @@ defmodule RachelWeb.InstantPlayLive do
 
   # Catch-all for other game events that don't belong in InstantPlayLive
   @impl true
-  def handle_event(event, _params, socket) when event in [
-    "play_cards", "draw_card", "nominate_suit", "toggle_cards", "toggle_stats"
-  ] do
+  def handle_event(event, _params, socket)
+      when event in [
+             "play_cards",
+             "draw_card",
+             "nominate_suit",
+             "toggle_cards",
+             "toggle_stats"
+           ] do
     # These are gameplay events - redirect to actual game
     if socket.assigns.game_id do
       {:noreply, push_navigate(socket, to: ~p"/game/#{socket.assigns.game_id}")}

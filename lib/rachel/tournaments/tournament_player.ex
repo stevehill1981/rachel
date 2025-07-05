@@ -257,7 +257,7 @@ defmodule Rachel.Tournaments.TournamentPlayer do
           )
 
         current_count >= max_players
-      
+
       nil ->
         false
     end

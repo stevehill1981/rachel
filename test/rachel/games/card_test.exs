@@ -57,10 +57,21 @@ defmodule Rachel.Games.CardTest do
       assert Card.can_play_on?(card, current) == true
     end
 
-    test "ace can play on any card" do
+    test "ace follows standard suit/rank matching rules" do
       current = Card.new(:hearts, :king)
-      ace = Card.new(:spades, :ace)
-      assert Card.can_play_on?(ace, current) == true
+
+      # Ace can play on same suit
+      ace_hearts = Card.new(:hearts, :ace)
+      assert Card.can_play_on?(ace_hearts, current) == true
+
+      # Ace can play on another ace
+      ace_spades = Card.new(:spades, :ace)
+      current_ace = Card.new(:diamonds, :ace)
+      assert Card.can_play_on?(ace_spades, current_ace) == true
+
+      # Ace cannot play on different suit/rank
+      ace_clubs = Card.new(:clubs, :ace)
+      assert Card.can_play_on?(ace_clubs, current) == false
     end
 
     test "different suit and rank cannot play" do

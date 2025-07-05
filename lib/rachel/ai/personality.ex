@@ -433,7 +433,8 @@ defmodule Rachel.AI.Personality do
       end
 
     modifier =
-      if :hoard_special_cards in quirks and context[:uses_special_card] and context[:hand_size] > 5 do
+      if :hoard_special_cards in quirks and context[:uses_special_card] and
+           context[:hand_size] > 5 do
         modifier - 10
       else
         modifier

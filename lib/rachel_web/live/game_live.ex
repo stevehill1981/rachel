@@ -562,6 +562,7 @@ defmodule RachelWeb.GameLive do
 
   defp get_selected_card(current_player, selected_cards) do
     selected_index = hd(selected_cards)
+
     case Enum.at(current_player.hand, selected_index) do
       nil -> {:error, :invalid_card}
       card -> {:ok, card}
