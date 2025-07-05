@@ -94,6 +94,24 @@ Phoenix LiveView handles real-time updates:
 2. Components: `lib/rachel_web/components/game_components.ex`
 3. Interactions: JS commands in `game_live_modern.html.heex`
 
+## Planning & Development Tracking
+
+### Current Status
+- **Mobile Phase 1**: ✅ Complete - Responsive design with touch optimization
+- **Integration Tests**: ✅ Complete - Comprehensive real-world scenario testing
+- **Critical Bugs**: ⚠️ Found via integration tests - Need immediate fixes
+
+### Planning Documents
+- **`ROADMAP.md`** - Complete development roadmap with phases and success metrics
+- **`TODO.md`** - Actionable task list prioritized by urgency
+- **Integration Tests** - Located in `test/rachel/games/*_integration_test.exs`
+
+### Next Priorities
+1. Fix integration test failures (card duplication, array bounds)
+2. Build missing GameServer infrastructure
+3. Implement LiveView Native for mobile monetization
+4. Add user accounts and social features
+
 ## Security Considerations
 - No user authentication currently implemented
 - Game state is session-based (no persistence)
