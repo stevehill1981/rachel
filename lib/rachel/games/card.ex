@@ -56,7 +56,7 @@ defmodule Rachel.Games.Card do
 
   @spec can_play_on?(t(), t()) :: boolean()
   def can_play_on?(%__MODULE__{} = card, %__MODULE__{} = top_card) do
-    matches_suit?(card, top_card) or matches_rank?(card, top_card) or card.rank == :ace
+    matches_suit?(card, top_card) or matches_rank?(card, top_card)
   end
 
   @spec display(t()) :: String.t()
