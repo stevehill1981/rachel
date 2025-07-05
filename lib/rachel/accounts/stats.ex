@@ -195,6 +195,7 @@ defmodule Rachel.Accounts.Stats do
           new_streak = if(game_stats.won, do: profile.current_streak + 1, else: 0)
 
           %{
+            player_id: player_id,
             total_games_played: new_total_games,
             total_games_won: new_total_wins,
             total_score: profile.total_score + game_stats.score,
