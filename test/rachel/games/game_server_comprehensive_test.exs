@@ -1,7 +1,7 @@
 defmodule Rachel.Games.GameServerComprehensiveTest do
   use ExUnit.Case, async: false
 
-  alias Rachel.Games.{GameServer, Card}
+  alias Rachel.Games.{Card, GameServer}
 
   setup do
     game_id = "test-#{System.unique_integer()}"

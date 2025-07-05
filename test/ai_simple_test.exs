@@ -1,7 +1,7 @@
 defmodule AISimpleTest do
   use ExUnit.Case, async: false
 
-  alias Rachel.Games.{GameServer, AIPlayer}
+  alias Rachel.Games.{AIPlayer, GameServer}
 
   test "AI takes automatic turns" do
     # Use GameManager to create game properly

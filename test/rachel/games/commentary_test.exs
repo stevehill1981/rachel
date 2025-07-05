@@ -6,6 +6,7 @@ defmodule Rachel.Games.CommentaryTest do
   describe "generate_comment/2 for :play events" do
     test "generates comment for single card play without special effects" do
       card = %{rank: :ace, suit: :hearts}
+
       params = %{
         player: %{name: "Alice"},
         cards: [card],
@@ -18,6 +19,7 @@ defmodule Rachel.Games.CommentaryTest do
 
     test "generates comment for single card play with special effects" do
       card = %{rank: 7, suit: :clubs}
+
       params = %{
         player: %{name: "Bob"},
         cards: [card],
@@ -30,6 +32,7 @@ defmodule Rachel.Games.CommentaryTest do
 
     test "generates comment for multiple cards play" do
       cards = [%{rank: 5, suit: :hearts}, %{rank: 5, suit: :diamonds}]
+
       params = %{
         player: %{name: "Charlie"},
         cards: cards,
@@ -42,6 +45,7 @@ defmodule Rachel.Games.CommentaryTest do
 
     test "generates comment for multiple cards with special effects" do
       cards = [%{rank: 2, suit: :spades}, %{rank: 2, suit: :clubs}]
+
       params = %{
         player: %{name: "Dana"},
         cards: cards,
@@ -75,6 +79,7 @@ defmodule Rachel.Games.CommentaryTest do
     test "handles all number ranks" do
       for rank <- 2..10 do
         card = %{rank: rank, suit: :hearts}
+
         params = %{
           player: %{name: "Player"},
           cards: [card],
@@ -93,6 +98,7 @@ defmodule Rachel.Games.CommentaryTest do
       Enum.zip(suits, expected_suffixes)
       |> Enum.each(fn {suit, expected_suffix} ->
         card = %{rank: :ace, suit: suit}
+
         params = %{
           player: %{name: "Player"},
           cards: [card],
@@ -106,6 +112,7 @@ defmodule Rachel.Games.CommentaryTest do
 
     test "handles multiple special effects" do
       card = %{rank: :jack, suit: :spades}
+
       params = %{
         player: %{name: "Eve"},
         cards: [card],
@@ -113,7 +120,9 @@ defmodule Rachel.Games.CommentaryTest do
       }
 
       result = Commentary.generate_comment(:play, params)
-      assert result == "Eve plays Jack of Spades ♠ - +5 cards, reverse direction, nominate Hearts ♥!"
+
+      assert result ==
+               "Eve plays Jack of Spades ♠ - +5 cards, reverse direction, nominate Hearts ♥!"
     end
   end
 
@@ -382,9 +391,12 @@ defmodule Rachel.Games.CommentaryTest do
     test "returns close game warning when multiple players have 3 or fewer cards" do
       game = %{
         players: [
-          %{name: "Alice", hand: [%{}, %{}, %{}]},      # 3 cards
-          %{name: "Bob", hand: [%{}, %{}, %{}]},        # 3 cards
-          %{name: "Charlie", hand: [%{}, %{}, %{}, %{}, %{}]}  # 5 cards
+          # 3 cards
+          %{name: "Alice", hand: [%{}, %{}, %{}]},
+          # 3 cards
+          %{name: "Bob", hand: [%{}, %{}, %{}]},
+          # 5 cards
+          %{name: "Charlie", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
         pending_pickups: 0,
         pending_skips: 0
@@ -405,12 +417,18 @@ defmodule Rachel.Games.CommentaryTest do
       }
 
       # Since ai_strategic_play is random, test multiple times
-      results = for _ <- 1..50 do
-        Commentary.generate_strategic_comment(game)
-      end
+      results =
+        for _ <- 1..50 do
+          Commentary.generate_strategic_comment(game)
+        end
 
       # Should sometimes return the AI comment
-      ai_comments = Enum.filter(results, &(&1 == "🤖 Smart play by the AI - that move could change everything!"))
+      ai_comments =
+        Enum.filter(
+          results,
+          &(&1 == "🤖 Smart play by the AI - that move could change everything!")
+        )
+
       assert length(ai_comments) > 0
     end
 
@@ -425,19 +443,21 @@ defmodule Rachel.Games.CommentaryTest do
       }
 
       # Run multiple times to account for random AI strategic play
-      results = for _ <- 1..10 do
-        Commentary.generate_strategic_comment(game)
-      end
+      results =
+        for _ <- 1..10 do
+          Commentary.generate_strategic_comment(game)
+        end
 
       # Should have at least some nil results
       nil_results = Enum.filter(results, &is_nil/1)
-      assert length(nil_results) > 0
+      refute Enum.empty?(nil_results)
     end
 
     test "ignores players with 0 cards for low card warning" do
       game = %{
         players: [
-          %{name: "Alice", hand: []},  # 0 cards - should be ignored
+          # 0 cards - should be ignored
+          %{name: "Alice", hand: []},
           %{name: "Bob", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
         pending_pickups: 0,
@@ -446,9 +466,10 @@ defmodule Rachel.Games.CommentaryTest do
 
       # Should not trigger low card warning for player with 0 cards
       # Run multiple times to account for random AI strategic play
-      results = for _ <- 1..10 do
-        Commentary.generate_strategic_comment(game)
-      end
+      results =
+        for _ <- 1..10 do
+          Commentary.generate_strategic_comment(game)
+        end
 
       low_card_warnings = Enum.filter(results, &(&1 && String.contains?(&1, "down to")))
       assert length(low_card_warnings) == 0
@@ -477,7 +498,8 @@ defmodule Rachel.Games.CommentaryTest do
           %{name: "Alice", hand: [%{}, %{}, %{}, %{}, %{}]},
           %{name: "Bob", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
-        pending_pickups: 6,  # +2 points
+        # +2 points
+        pending_pickups: 6,
         pending_skips: 0,
         direction: :clockwise
       }
@@ -489,32 +511,43 @@ defmodule Rachel.Games.CommentaryTest do
     test "returns :high for high excitement with close game" do
       game = %{
         players: [
-          %{name: "Alice", hand: [%{}, %{}, %{}]},  # 3 cards
-          %{name: "Bob", hand: [%{}, %{}, %{}]},    # 3 cards (close_game +3)
-          %{name: "Charlie", hand: [%{}, %{}, %{}, %{}, %{}]}  # 5 cards
+          # 3 cards
+          %{name: "Alice", hand: [%{}, %{}, %{}]},
+          # 3 cards (close_game +3)
+          %{name: "Bob", hand: [%{}, %{}, %{}]},
+          # 5 cards
+          %{name: "Charlie", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
         pending_pickups: 0,
         pending_skips: 0,
-        direction: :counter_clockwise  # +1 point
+        # +1 point
+        direction: :counter_clockwise
       }
 
       result = Commentary.get_excitement_level(game)
-      assert result == :high  # 3 + 1 = 4 points
+      # 3 + 1 = 4 points
+      assert result == :high
     end
 
     test "returns :extreme for very high excitement" do
       game = %{
         players: [
-          %{name: "Alice", hand: [%{}, %{}]},  # 2 cards
-          %{name: "Bob", hand: [%{}, %{}]}     # 2 cards (multiple_low_cards +2, close_game +3)
+          # 2 cards
+          %{name: "Alice", hand: [%{}, %{}]},
+          # 2 cards (multiple_low_cards +2, close_game +3)
+          %{name: "Bob", hand: [%{}, %{}]}
         ],
-        pending_pickups: 6,         # +2 points
-        pending_skips: 3,           # +1 point
-        direction: :counter_clockwise  # +1 point
+        # +2 points
+        pending_pickups: 6,
+        # +1 point
+        pending_skips: 3,
+        # +1 point
+        direction: :counter_clockwise
       }
 
       result = Commentary.get_excitement_level(game)
-      assert result == :extreme  # 2 + 3 + 2 + 1 + 1 = 9 points
+      # 2 + 3 + 2 + 1 + 1 = 9 points
+      assert result == :extreme
     end
 
     test "factors in high pickup stack only" do
@@ -523,13 +556,15 @@ defmodule Rachel.Games.CommentaryTest do
           %{name: "Alice", hand: [%{}, %{}, %{}, %{}, %{}]},
           %{name: "Bob", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
-        pending_pickups: 6,  # +2 points
+        # +2 points
+        pending_pickups: 6,
         pending_skips: 0,
         direction: :clockwise
       }
 
       result = Commentary.get_excitement_level(game)
-      assert result == :medium  # 2 points
+      # 2 points
+      assert result == :medium
     end
 
     test "factors in skip stack only" do
@@ -539,12 +574,14 @@ defmodule Rachel.Games.CommentaryTest do
           %{name: "Bob", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
         pending_pickups: 0,
-        pending_skips: 3,    # +1 point
+        # +1 point
+        pending_skips: 3,
         direction: :clockwise
       }
 
       result = Commentary.get_excitement_level(game)
-      assert result == :low  # 1 point
+      # 1 point
+      assert result == :low
     end
 
     test "factors in counter-clockwise direction only" do
@@ -555,11 +592,13 @@ defmodule Rachel.Games.CommentaryTest do
         ],
         pending_pickups: 0,
         pending_skips: 0,
-        direction: :counter_clockwise  # +1 point
+        # +1 point
+        direction: :counter_clockwise
       }
 
       result = Commentary.get_excitement_level(game)
-      assert result == :low  # 1 point
+      # 1 point
+      assert result == :low
     end
 
     test "correctly calculates excitement score boundaries" do
@@ -569,7 +608,8 @@ defmodule Rachel.Games.CommentaryTest do
           %{name: "Alice", hand: [%{}, %{}, %{}, %{}, %{}]},
           %{name: "Bob", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
-        pending_pickups: 6,  # +2 points = 2 total
+        # +2 points = 2 total
+        pending_pickups: 6,
         pending_skips: 0,
         direction: :clockwise
       }
@@ -579,13 +619,17 @@ defmodule Rachel.Games.CommentaryTest do
       # Test boundary between :medium and :high (score 4)
       game_high = %{
         players: [
-          %{name: "Alice", hand: [%{}, %{}, %{}]},      # 3 cards
-          %{name: "Bob", hand: [%{}, %{}, %{}]},        # 3 cards (close_game +3)
-          %{name: "Charlie", hand: [%{}, %{}, %{}, %{}, %{}]}  # 5 cards
+          # 3 cards
+          %{name: "Alice", hand: [%{}, %{}, %{}]},
+          # 3 cards (close_game +3)
+          %{name: "Bob", hand: [%{}, %{}, %{}]},
+          # 5 cards
+          %{name: "Charlie", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
         pending_pickups: 0,
         pending_skips: 0,
-        direction: :counter_clockwise  # +1 point = 4 total
+        # +1 point = 4 total
+        direction: :counter_clockwise
       }
 
       assert Commentary.get_excitement_level(game_high) == :high
@@ -593,12 +637,16 @@ defmodule Rachel.Games.CommentaryTest do
       # Test boundary between :high and :extreme (score 6+)
       game_extreme = %{
         players: [
-          %{name: "Alice", hand: [%{}, %{}]},  # 2 cards
-          %{name: "Bob", hand: [%{}, %{}]}     # 2 cards (multiple_low_cards +2, close_game +3)
+          # 2 cards
+          %{name: "Alice", hand: [%{}, %{}]},
+          # 2 cards (multiple_low_cards +2, close_game +3)
+          %{name: "Bob", hand: [%{}, %{}]}
         ],
-        pending_pickups: 6,         # +2 points
+        # +2 points
+        pending_pickups: 6,
         pending_skips: 0,
-        direction: :counter_clockwise  # +1 point = 8 total
+        # +1 point = 8 total
+        direction: :counter_clockwise
       }
 
       assert Commentary.get_excitement_level(game_extreme) == :extreme
@@ -609,7 +657,7 @@ defmodule Rachel.Games.CommentaryTest do
     test "format_special_effect handles all effect types" do
       # These are private functions, but we can test them indirectly through generate_comment
       card = %{rank: :ace, suit: :hearts}
-      
+
       test_effects = [
         {[{:pickup, 3}], "+3 cards"},
         {[{:skip, 2}], "skip 2"},
@@ -706,13 +754,17 @@ defmodule Rachel.Games.CommentaryTest do
           %{name: "Alice", hand: [%{}, %{}, %{}, %{}, %{}]},
           %{name: "Bob", hand: [%{}, %{}, %{}, %{}, %{}]}
         ],
-        pending_pickups: 50,  # +2 points (>5)
-        pending_skips: 20,    # +1 point (>2)
-        direction: :clockwise # +0 points
+        # +2 points (>5)
+        pending_pickups: 50,
+        # +1 point (>2)
+        pending_skips: 20,
+        # +0 points
+        direction: :clockwise
       }
 
       result = Commentary.get_excitement_level(game)
-      assert result == :medium  # 2 + 1 + 0 + 0 + 0 = 3 points
+      # 2 + 1 + 0 + 0 + 0 = 3 points
+      assert result == :medium
     end
   end
 end

@@ -2,7 +2,7 @@ defmodule RachelWeb.Components.Game.PlayerHandTest do
   use RachelWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
   alias RachelWeb.Components.Game.PlayerHand
-  alias Rachel.Games.{Game, Card, Player, Deck}
+  alias Rachel.Games.{Card, Deck, Game, Player}
 
   # Mock the GameLive function that's imported
   defmodule RachelWeb.GameLive do

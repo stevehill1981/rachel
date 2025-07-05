@@ -13,7 +13,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
   import Phoenix.LiveViewTest
   import RachelWeb.LiveViewTestHelpers
 
-  alias Rachel.Games.{GameManager, GameServer, Game, Card, Player}
+  alias Rachel.Games.{Card, Game, GameManager, GameServer, Player}
 
   describe "auto-draw system" do
     setup %{conn: conn} do

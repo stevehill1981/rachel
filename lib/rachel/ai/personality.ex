@@ -422,28 +422,30 @@ defmodule Rachel.AI.Personality do
 
   defp calculate_quirk_modifier(personality, context) do
     quirks = personality.quirks
-    
+
     quirk_modifiers = [
       # Early special cards bonus
-      {:early_special_cards, fn ->
-        context[:early_game] and context[:uses_special_card]
-      end, 15},
-      
+      {:early_special_cards,
+       fn ->
+         context[:early_game] and context[:uses_special_card]
+       end, 15},
+
       # Hoard special cards penalty
-      {:hoard_special_cards, fn ->
-        context[:uses_special_card] and context[:hand_size] > 5
-      end, -10},
-      
+      {:hoard_special_cards,
+       fn ->
+         context[:uses_special_card] and context[:hand_size] > 5
+       end, -10},
+
       # Random plays modifier
       {:random_plays, fn -> true end, fn -> (:rand.uniform() - 0.5) * 20 end},
-      
+
       # Card counting bonus
       {:card_counting, fn -> context[:uses_memory] end, 10},
-      
+
       # Psychological warfare bonus
       {:psychological_warfare, fn -> context[:affects_multiple_opponents] end, 8}
     ]
-    
+
     Enum.reduce(quirk_modifiers, 0, fn
       {quirk, condition, modifier}, acc when is_function(modifier) ->
         if quirk in quirks and condition.() do
@@ -451,7 +453,7 @@ defmodule Rachel.AI.Personality do
         else
           acc
         end
-        
+
       {quirk, condition, modifier}, acc ->
         if quirk in quirks and condition.() do
           acc + modifier

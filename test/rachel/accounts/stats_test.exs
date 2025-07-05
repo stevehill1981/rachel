@@ -2,7 +2,7 @@ defmodule Rachel.Accounts.StatsTest do
   use Rachel.DataCase
 
   alias Rachel.Accounts.Stats
-  alias Rachel.Games.{Game, Player, Card, Deck}
+  alias Rachel.Games.{Card, Deck, Game, Player}
   alias Rachel.Games.Stats, as: GameStats
 
   describe "record_game/4" do
@@ -64,7 +64,11 @@ defmodule Rachel.Accounts.StatsTest do
       {:ok, game: game, started_at: started_at, ended_at: ended_at}
     end
 
-    test "successfully records a completed game", %{game: game, started_at: started_at, ended_at: ended_at} do
+    test "successfully records a completed game", %{
+      game: game,
+      started_at: started_at,
+      ended_at: ended_at
+    } do
       assert {:ok, game_record} = Stats.record_game(game, "test-game-1", started_at, ended_at)
 
       assert game_record.game_id == "test-game-1"
@@ -76,8 +80,10 @@ defmodule Rachel.Accounts.StatsTest do
       assert game_record.special_effects_triggered == 5
       assert game_record.direction_changes == 2
       assert game_record.suit_nominations == 3
-      assert game_record.game_duration_seconds == 1800  # 30 minutes
-      assert game_record.finish_positions == ["p1"]  # Only winners are stored
+      # 30 minutes
+      assert game_record.game_duration_seconds == 1800
+      # Only winners are stored
+      assert game_record.finish_positions == ["p1"]
       assert game_record.started_at == started_at
       assert game_record.ended_at == ended_at
 
@@ -87,7 +93,8 @@ defmodule Rachel.Accounts.StatsTest do
 
       p1_stats = Enum.find(player_stats, &(&1.player_id == "p1"))
       assert p1_stats.player_name == "Winner"
-      assert p1_stats.finish_position == 0  # First place is index 0
+      # First place is index 0
+      assert p1_stats.finish_position == 0
       assert p1_stats.cards_played == 15
       assert p1_stats.cards_drawn == 5
       assert p1_stats.special_cards_played == 3
@@ -96,11 +103,16 @@ defmodule Rachel.Accounts.StatsTest do
 
       p2_stats = Enum.find(player_stats, &(&1.player_id == "p2"))
       assert p2_stats.player_name == "Loser"
-      assert p2_stats.finish_position == nil  # Non-winners don't have a finish position
+      # Non-winners don't have a finish position
+      assert p2_stats.finish_position == nil
       assert p2_stats.won == false
     end
 
-    test "creates player profiles for new players", %{game: game, started_at: started_at, ended_at: ended_at} do
+    test "creates player profiles for new players", %{
+      game: game,
+      started_at: started_at,
+      ended_at: ended_at
+    } do
       assert {:ok, _game_record} = Stats.record_game(game, "test-game-2", started_at, ended_at)
 
       # Check player profiles were created
@@ -122,32 +134,45 @@ defmodule Rachel.Accounts.StatsTest do
       assert p2_profile.win_rate == 0.0
     end
 
-    test "updates existing player profiles", %{game: game, started_at: started_at, ended_at: ended_at} do
+    test "updates existing player profiles", %{
+      game: game,
+      started_at: started_at,
+      ended_at: ended_at
+    } do
       # First game
       assert {:ok, _} = Stats.record_game(game, "test-game-3", started_at, ended_at)
 
       # Second game - p2 wins this time
-      game2 = %{game | 
-        id: "test-game-4",
-        winners: ["p2"],
-        stats: %{game.stats | 
-          game_stats: %{game.stats.game_stats | winner_id: "p2", finish_positions: ["p2", "p1"]}
-        }
+      game2 = %{
+        game
+        | id: "test-game-4",
+          winners: ["p2"],
+          stats: %{
+            game.stats
+            | game_stats: %{
+                game.stats.game_stats
+                | winner_id: "p2",
+                  finish_positions: ["p2", "p1"]
+              }
+          }
       }
+
       assert {:ok, _} = Stats.record_game(game2, "test-game-4", started_at, ended_at)
 
       # Check updated profiles
       p1_profile = Stats.get_player_profile("p1")
       assert p1_profile.total_games_played == 2
       assert p1_profile.total_games_won == 1
-      assert p1_profile.current_streak == 0  # Lost the second game
+      # Lost the second game
+      assert p1_profile.current_streak == 0
       assert p1_profile.best_streak == 1
       assert p1_profile.win_rate == 50.0
 
       p2_profile = Stats.get_player_profile("p2")
       assert p2_profile.total_games_played == 2
       assert p2_profile.total_games_won == 1
-      assert p2_profile.current_streak == 1  # Won the second game
+      # Won the second game
+      assert p2_profile.current_streak == 1
       assert p2_profile.win_rate == 50.0
     end
 
@@ -257,29 +282,33 @@ defmodule Rachel.Accounts.StatsTest do
 
   describe "get_player_stats_for_game/1" do
     setup do
-      {:ok, game_record} = Stats.create_game_record(%{
-        game_id: "test-game",
-        status: "completed"
-      })
+      {:ok, game_record} =
+        Stats.create_game_record(%{
+          game_id: "test-game",
+          status: "completed"
+        })
+
       {:ok, game_record: game_record}
     end
 
     test "returns all player stats for a game", %{game_record: game_record} do
-      {:ok, _} = Stats.create_player_stats(%{
-        player_id: "p1",
-        player_name: "Player 1",
-        game_record_id: game_record.id,
-        finish_position: 1,
-        won: true
-      })
+      {:ok, _} =
+        Stats.create_player_stats(%{
+          player_id: "p1",
+          player_name: "Player 1",
+          game_record_id: game_record.id,
+          finish_position: 1,
+          won: true
+        })
 
-      {:ok, _} = Stats.create_player_stats(%{
-        player_id: "p2",
-        player_name: "Player 2",
-        game_record_id: game_record.id,
-        finish_position: 2,
-        won: false
-      })
+      {:ok, _} =
+        Stats.create_player_stats(%{
+          player_id: "p2",
+          player_name: "Player 2",
+          game_record_id: game_record.id,
+          finish_position: 2,
+          won: false
+        })
 
       stats = Stats.get_player_stats_for_game(game_record.id)
       assert length(stats) == 2
@@ -299,26 +328,29 @@ defmodule Rachel.Accounts.StatsTest do
     end
 
     test "returns all stats for a specific player", %{game1: game1, game2: game2} do
-      {:ok, _} = Stats.create_player_stats(%{
-        player_id: "p1",
-        player_name: "Player 1",
-        game_record_id: game1.id,
-        won: true
-      })
+      {:ok, _} =
+        Stats.create_player_stats(%{
+          player_id: "p1",
+          player_name: "Player 1",
+          game_record_id: game1.id,
+          won: true
+        })
 
-      {:ok, _} = Stats.create_player_stats(%{
-        player_id: "p1",
-        player_name: "Player 1",
-        game_record_id: game2.id,
-        won: false
-      })
+      {:ok, _} =
+        Stats.create_player_stats(%{
+          player_id: "p1",
+          player_name: "Player 1",
+          game_record_id: game2.id,
+          won: false
+        })
 
-      {:ok, _} = Stats.create_player_stats(%{
-        player_id: "p2",
-        player_name: "Player 2",
-        game_record_id: game1.id,
-        won: false
-      })
+      {:ok, _} =
+        Stats.create_player_stats(%{
+          player_id: "p2",
+          player_name: "Player 2",
+          game_record_id: game1.id,
+          won: false
+        })
 
       p1_stats = Stats.get_player_stats("p1")
       assert length(p1_stats) == 2
@@ -332,29 +364,31 @@ defmodule Rachel.Accounts.StatsTest do
     end
 
     test "returns stats ordered by most recent first", %{game1: game1, game2: game2} do
-      {:ok, older} = Stats.create_player_stats(%{
-        player_id: "p1",
-        player_name: "Player 1",
-        game_record_id: game1.id
-      })
+      {:ok, older} =
+        Stats.create_player_stats(%{
+          player_id: "p1",
+          player_name: "Player 1",
+          game_record_id: game1.id
+        })
 
       # Sleep to ensure different timestamps
       Process.sleep(100)
 
-      {:ok, newer} = Stats.create_player_stats(%{
-        player_id: "p1",
-        player_name: "Player 1",
-        game_record_id: game2.id
-      })
+      {:ok, newer} =
+        Stats.create_player_stats(%{
+          player_id: "p1",
+          player_name: "Player 1",
+          game_record_id: game2.id
+        })
 
       stats = Stats.get_player_stats("p1")
       assert length(stats) == 2
-      
+
       # Check that we have both stats
       stat_ids = Enum.map(stats, & &1.id)
       assert older.id in stat_ids
       assert newer.id in stat_ids
-      
+
       # The newer one should generally be first, but we can't guarantee
       # exact ordering with microsecond precision in tests
       # Just verify we got both records back
@@ -363,10 +397,12 @@ defmodule Rachel.Accounts.StatsTest do
 
   describe "create_player_stats/1" do
     setup do
-      {:ok, game_record} = Stats.create_game_record(%{
-        game_id: "test-game",
-        status: "completed"
-      })
+      {:ok, game_record} =
+        Stats.create_game_record(%{
+          game_id: "test-game",
+          status: "completed"
+        })
+
       {:ok, game_record: game_record}
     end
 
@@ -404,6 +440,7 @@ defmodule Rachel.Accounts.StatsTest do
         player_name: "Alice",
         game_record_id: Ecto.UUID.generate()
       }
+
       assert {:error, changeset} = Stats.create_player_stats(attrs)
       assert "does not exist" in errors_on(changeset).game_record_id
     end
@@ -411,10 +448,11 @@ defmodule Rachel.Accounts.StatsTest do
 
   describe "get_player_profile/1" do
     test "returns player profile if exists" do
-      {:ok, profile} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        display_name: "Player One"
-      })
+      {:ok, profile} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          display_name: "Player One"
+        })
 
       found_profile = Stats.get_player_profile("p1")
       assert found_profile.id == profile.id
@@ -429,26 +467,29 @@ defmodule Rachel.Accounts.StatsTest do
 
   describe "get_leaderboard/1" do
     test "returns top players sorted by total score" do
-      {:ok, _} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        display_name: "Low Score",
-        total_score: 100,
-        total_games_won: 1
-      })
+      {:ok, _} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          display_name: "Low Score",
+          total_score: 100,
+          total_games_won: 1
+        })
 
-      {:ok, _} = Stats.upsert_player_profile(%{
-        player_id: "p2",
-        display_name: "High Score",
-        total_score: 500,
-        total_games_won: 5
-      })
+      {:ok, _} =
+        Stats.upsert_player_profile(%{
+          player_id: "p2",
+          display_name: "High Score",
+          total_score: 500,
+          total_games_won: 5
+        })
 
-      {:ok, _} = Stats.upsert_player_profile(%{
-        player_id: "p3",
-        display_name: "Mid Score",
-        total_score: 300,
-        total_games_won: 3
-      })
+      {:ok, _} =
+        Stats.upsert_player_profile(%{
+          player_id: "p3",
+          display_name: "Mid Score",
+          total_score: 300,
+          total_games_won: 3
+        })
 
       leaderboard = Stats.get_leaderboard(2)
       assert length(leaderboard) == 2
@@ -457,19 +498,21 @@ defmodule Rachel.Accounts.StatsTest do
     end
 
     test "uses games won as tiebreaker" do
-      {:ok, _} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        display_name: "Fewer Wins",
-        total_score: 300,
-        total_games_won: 2
-      })
+      {:ok, _} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          display_name: "Fewer Wins",
+          total_score: 300,
+          total_games_won: 2
+        })
 
-      {:ok, _} = Stats.upsert_player_profile(%{
-        player_id: "p2",
-        display_name: "More Wins",
-        total_score: 300,
-        total_games_won: 5
-      })
+      {:ok, _} =
+        Stats.upsert_player_profile(%{
+          player_id: "p2",
+          display_name: "More Wins",
+          total_score: 300,
+          total_games_won: 5
+        })
 
       leaderboard = Stats.get_leaderboard()
       assert Enum.at(leaderboard, 0).player_id == "p2"
@@ -478,16 +521,18 @@ defmodule Rachel.Accounts.StatsTest do
 
     test "respects limit parameter" do
       for i <- 1..15 do
-        {:ok, _} = Stats.upsert_player_profile(%{
-          player_id: "p#{i}",
-          display_name: "Player #{i}",
-          total_score: i * 10
-        })
+        {:ok, _} =
+          Stats.upsert_player_profile(%{
+            player_id: "p#{i}",
+            display_name: "Player #{i}",
+            total_score: i * 10
+          })
       end
 
       assert length(Stats.get_leaderboard(5)) == 5
       assert length(Stats.get_leaderboard(10)) == 10
-      assert length(Stats.get_leaderboard()) == 10  # Default
+      # Default
+      assert length(Stats.get_leaderboard()) == 10
     end
   end
 
@@ -510,24 +555,27 @@ defmodule Rachel.Accounts.StatsTest do
 
     test "updates existing profile" do
       # Create initial profile
-      {:ok, _} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        display_name: "Player One",
-        total_games_played: 5,
-        total_games_won: 2,
-        total_score: 500
-      })
+      {:ok, _} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          display_name: "Player One",
+          total_games_played: 5,
+          total_games_won: 2,
+          total_score: 500
+        })
 
       # Update profile
-      {:ok, updated} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        total_games_played: 6,
-        total_games_won: 3,
-        total_score: 650
-      })
+      {:ok, updated} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          total_games_played: 6,
+          total_games_won: 3,
+          total_score: 650
+        })
 
       assert updated.player_id == "p1"
-      assert updated.display_name == "Player One"  # Unchanged
+      # Unchanged
+      assert updated.display_name == "Player One"
       assert updated.total_games_played == 6
       assert updated.total_games_won == 3
       assert updated.total_score == 650
@@ -536,26 +584,28 @@ defmodule Rachel.Accounts.StatsTest do
     end
 
     test "calculates derived stats correctly" do
-      {:ok, profile} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        display_name: "Test Player",
-        total_games_played: 10,
-        total_games_won: 7,
-        total_score: 1500
-      })
+      {:ok, profile} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          display_name: "Test Player",
+          total_games_played: 10,
+          total_games_won: 7,
+          total_score: 1500
+        })
 
       assert profile.win_rate == 70.0
       assert profile.average_score == 150.0
     end
 
     test "handles zero games played" do
-      {:ok, profile} = Stats.upsert_player_profile(%{
-        player_id: "p1",
-        display_name: "New Player",
-        total_games_played: 0,
-        total_games_won: 0,
-        total_score: 0
-      })
+      {:ok, profile} =
+        Stats.upsert_player_profile(%{
+          player_id: "p1",
+          display_name: "New Player",
+          total_games_played: 0,
+          total_games_won: 0,
+          total_score: 0
+        })
 
       # Should not calculate derived stats
       assert profile.win_rate == 0.0
@@ -607,7 +657,8 @@ defmodule Rachel.Accounts.StatsTest do
       start = ~U[2025-01-05 10:00:00Z]
       finish = ~U[2025-01-05 10:05:00Z]
       {:ok, record} = Stats.record_game(game, "duration-test-1", start, finish)
-      assert record.game_duration_seconds == 300  # 5 minutes
+      # 5 minutes
+      assert record.game_duration_seconds == 300
 
       # Test with nil times
       {:ok, record2} = Stats.record_game(game, "duration-test-2", nil, nil)
@@ -680,20 +731,21 @@ defmodule Rachel.Accounts.StatsTest do
       assert profile.best_streak == 2
 
       # Loss - breaks streak
-      game3 = %{game | 
-        id: "streak-3",
-        winners: ["p2"],
-        stats: %{game.stats | 
-          game_stats: %{game.stats.game_stats | 
-            winner_id: "p2",
-            finish_positions: ["p2"]
+      game3 = %{
+        game
+        | id: "streak-3",
+          winners: ["p2"],
+          stats: %{
+            game.stats
+            | game_stats: %{game.stats.game_stats | winner_id: "p2", finish_positions: ["p2"]}
           }
-        }
       }
+
       {:ok, _} = Stats.record_game(game3, "streak-3", nil, nil)
       profile = Stats.get_player_profile("p1")
       assert profile.current_streak == 0
-      assert profile.best_streak == 2  # Best streak preserved
+      # Best streak preserved
+      assert profile.best_streak == 2
     end
   end
 end

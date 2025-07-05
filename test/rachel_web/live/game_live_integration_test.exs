@@ -13,7 +13,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
 
-  alias Rachel.Games.{GameManager, GameServer, Game, Card}
+  alias Rachel.Games.{Card, Game, GameManager, GameServer}
 
   describe "mount error scenarios" do
     test "handles GameServer notification failure gracefully", %{conn: conn} do

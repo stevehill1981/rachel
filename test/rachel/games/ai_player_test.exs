@@ -1,7 +1,7 @@
 defmodule Rachel.Games.AIPlayerTest do
   use ExUnit.Case, async: true
 
-  alias Rachel.Games.{Game, Card, AIPlayer}
+  alias Rachel.Games.{AIPlayer, Card, Game}
   alias Test.AITestHelper
 
   describe "make_move/2" do

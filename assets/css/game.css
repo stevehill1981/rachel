@@ -416,6 +416,57 @@
   }
 }
 
+/* Mobile hand scrolling optimizations */
+.scrollbar-hide {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Smooth scroll snapping for mobile hands */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* Mobile hand improvements */
+@media (max-width: 1024px) {
+  .player-hand-mobile {
+    /* Add momentum scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Add subtle scroll indicator */
+    background: linear-gradient(90deg, 
+      rgba(255,255,255,0.1) 0%, 
+      transparent 10%, 
+      transparent 90%, 
+      rgba(255,255,255,0.1) 100%);
+  }
+  
+  /* Improve card spacing in horizontal scroll */
+  .playing-card {
+    margin-right: 8px;
+  }
+  
+  /* Better visual feedback for scrollable area */
+  .player-hand-mobile::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1));
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 480px) {
   /* Extra small screens */
   .playing-card {
@@ -427,6 +478,53 @@
   /* Single column layout for very small screens */
   .game-layout {
     flex-direction: column;
+  }
+}
+
+/* Mobile-specific game optimizations */
+@media (max-width: 1024px) {
+  /* Ensure fixed bottom hand doesn't interfere with iOS safe areas */
+  .game-layout {
+    padding-bottom: max(8rem, env(safe-area-inset-bottom, 8rem));
+  }
+  
+  /* Better mobile game action buttons */
+  .deck-can-draw button {
+    /* Larger touch target on mobile */
+    min-height: 3rem;
+    min-width: 3rem;
+  }
+  
+  /* Mobile-optimized text sizing */
+  .playing-card {
+    font-size: 1.1rem;
+  }
+  
+  /* Prevent text selection on mobile during gameplay */
+  .game-layout {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+  
+  /* Enable text selection for specific elements */
+  .player-name,
+  .game-status-text {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+  }
+}
+
+/* iPhone notch and safe area support */
+@supports (padding: max(0px)) {
+  .game-layout {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .fixed.bottom-0 {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 }
 

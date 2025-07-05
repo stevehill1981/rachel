@@ -68,7 +68,7 @@ defmodule Rachel.AI.EnhancedAIPlayer do
 
     # Get the player struct from the game
     player = Enum.find(game.players, &(&1.id == updated_ai.id))
-    
+
     # Get valid plays
     valid_plays = if player, do: Game.get_valid_plays(game, player), else: []
 
@@ -98,7 +98,8 @@ defmodule Rachel.AI.EnhancedAIPlayer do
           end)
 
         # Select best play with some randomness for personality
-        {_best_card, best_index} = select_play_with_personality(scored_plays, updated_ai.ai_state.personality)
+        {_best_card, best_index} =
+          select_play_with_personality(scored_plays, updated_ai.ai_state.personality)
 
         # Calculate thinking time based on decision complexity
         complexity = calculate_decision_complexity(scored_plays)
@@ -274,15 +275,16 @@ defmodule Rachel.AI.EnhancedAIPlayer do
       _ -> calculate_average_threat(opponents)
     end
   end
-  
+
   defp calculate_average_threat(opponents) do
-    total_threat = opponents
+    total_threat =
+      opponents
       |> Enum.map(&calculate_opponent_threat/1)
       |> Enum.sum()
-      
+
     total_threat / length(opponents)
   end
-  
+
   defp calculate_opponent_threat(opponent) do
     case opponent.hand_size do
       size when size <= 2 -> 0.8
@@ -381,18 +383,24 @@ defmodule Rachel.AI.EnhancedAIPlayer do
 
   defp get_special_card_bonus(%Card{rank: rank}, context) do
     base_bonuses = %{
-      2 => {10, 20, 0.5},      # base, threat_bonus, threat_threshold
+      # base, threat_bonus, threat_threshold
+      2 => {10, 20, 0.5},
       7 => {8, 15, 0.3},
-      :jack => {25, 25, 1.0},  # Always 25
-      :queen => {12, 18, 0.6}, # Based on opportunity score instead
-      :ace => {20, 20, 1.0}    # Always 20
+      # Always 25
+      :jack => {25, 25, 1.0},
+      # Based on opportunity score instead
+      :queen => {12, 18, 0.6},
+      # Always 20
+      :ace => {20, 20, 1.0}
     }
-    
+
     case Map.get(base_bonuses, rank) do
       {base, threat_bonus, threshold} ->
-        score_to_check = if rank == :queen, do: context.opportunity_score, else: context.threat_level
+        score_to_check =
+          if rank == :queen, do: context.opportunity_score, else: context.threat_level
+
         if score_to_check > threshold, do: threat_bonus, else: base
-        
+
       nil ->
         0
     end
@@ -408,14 +416,22 @@ defmodule Rachel.AI.EnhancedAIPlayer do
       0
     end
   end
-  
+
   defp score_defensive_card(card) do
     case card.rank do
-      2 -> 15      # Force pickup
-      7 -> 10      # Skip
-      :jack -> 
+      # Force pickup
+      2 ->
+        15
+
+      # Skip
+      7 ->
+        10
+
+      :jack ->
         if card.suit in [:clubs, :spades], do: 25, else: -5
-      _ -> 0
+
+      _ ->
+        0
     end
   end
 

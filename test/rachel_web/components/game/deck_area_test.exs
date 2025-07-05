@@ -2,7 +2,7 @@ defmodule RachelWeb.Components.Game.DeckAreaTest do
   use RachelWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
   alias RachelWeb.Components.Game.DeckArea
-  alias Rachel.Games.{Game, Card, Player, Deck}
+  alias Rachel.Games.{Card, Deck, Game, Player}
 
   describe "deck_area component" do
     setup do

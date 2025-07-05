@@ -11,8 +11,8 @@ defmodule RachelWeb.LobbyLiveIntegrationTest do
   use RachelWeb.ConnCase
 
   import Phoenix.LiveViewTest
-  alias Rachel.Games.{GameManager, GameServer}
   alias Phoenix.PubSub
+  alias Rachel.Games.{GameManager, GameServer}
 
   setup do
     # Clean up any existing games before each test

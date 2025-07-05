@@ -1,7 +1,7 @@
 defmodule PracticeAITest do
   use ExUnit.Case, async: true
 
-  alias Rachel.Games.{Game, AIPlayer}
+  alias Rachel.Games.{AIPlayer, Game}
 
   test "AI takes turns in practice games" do
     # Create a new practice game

@@ -1,8 +1,8 @@
 defmodule Rachel.Games.GameServerAITest do
   use ExUnit.Case, async: false
 
-  alias Rachel.Games.{GameServer, Game, Player, Card, Deck}
-  alias Test.{GameServerBuilder, GameBuilder}
+  alias Rachel.Games.{Card, Deck, Game, GameServer, Player}
+  alias Test.{GameBuilder, GameServerBuilder}
 
   setup do
     game_id = "test-game-#{System.unique_integer()}"

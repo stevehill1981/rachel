@@ -6,10 +6,10 @@ defmodule Rachel.AI.PersonalityTest do
   describe "all_personalities/0" do
     test "returns list of all available personalities" do
       personalities = Personality.all_personalities()
-      
+
       assert is_list(personalities)
       assert length(personalities) > 0
-      
+
       # Check that each personality has required structure
       Enum.each(personalities, fn personality ->
         assert Map.has_key?(personality, :type)
@@ -25,9 +25,9 @@ defmodule Rachel.AI.PersonalityTest do
     test "includes all expected personality types" do
       personalities = Personality.all_personalities()
       types = Enum.map(personalities, & &1.type)
-      
+
       expected_types = [:aggressive, :conservative, :strategic, :chaotic, :adaptive, :bluffer]
-      
+
       Enum.each(expected_types, fn expected_type ->
         assert expected_type in types, "Missing personality type: #{expected_type}"
       end)
@@ -37,7 +37,7 @@ defmodule Rachel.AI.PersonalityTest do
   describe "get_personality/1" do
     test "returns specific personality by type" do
       aggressive = Personality.get_personality(:aggressive)
-      
+
       assert aggressive.type == :aggressive
       assert is_binary(aggressive.name)
       assert is_binary(aggressive.description)
@@ -51,11 +51,11 @@ defmodule Rachel.AI.PersonalityTest do
       aggressive = Personality.get_personality(:aggressive)
       conservative = Personality.get_personality(:conservative)
       strategic = Personality.get_personality(:strategic)
-      
+
       assert aggressive.type != conservative.type
       assert conservative.type != strategic.type
       assert strategic.type != aggressive.type
-      
+
       # Should have different trait values
       assert aggressive.traits != conservative.traits
       assert conservative.traits != strategic.traits
@@ -63,7 +63,7 @@ defmodule Rachel.AI.PersonalityTest do
 
     test "handles all valid personality types" do
       valid_types = [:aggressive, :conservative, :strategic, :chaotic, :adaptive, :bluffer]
-      
+
       Enum.each(valid_types, fn type ->
         personality = Personality.get_personality(type)
         assert personality.type == type
@@ -81,7 +81,7 @@ defmodule Rachel.AI.PersonalityTest do
   describe "random_personality/0" do
     test "returns a valid random personality" do
       personality = Personality.random_personality()
-      
+
       assert is_map(personality)
       assert Map.has_key?(personality, :type)
       assert Map.has_key?(personality, :name)
@@ -92,7 +92,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "generates different personalities on multiple calls" do
       personalities = for _ <- 1..10, do: Personality.random_personality()
       types = Enum.map(personalities, & &1.type)
-      
+
       # Should have some variety (not all the same)
       unique_types = Enum.uniq(types)
       assert length(unique_types) > 1
@@ -101,9 +101,9 @@ defmodule Rachel.AI.PersonalityTest do
     test "all random personalities are valid types" do
       personalities = for _ <- 1..20, do: Personality.random_personality()
       types = Enum.map(personalities, & &1.type)
-      
+
       valid_types = [:aggressive, :conservative, :strategic, :chaotic, :adaptive, :bluffer]
-      
+
       Enum.each(types, fn type ->
         assert type in valid_types
       end)
@@ -114,7 +114,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns comment for aggressive personality with special card" do
       personality = Personality.get_personality(:aggressive)
       comment = Personality.get_personality_comment(personality, :special_card)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -122,7 +122,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns comment for conservative personality with safe play" do
       personality = Personality.get_personality(:conservative)
       comment = Personality.get_personality_comment(personality, :safe_play)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -130,7 +130,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns comment for strategic personality with calculated move" do
       personality = Personality.get_personality(:strategic)
       comment = Personality.get_personality_comment(personality, :calculated_move)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -138,7 +138,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns comment for chaotic personality with random play" do
       personality = Personality.get_personality(:chaotic)
       comment = Personality.get_personality_comment(personality, :random_play)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -146,7 +146,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns comment for adaptive personality with smart adjustment" do
       personality = Personality.get_personality(:adaptive)
       comment = Personality.get_personality_comment(personality, :smart_adjustment)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -154,7 +154,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns comment for bluffer personality with deceptive play" do
       personality = Personality.get_personality(:bluffer)
       comment = Personality.get_personality_comment(personality, :deceptive_play)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -162,7 +162,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns generic comment for card play" do
       personality = Personality.get_personality(:strategic)
       comment = Personality.get_personality_comment(personality, :card_play)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -171,7 +171,7 @@ defmodule Rachel.AI.PersonalityTest do
       personality = Personality.get_personality(:aggressive)
       context = %{game_phase: :late, threat_level: 0.8}
       comment = Personality.get_personality_comment(personality, :special_card, context)
-      
+
       assert is_binary(comment)
       assert String.length(comment) > 0
     end
@@ -186,16 +186,17 @@ defmodule Rachel.AI.PersonalityTest do
         {:adaptive, :smart_adjustment},
         {:bluffer, :deceptive_play}
       ]
-      
+
       Enum.each(valid_combinations, fn {personality_type, move_type} ->
         personality = Personality.get_personality(personality_type)
         comment = Personality.get_personality_comment(personality, move_type)
         assert is_binary(comment)
         assert String.length(comment) > 0
       end)
-      
+
       # Test that all personalities work with :card_play (the fallback)
       personalities = Personality.all_personalities()
+
       Enum.each(personalities, fn personality ->
         comment = Personality.get_personality_comment(personality, :card_play)
         assert is_binary(comment)
@@ -208,17 +209,18 @@ defmodule Rachel.AI.PersonalityTest do
     test "returns thinking time for personality" do
       personality = Personality.get_personality(:strategic)
       time = Personality.get_thinking_time(personality)
-      
+
       assert is_integer(time)
       assert time > 0
-      assert time <= 10000  # Reasonable upper bound
+      # Reasonable upper bound
+      assert time <= 10_000
     end
 
     test "considers decision complexity" do
       personality = Personality.get_personality(:strategic)
       simple_time = Personality.get_thinking_time(personality, 0.5)
       complex_time = Personality.get_thinking_time(personality, 2.0)
-      
+
       assert is_integer(simple_time)
       assert is_integer(complex_time)
       assert complex_time > simple_time
@@ -227,10 +229,10 @@ defmodule Rachel.AI.PersonalityTest do
     test "different personalities have different thinking times" do
       aggressive = Personality.get_personality(:aggressive)
       conservative = Personality.get_personality(:conservative)
-      
+
       aggressive_time = Personality.get_thinking_time(aggressive)
       conservative_time = Personality.get_thinking_time(conservative)
-      
+
       assert is_integer(aggressive_time)
       assert is_integer(conservative_time)
       # Times may be the same or different depending on implementation
@@ -239,17 +241,17 @@ defmodule Rachel.AI.PersonalityTest do
     test "handles default complexity" do
       personality = Personality.get_personality(:chaotic)
       time = Personality.get_thinking_time(personality)
-      
+
       assert is_integer(time)
       assert time > 0
     end
 
     test "handles edge case complexities" do
       personality = Personality.get_personality(:strategic)
-      
+
       zero_time = Personality.get_thinking_time(personality, 0.0)
       high_time = Personality.get_thinking_time(personality, 5.0)
-      
+
       assert is_integer(zero_time)
       assert is_integer(high_time)
       assert zero_time >= 0
@@ -261,6 +263,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "modifies score based on personality" do
       aggressive = Personality.get_personality(:aggressive)
       base_score = 100
+
       context = %{
         is_aggressive_play: true,
         requires_patience: false,
@@ -274,9 +277,9 @@ defmodule Rachel.AI.PersonalityTest do
         uses_memory: false,
         affects_multiple_opponents: false
       }
-      
+
       modified_score = Personality.apply_personality_to_score(base_score, aggressive, context)
-      
+
       assert is_number(modified_score)
       # Score should be modified (either increased or decreased)
     end
@@ -285,6 +288,7 @@ defmodule Rachel.AI.PersonalityTest do
       aggressive = Personality.get_personality(:aggressive)
       conservative = Personality.get_personality(:conservative)
       base_score = 100
+
       context = %{
         is_aggressive_play: true,
         requires_patience: true,
@@ -298,10 +302,12 @@ defmodule Rachel.AI.PersonalityTest do
         uses_memory: false,
         affects_multiple_opponents: false
       }
-      
+
       aggressive_score = Personality.apply_personality_to_score(base_score, aggressive, context)
-      conservative_score = Personality.apply_personality_to_score(base_score, conservative, context)
-      
+
+      conservative_score =
+        Personality.apply_personality_to_score(base_score, conservative, context)
+
       assert is_number(aggressive_score)
       assert is_number(conservative_score)
       # Scores should likely be different for aggressive vs conservative play
@@ -324,14 +330,15 @@ defmodule Rachel.AI.PersonalityTest do
         uses_memory: false,
         affects_multiple_opponents: false
       }
-      
+
       score = Personality.apply_personality_to_score(base_score, personality, context)
-      
+
       assert is_number(score)
     end
 
     test "handles various context scenarios" do
       personality = Personality.get_personality(:adaptive)
+
       base_context = %{
         is_aggressive_play: false,
         requires_patience: false,
@@ -345,7 +352,7 @@ defmodule Rachel.AI.PersonalityTest do
         uses_memory: false,
         affects_multiple_opponents: false
       }
-      
+
       context_variations = [
         Map.put(base_context, :is_aggressive_play, true),
         Map.put(base_context, :requires_patience, true),
@@ -358,7 +365,7 @@ defmodule Rachel.AI.PersonalityTest do
         Map.put(base_context, :uses_memory, true),
         Map.put(base_context, :affects_multiple_opponents, true)
       ]
-      
+
       Enum.each(context_variations, fn context ->
         score = Personality.apply_personality_to_score(100, personality, context)
         assert is_number(score)
@@ -368,6 +375,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "works with all personality types" do
       personalities = Personality.all_personalities()
       base_score = 75
+
       context = %{
         is_aggressive_play: true,
         requires_patience: false,
@@ -381,7 +389,7 @@ defmodule Rachel.AI.PersonalityTest do
         uses_memory: false,
         affects_multiple_opponents: false
       }
-      
+
       Enum.each(personalities, fn personality ->
         score = Personality.apply_personality_to_score(base_score, personality, context)
         assert is_number(score)
@@ -392,21 +400,28 @@ defmodule Rachel.AI.PersonalityTest do
   describe "personality trait validation" do
     test "all personalities have valid trait ranges" do
       personalities = Personality.all_personalities()
-      
+
       Enum.each(personalities, fn personality ->
         traits = personality.traits
-        
+
         # All traits should be between 0.0 and 1.0
         Enum.each(traits, fn {_trait_name, value} ->
           assert is_number(value)
           assert value >= 0.0
           assert value <= 1.0
         end)
-        
+
         # Should have all required traits
-        required_traits = [:aggression, :patience, :risk_tolerance, :card_counting, 
-                          :bluffing, :adaptability, :special_focus]
-        
+        required_traits = [
+          :aggression,
+          :patience,
+          :risk_tolerance,
+          :card_counting,
+          :bluffing,
+          :adaptability,
+          :special_focus
+        ]
+
         Enum.each(required_traits, fn trait ->
           assert Map.has_key?(traits, trait), "Missing trait #{trait} in #{personality.type}"
         end)
@@ -415,20 +430,26 @@ defmodule Rachel.AI.PersonalityTest do
 
     test "all personalities have valid decision weights" do
       personalities = Personality.all_personalities()
-      
+
       Enum.each(personalities, fn personality ->
         weights = personality.decision_weights
-        
+
         # All weights should be positive numbers
         Enum.each(weights, fn {_weight_name, value} ->
           assert is_number(value)
           assert value >= 0.0
         end)
-        
+
         # Should have all required weights
-        required_weights = [:card_value, :hand_size, :opponent_impact, 
-                           :self_protection, :special_effects, :suit_control]
-        
+        required_weights = [
+          :card_value,
+          :hand_size,
+          :opponent_impact,
+          :self_protection,
+          :special_effects,
+          :suit_control
+        ]
+
         Enum.each(required_weights, fn weight ->
           assert Map.has_key?(weights, weight), "Missing weight #{weight} in #{personality.type}"
         end)
@@ -437,22 +458,23 @@ defmodule Rachel.AI.PersonalityTest do
 
     test "all personalities have valid difficulty modifiers" do
       personalities = Personality.all_personalities()
-      
+
       Enum.each(personalities, fn personality ->
         modifier = personality.difficulty_modifier
-        
+
         assert is_number(modifier)
         assert modifier > 0.0
-        assert modifier <= 2.0  # Reasonable upper bound
+        # Reasonable upper bound
+        assert modifier <= 2.0
       end)
     end
 
     test "all personalities have quirks list" do
       personalities = Personality.all_personalities()
-      
+
       Enum.each(personalities, fn personality ->
         quirks = personality.quirks
-        
+
         assert is_list(quirks)
         # Quirks should be atoms
         Enum.each(quirks, fn quirk ->
@@ -465,23 +487,24 @@ defmodule Rachel.AI.PersonalityTest do
   describe "personality descriptions" do
     test "all personalities have meaningful names and descriptions" do
       personalities = Personality.all_personalities()
-      
+
       Enum.each(personalities, fn personality ->
         assert is_binary(personality.name)
         assert String.length(personality.name) > 0
-        
+
         assert is_binary(personality.description)
-        assert String.length(personality.description) > 10  # Should be descriptive
+        # Should be descriptive
+        assert String.length(personality.description) > 10
       end)
     end
 
     test "personality names include personality type information" do
       personalities = Personality.all_personalities()
-      
+
       Enum.each(personalities, fn personality ->
         name_lower = String.downcase(personality.name)
         type_string = Atom.to_string(personality.type)
-        
+
         # Name should somehow relate to the type (or be descriptive enough)
         assert String.length(name_lower) > 0
         assert String.length(type_string) > 0
@@ -504,7 +527,7 @@ defmodule Rachel.AI.PersonalityTest do
 
     test "raises error for invalid move type in comment generation" do
       personality = Personality.get_personality(:strategic)
-      
+
       # Function should raise for invalid move types due to case clause
       assert_raise CaseClauseError, fn ->
         Personality.get_personality_comment(personality, :invalid_move_type)
@@ -514,7 +537,7 @@ defmodule Rachel.AI.PersonalityTest do
     test "negative thinking time complexity" do
       personality = Personality.get_personality(:strategic)
       time = Personality.get_thinking_time(personality, -1.0)
-      
+
       assert is_integer(time)
       # Function may return negative values for negative complexity
       # This is acceptable behavior - just ensure it returns a number
@@ -523,10 +546,11 @@ defmodule Rachel.AI.PersonalityTest do
     test "very high thinking time complexity" do
       personality = Personality.get_personality(:conservative)
       time = Personality.get_thinking_time(personality, 100.0)
-      
+
       assert is_integer(time)
       # Should cap at reasonable value or scale appropriately
-      assert time <= 120000  # 2 minutes seems like reasonable max for very complex decisions
+      # 2 minutes seems like reasonable max for very complex decisions
+      assert time <= 120_000
     end
   end
 end

@@ -85,12 +85,18 @@ defmodule Rachel.Games.Game do
       | players: players_with_cards,
         deck: deck,
         current_card: first_card,
+        discard_pile: [first_card],  # CRITICAL FIX: Add first card to discard pile
         status: :playing,
         stats: stats
     }
   end
 
   @spec play_card(t(), player_id(), [integer()] | integer()) :: {:ok, t()} | {:error, atom()}
+  def play_card(%__MODULE__{status: status} = _game, _player_id, _card_indices) 
+      when status != :playing do
+    {:error, :game_not_in_progress}
+  end
+
   def play_card(%__MODULE__{status: :playing} = game, player_id, card_indices)
       when is_list(card_indices) do
     with {:ok, player_index} <- find_player_index(game, player_id),
@@ -210,12 +216,25 @@ defmodule Rachel.Games.Game do
   end
 
   defp get_cards_by_indices(hand, indices) do
-    cards = Enum.map(indices, fn i -> Enum.at(hand, i) end)
+    hand_size = length(hand)
+    
+    # Check for duplicate indices first (prevents card duplication exploits)
+    cond do
+      length(indices) != length(Enum.uniq(indices)) ->
+        {:error, :duplicate_card_indices}
+      
+      # Check for invalid indices (negative or out of bounds)
+      Enum.any?(indices, fn i -> i < 0 or i >= hand_size end) ->
+        {:error, :invalid_card_index}
+      
+      true ->
+        cards = Enum.map(indices, fn i -> Enum.at(hand, i) end)
 
-    if Enum.any?(cards, &is_nil/1) do
-      {:error, :invalid_card_index}
-    else
-      {:ok, cards}
+        if Enum.any?(cards, &is_nil/1) do
+          {:error, :invalid_card_index}
+        else
+          {:ok, cards}
+        end
     end
   end
 
@@ -246,6 +265,10 @@ defmodule Rachel.Games.Game do
     else
       {:error, :must_play_nominated_suit}
     end
+  end
+
+  defp validate_play(_game, []) do
+    {:error, :no_cards_selected}
   end
 
   defp validate_play(game, cards) do
@@ -318,19 +341,27 @@ defmodule Rachel.Games.Game do
       {cards, new_deck, discard_pile}
     else
       # Need to reshuffle discard pile into deck
-      # Create a new deck with the discarded cards added back and shuffled
-      cards_to_reshuffle = discard_pile
+      # CRITICAL FIX: Don't reshuffle the current card (top of discard pile)
+      # The current card should stay as the current card
+      case discard_pile do
+        [] ->
+          # No cards to reshuffle, return what we have
+          {cards, new_deck} = Deck.draw(deck, count)
+          {cards, new_deck, discard_pile}
+        
+        [_current_card | cards_to_reshuffle] ->
+          # Only reshuffle the cards UNDER the current card
+          # Keep the current card at the top of discard pile
+          all_cards = deck.cards ++ cards_to_reshuffle
+          reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
 
-      # Create a new deck by adding discard pile cards to the existing deck
-      all_cards = deck.cards ++ cards_to_reshuffle
-      reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
+          # Keep only the current card in discard pile
+          new_discard_pile = [List.first(discard_pile)]
 
-      # Clear discard pile since we reshuffled it
-      new_discard_pile = []
-
-      # Now draw the required cards
-      {cards, final_deck} = Deck.draw(reshuffled_deck, count)
-      {cards, final_deck, new_discard_pile}
+          # Now draw the required cards
+          {cards, final_deck} = Deck.draw(reshuffled_deck, count)
+          {cards, final_deck, new_discard_pile}
+      end
     end
   end
 

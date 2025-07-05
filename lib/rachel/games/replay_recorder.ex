@@ -50,14 +50,18 @@ defmodule Rachel.Games.ReplayRecorder do
 
     table = recording_table(game_id)
 
-    case :ets.lookup(table, 0) do
-      [{0, existing_events}] ->
-        updated_events = existing_events ++ [event]
-        :ets.insert(table, {0, updated_events})
-        {:ok, event}
+    if :ets.whereis(table) == :undefined do
+      {:error, :recording_not_started}
+    else
+      case :ets.lookup(table, 0) do
+        [{0, existing_events}] ->
+          updated_events = existing_events ++ [event]
+          :ets.insert(table, {0, updated_events})
+          {:ok, event}
 
-      [] ->
-        {:error, :recording_not_started}
+        [] ->
+          {:error, :recording_not_started}
+      end
     end
   end
 
@@ -67,18 +71,22 @@ defmodule Rachel.Games.ReplayRecorder do
   def stop_recording(game_id, save_replay? \\ true) do
     table = recording_table(game_id)
 
-    case :ets.lookup(table, 0) do
-      [{0, events}] ->
-        :ets.delete(table)
+    if :ets.whereis(table) == :undefined do
+      {:error, :no_recording_found}
+    else
+      case :ets.lookup(table, 0) do
+        [{0, events}] ->
+          :ets.delete(table)
 
-        if save_replay? and length(events) > 1 do
-          save_replay(game_id, events)
-        else
-          {:ok, events}
-        end
+          if save_replay? and length(events) > 1 do
+            save_replay(game_id, events)
+          else
+            {:ok, events}
+          end
 
-      [] ->
-        {:error, :no_recording_found}
+        [] ->
+          {:error, :no_recording_found}
+      end
     end
   end
 
@@ -86,9 +94,15 @@ defmodule Rachel.Games.ReplayRecorder do
   Gets current recording events without stopping.
   """
   def get_current_events(game_id) do
-    case :ets.lookup(recording_table(game_id), 0) do
-      [{0, events}] -> {:ok, events}
-      [] -> {:error, :no_recording_found}
+    table = recording_table(game_id)
+
+    if :ets.whereis(table) == :undefined do
+      {:error, :no_recording_found}
+    else
+      case :ets.lookup(table, 0) do
+        [{0, events}] -> {:ok, events}
+        [] -> {:error, :no_recording_found}
+      end
     end
   end
 

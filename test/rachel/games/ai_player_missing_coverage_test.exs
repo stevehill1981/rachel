@@ -4,7 +4,7 @@ defmodule Rachel.Games.AIPlayerMissingCoverageTest do
   """
   use ExUnit.Case, async: true
 
-  alias Rachel.Games.{Game, Card, AIPlayer}
+  alias Rachel.Games.{AIPlayer, Card, Game}
 
   describe "specific missing coverage lines" do
     test "reverse direction with 2 or fewer players gets default priority" do

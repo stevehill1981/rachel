@@ -6,7 +6,7 @@ defmodule Rachel.Accounts.Stats do
   import Ecto.Query, warn: false
   alias Rachel.Repo
 
-  alias Rachel.Accounts.{GameRecord, PlayerStats, PlayerProfile}
+  alias Rachel.Accounts.{GameRecord, PlayerProfile, PlayerStats}
   alias Rachel.Games.Stats
 
   @doc """

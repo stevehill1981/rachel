@@ -108,7 +108,7 @@ defmodule Rachel.Games.Commentary do
   @spec get_excitement_level(map()) :: :low | :medium | :high | :extreme
   def get_excitement_level(game) do
     total_excitement = calculate_excitement_score(game)
-    
+
     cond do
       total_excitement <= 1 -> :low
       total_excitement <= 3 -> :medium
@@ -116,7 +116,7 @@ defmodule Rachel.Games.Commentary do
       true -> :extreme
     end
   end
-  
+
   defp calculate_excitement_score(game) do
     excitement_factors = [
       {game.pending_pickups > 5, 2},
@@ -125,7 +125,7 @@ defmodule Rachel.Games.Commentary do
       {multiple_low_cards(game), 2},
       {game.direction == :counter_clockwise, 1}
     ]
-    
+
     excitement_factors
     |> Enum.filter(fn {condition, _} -> condition end)
     |> Enum.map(fn {_, score} -> score end)

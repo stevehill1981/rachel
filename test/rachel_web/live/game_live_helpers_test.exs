@@ -6,7 +6,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
 
-  alias Rachel.Games.{Game, Card, Deck, Player}
+  alias Rachel.Games.{Card, Deck, Game, Player}
 
   describe "helper functions" do
     test "get_player_name_by_id with existing player" do

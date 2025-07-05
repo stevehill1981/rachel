@@ -55,12 +55,43 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   defp play_button(assigns) do
     ~H"""
     <%= if length(@selected_cards) > 0 do %>
-      <div class="flex justify-center mb-4">
+      <div class="flex flex-col items-center mb-4 space-y-2">
+        <!-- Multi-card selection indicator -->
+        <%= if length(@selected_cards) > 1 do %>
+          <div class="flex space-x-1">
+            <%= for i <- 1..length(@selected_cards) do %>
+              <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={"animation-delay: #{(i-1) * 100}ms"}></div>
+            <% end %>
+          </div>
+          <div class="text-xs text-blue-300 font-medium">
+            {length(@selected_cards)} cards selected
+          </div>
+        <% end %>
+        
+        <!-- Main play button -->
         <button
           phx-click="play_cards"
-          class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
+          class={[
+            "px-8 py-3 text-white rounded-xl font-bold transition-all duration-200",
+            "shadow-lg active:scale-95 touch-manipulation",
+            # Large touch target
+            "min-h-[48px] min-w-[120px]",
+            # Different colors for single vs multi-card
+            length(@selected_cards) == 1 && "bg-green-500 hover:bg-green-600",
+            length(@selected_cards) > 1 && "bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/50"
+          ]}
         >
-          Play {length(@selected_cards)} Card{if length(@selected_cards) == 1, do: "", else: "s"}
+          <%= if length(@selected_cards) == 1 do %>
+            <span class="flex items-center space-x-2">
+              <span>▶</span>
+              <span>Play Card</span>
+            </span>
+          <% else %>
+            <span class="flex items-center space-x-2">
+              <span>🃏</span>
+              <span>Play {length(@selected_cards)} Cards</span>
+            </span>
+          <% end %>
         </button>
       </div>
     <% end %>
@@ -98,9 +129,44 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   attr :current_player, :any, required: true
 
   defp hand_display(assigns) do
+    assigns = assign(assigns, :hand_size, length(assigns.player.hand))
+    
     ~H"""
     <%= if @player do %>
-      <div class="grid grid-cols-4 lg:grid-cols-8 gap-2">
+      <!-- Mobile: Horizontal scroll, Desktop: Grid -->
+      <div class={[
+        # Mobile: horizontal scrolling container
+        "flex overflow-x-auto gap-3 pb-4 snap-x snap-mandatory lg:hidden",
+        # Hide scrollbar on mobile
+        "scrollbar-hide",
+        # Padding for scroll snap
+        "px-2"
+      ]}>
+        <%= for {card, idx} <- Enum.with_index(@player.hand) do %>
+          <div class="flex-shrink-0 snap-start">
+            <.playing_card
+              card={card}
+              index={idx}
+              selected={idx in @selected_cards}
+              disabled={
+                @current_player == nil ||
+                  @current_player.id != @player_id ||
+                  !RachelWeb.GameLive.EventHandlers.can_select_card?(
+                    @game,
+                    card,
+                    @selected_cards,
+                    @player.hand
+                  )
+              }
+              phx-click="select_card"
+              phx-value-index={idx}
+            />
+          </div>
+        <% end %>
+      </div>
+      
+      <!-- Desktop: Grid layout -->
+      <div class="hidden lg:grid lg:grid-cols-8 gap-2">
         <%= for {card, idx} <- Enum.with_index(@player.hand) do %>
           <div class="flex justify-center">
             <.playing_card

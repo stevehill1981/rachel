@@ -2,7 +2,7 @@ defmodule Rachel.Accounts.PlayerStats do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias Rachel.Accounts.{User, GameRecord}
+  alias Rachel.Accounts.{GameRecord, User}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id

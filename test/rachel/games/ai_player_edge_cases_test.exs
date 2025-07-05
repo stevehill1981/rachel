@@ -5,7 +5,7 @@ defmodule Rachel.Games.AIPlayerEdgeCasesTest do
   """
   use ExUnit.Case, async: true
 
-  alias Rachel.Games.{Game, Card, AIPlayer}
+  alias Rachel.Games.{AIPlayer, Card, Game}
 
   describe "edge cases for 100% coverage" do
     test "handles when opponents have many cards for reverse direction priority" do

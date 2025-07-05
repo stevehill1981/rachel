@@ -7,7 +7,7 @@ defmodule Rachel.Tournaments.Tournament do
   import Ecto.Changeset
   import Ecto.Query
   alias Rachel.Repo
-  alias Rachel.Tournaments.{TournamentPlayer, TournamentMatch}
+  alias Rachel.Tournaments.{TournamentMatch, TournamentPlayer}
 
   @type tournament_status :: :registration | :starting | :in_progress | :completed | :cancelled
   @type tournament_format :: :single_elimination | :double_elimination | :round_robin | :swiss

@@ -170,16 +170,36 @@ defmodule RachelWeb.GameComponents do
         <button
           id="deck-draw-button"
           phx-click="draw_card"
-          class="absolute inset-0 z-20 rounded-2xl hover:ring-4 hover:ring-green-400 focus:ring-4 focus:ring-green-400 transition-all duration-300 cursor-pointer group touch-manipulation"
+          class={[
+            "absolute inset-0 z-20 rounded-2xl transition-all duration-300 cursor-pointer group touch-manipulation",
+            # Enhanced mobile touch feedback
+            "active:scale-95",
+            # Better ring visibility on mobile
+            "hover:ring-4 hover:ring-green-400 focus:ring-4 focus:ring-green-400",
+            # Always show ring on mobile for clear interaction
+            "ring-2 ring-green-400/50 lg:ring-0"
+          ]}
           title="Draw cards from deck"
           aria-label={"Draw cards from deck, #{@deck_size} cards remaining"}
           phx-hook="SoundEffect"
           data-sound="card-draw"
         >
-          <div class="absolute inset-0 bg-green-400/20 rounded-2xl opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300">
+          <!-- Background overlay - more visible on mobile -->
+          <div class={[
+            "absolute inset-0 bg-green-400/20 rounded-2xl transition-opacity duration-300",
+            # More visible on mobile, hover-based on desktop
+            "opacity-30 lg:opacity-0 group-hover:opacity-100 group-focus:opacity-100"
+          ]}>
           </div>
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
-            Draw Cards
+          
+          <!-- Draw text/icon - always visible on mobile -->
+          <div class={[
+            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold transition-opacity flex flex-col items-center",
+            # Always visible on mobile, hover on desktop
+            "opacity-80 lg:opacity-0 group-hover:opacity-100 group-focus:opacity-100"
+          ]}>
+            <div class="text-2xl mb-1">⬇️</div>
+            <div class="text-xs lg:text-sm">Draw</div>
           </div>
         </button>
       <% end %>

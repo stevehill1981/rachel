@@ -1,7 +1,7 @@
 defmodule Rachel.Games.StatsTest do
   use ExUnit.Case, async: true
 
-  alias Rachel.Games.{Stats, Card}
+  alias Rachel.Games.{Card, Stats}
 
   describe "new/1" do
     test "creates stats for all players" do

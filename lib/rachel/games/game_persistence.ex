@@ -13,7 +13,7 @@ defmodule Rachel.Games.GamePersistence do
   require Logger
 
   alias Rachel.Repo
-  alias Rachel.Games.{Game, GameServer, GameManager, GameState}
+  alias Rachel.Games.{Game, GameManager, GameServer, GameState}
   import Ecto.Query
 
   # Save every 30 seconds
@@ -235,13 +235,14 @@ defmodule Rachel.Games.GamePersistence do
         game_state
         |> Map.from_struct()
         |> serialize_nested_data()
-      
+
       _ when is_map(game_state) ->
         serialize_nested_data(game_state)
-      
+
       _ ->
         # Not a valid game state structure
-        raise ArgumentError, "Invalid game state: expected struct or map, got #{inspect(game_state)}"
+        raise ArgumentError,
+              "Invalid game state: expected struct or map, got #{inspect(game_state)}"
     end
   end
 
@@ -307,7 +308,7 @@ defmodule Rachel.Games.GamePersistence do
       "clockwise" => :clockwise,
       "counter_clockwise" => :counter_clockwise
     }
-    
+
     Map.get(string_to_atom_map, str, str)
   end
 

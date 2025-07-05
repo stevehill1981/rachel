@@ -362,7 +362,7 @@ defmodule Rachel.Games.Stats do
       finish_positions: game.winners,
       game_duration_seconds: nil
     }
-    
+
     if game.stats && game.stats.game_stats do
       Map.merge(default_stats, %{
         total_turns: game.stats.game_stats.total_turns,

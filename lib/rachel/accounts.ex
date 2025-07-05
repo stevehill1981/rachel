@@ -6,7 +6,7 @@ defmodule Rachel.Accounts do
   import Ecto.Query, warn: false
   alias Rachel.Repo
 
-  alias Rachel.Accounts.{User, UserToken, UserNotifier}
+  alias Rachel.Accounts.{User, UserNotifier, UserToken}
 
   ## Database getters
 

@@ -22,14 +22,32 @@ defmodule RachelWeb.Components.Game.GameInProgress do
     assigns = assign(assigns, :current_player, StateManager.current_player(assigns.game))
 
     ~H"""
-    <div class="game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-4 p-4 min-h-[80vh] page-transition">
-      <!-- Top Players - Mobile: stacked, Desktop: top row -->
-      <div class="lg:col-span-3 lg:row-start-1">
+    <div class="game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-32 lg:pb-0">
+      <!-- Top Players - Compact on mobile for more game space -->
+      <div class="lg:col-span-3 lg:row-start-1 flex-shrink-0">
         <.players_display game={@game} />
       </div>
       
-    <!-- Main Game Area - Mobile: center, Desktop: center column -->
-      <div class="lg:col-start-2 lg:row-start-2 flex items-center justify-center">
+      <!-- Mobile: Compact middle section with game area and status side by side -->
+      <div class="flex lg:hidden gap-2 flex-shrink-0 px-2">
+        <!-- Main Game Area -->
+        <div class="flex-1 flex items-center justify-center min-h-[200px]">
+          <.deck_area
+            game={@game}
+            player_id={@player_id}
+            show_ai_thinking={@show_ai_thinking}
+            current_player={@current_player}
+          />
+        </div>
+        
+        <!-- Side Game Info - Compact vertical -->
+        <div class="w-20 flex flex-col items-center justify-center">
+          <.game_status game={@game} />
+        </div>
+      </div>
+      
+      <!-- Desktop: Original grid layout -->
+      <div class="hidden lg:flex lg:col-start-2 lg:row-start-2 items-center justify-center">
         <.deck_area
           game={@game}
           player_id={@player_id}
@@ -38,13 +56,12 @@ defmodule RachelWeb.Components.Game.GameInProgress do
         />
       </div>
       
-    <!-- Side Game Info - Mobile: below main, Desktop: side columns -->
-      <div class="lg:col-start-1 lg:row-start-2 lg:col-start-3 lg:row-start-2 flex flex-col items-center justify-center">
+      <div class="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:col-start-3 lg:row-start-2 flex-col items-center justify-center">
         <.game_status game={@game} />
       </div>
       
-    <!-- Player Hand - Mobile: bottom, Desktop: bottom row -->
-      <div class="lg:col-span-3 lg:row-start-3 mt-auto">
+    <!-- Player Hand - Fixed bottom position for easy thumb access -->
+      <div class="lg:col-span-3 lg:row-start-3 mt-auto fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto bg-slate-900/90 backdrop-blur lg:bg-transparent p-2 lg:p-0 z-50">
         <.player_hand
           game={@game}
           player_id={@player_id}

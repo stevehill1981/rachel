@@ -7,7 +7,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
   import Phoenix.LiveViewTest
   import RachelWeb.LiveViewTestHelpers
 
-  alias Rachel.Games.{GameManager, Card, Player, Deck}
+  alias Rachel.Games.{Card, Deck, GameManager, Player}
 
   describe "format_error function coverage" do
     test "format_error handles all error types" do

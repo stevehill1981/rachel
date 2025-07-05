@@ -1,7 +1,7 @@
 defmodule RachelWeb.Components.JSCommandsTest do
   use ExUnit.Case, async: true
-  alias RachelWeb.Components.JSCommands
   alias Phoenix.LiveView.JS
+  alias RachelWeb.Components.JSCommands
 
   describe "show/2" do
     test "creates show command with default JS struct" do

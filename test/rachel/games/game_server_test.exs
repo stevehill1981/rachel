@@ -1,7 +1,7 @@
 defmodule Rachel.Games.GameServerTest do
   use ExUnit.Case, async: true
 
-  alias Rachel.Games.{GameServer, Game}
+  alias Rachel.Games.{Game, GameServer}
 
   describe "start_link/1" do
     test "starts a game server with initial state" do
