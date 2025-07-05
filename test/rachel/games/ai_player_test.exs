@@ -261,7 +261,7 @@ defmodule Rachel.Games.AIPlayerTest do
             %Card{suit: :hearts, rank: 2},
             # Correct suit
             %Card{suit: :clubs, rank: 3},
-            # Ace always valid
+            # Ace (matches rank)
             %Card{suit: :spades, rank: :ace}
           ]
       }

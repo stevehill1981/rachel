@@ -345,7 +345,7 @@ defmodule Rachel.Games.GameComprehensiveTest do
           %Card{suit: :spades, rank: :king},
           # Invalid
           %Card{suit: :clubs, rank: 3},
-          # Valid - ace always valid
+          # Valid - ace matches suit
           %Card{suit: :hearts, rank: :ace}
         ]
       }
@@ -418,8 +418,8 @@ defmodule Rachel.Games.GameComprehensiveTest do
           %Card{suit: :clubs, rank: 2},
           # Invalid - wrong suit
           %Card{suit: :hearts, rank: 3},
-          # Valid - ace always valid
-          %Card{suit: :spades, rank: :ace}
+          # Valid - ace of nominated suit
+          %Card{suit: :clubs, rank: :ace}
         ]
       }
 
@@ -548,7 +548,8 @@ defmodule Rachel.Games.GameComprehensiveTest do
     end
 
     test "aces require suit nomination", %{game: game} do
-      game = %{game | current_player_index: 0}
+      # Set current card to hearts so the ace can be played
+      game = %{game | current_player_index: 0, current_card: %Card{suit: :hearts, rank: :king}}
       [player | rest] = game.players
       player = %{player | hand: [%Card{suit: :hearts, rank: :ace}]}
       game = %{game | players: [player | rest]}
