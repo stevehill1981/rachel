@@ -112,10 +112,10 @@ defmodule RachelWeb.InstantPlayLive do
           |> assign(:creating_game, false)
 
         # If tutorial is skipped, go straight to game
-        if not socket.assigns.show_tutorial do
-          {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
-        else
+        if socket.assigns.show_tutorial do
           {:noreply, socket}
+        else
+          {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
         end
 
       {:error, reason} ->

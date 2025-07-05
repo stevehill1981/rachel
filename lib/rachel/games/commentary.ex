@@ -151,9 +151,7 @@ defmodule Rachel.Games.Commentary do
   defp format_suit(:spades), do: "Spades ♠"
 
   defp format_special_effects(effects) do
-    effects
-    |> Enum.map(&format_special_effect/1)
-    |> Enum.join(", ")
+    Enum.map_join(effects, ", ", &format_special_effect/1)
   end
 
   defp format_special_effect({:pickup, count}), do: "+#{count} cards"
