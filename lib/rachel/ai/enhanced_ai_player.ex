@@ -66,8 +66,11 @@ defmodule Rachel.AI.EnhancedAIPlayer do
     # Analyze current situation
     context = analyze_game_context(game, updated_ai)
 
+    # Get the player struct from the game
+    player = Enum.find(game.players, &(&1.id == updated_ai.id))
+    
     # Get valid plays
-    valid_plays = Game.get_valid_plays(game, updated_ai.id)
+    valid_plays = if player, do: Game.get_valid_plays(game, player), else: []
 
     case valid_plays do
       [] ->
@@ -79,28 +82,30 @@ defmodule Rachel.AI.EnhancedAIPlayer do
       plays ->
         # Score each play using personality
         scored_plays =
-          Enum.map(plays, fn play ->
-            base_score = calculate_base_score(play, game, context)
+          Enum.map(plays, fn {card, index} ->
+            # Convert single card to list for scoring
+            cards = [card]
+            base_score = calculate_base_score(cards, game, context)
 
             personality_score =
               Personality.apply_personality_to_score(
                 base_score,
                 updated_ai.ai_state.personality,
-                build_play_context(play, game, context)
+                build_play_context(cards, game, context)
               )
 
-            {play, personality_score}
+            {{card, index}, personality_score}
           end)
 
         # Select best play with some randomness for personality
-        best_play = select_play_with_personality(scored_plays, updated_ai.ai_state.personality)
+        {_best_card, best_index} = select_play_with_personality(scored_plays, updated_ai.ai_state.personality)
 
         # Calculate thinking time based on decision complexity
         complexity = calculate_decision_complexity(scored_plays)
         thinking_time = Personality.get_thinking_time(updated_ai.ai_state.personality, complexity)
         Process.sleep(thinking_time)
 
-        {:play_cards, best_play, updated_ai}
+        {:play_cards, [best_index], updated_ai}
     end
   end
 
@@ -264,18 +269,24 @@ defmodule Rachel.AI.EnhancedAIPlayer do
   defp calculate_threat_level(game, ai_player) do
     opponents = get_opponent_info(game, ai_player.id)
 
-    # Threat based on opponent hand sizes and special cards
-    Enum.reduce(opponents, 0.0, fn opponent, acc ->
-      hand_threat =
-        case opponent.hand_size do
-          size when size <= 2 -> 0.8
-          size when size <= 4 -> 0.5
-          size when size <= 6 -> 0.3
-          _ -> 0.1
-        end
+    if length(opponents) == 0 do
+      0.0
+    else
+      # Threat based on opponent hand sizes and special cards
+      total_threat = Enum.reduce(opponents, 0.0, fn opponent, acc ->
+        hand_threat =
+          case opponent.hand_size do
+            size when size <= 2 -> 0.8
+            size when size <= 4 -> 0.5
+            size when size <= 6 -> 0.3
+            _ -> 0.1
+          end
 
-      acc + hand_threat
-    end) / length(opponents)
+        acc + hand_threat
+      end)
+      
+      total_threat / length(opponents)
+    end
   end
 
   defp calculate_opportunity_score(game, ai_player) do

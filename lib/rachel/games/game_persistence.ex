@@ -230,9 +230,19 @@ defmodule Rachel.Games.GamePersistence do
   # Serialize/deserialize functions to handle complex data types
   defp serialize_game_state(game_state) do
     # Convert atoms to strings, handle special types
-    game_state
-    |> Map.from_struct()
-    |> serialize_nested_data()
+    case game_state do
+      %{__struct__: _} ->
+        game_state
+        |> Map.from_struct()
+        |> serialize_nested_data()
+      
+      _ when is_map(game_state) ->
+        serialize_nested_data(game_state)
+      
+      _ ->
+        # Not a valid game state structure
+        raise ArgumentError, "Invalid game state: expected struct or map, got #{inspect(game_state)}"
+    end
   end
 
   defp serialize_nested_data(data) when is_map(data) do

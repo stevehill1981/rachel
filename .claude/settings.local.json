@@ -56,7 +56,8 @@
       "Bash(timeout 10s iex -S mix:*)",
       "Bash(elixir:*)",
       "Bash(mix format:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(mix deps.get:*)"
     ],
     "deny": []
   }
