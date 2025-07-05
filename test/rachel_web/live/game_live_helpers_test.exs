@@ -10,7 +10,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
 
   describe "helper functions" do
     test "get_player_name_by_id with existing player" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game with known players
       test_game = %{
@@ -43,7 +43,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "get_player_name_by_id with missing player" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game with empty players
       test_game = %{
@@ -69,7 +69,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "count_other_cards_with_rank with various hands" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game with players having specific cards
       test_game = %{
@@ -121,7 +121,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "can_select_card with different game states" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test with various game states
       game_states = [
@@ -167,7 +167,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "check_auto_draw conditions" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test auto-draw scenarios
       auto_draw_scenarios = [
@@ -236,7 +236,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
 
   describe "AI movement logic" do
     test "AI move handling with different scenarios" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game where AI is current player
       ai_game = %Game{
@@ -282,7 +282,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "AI draw handling when no cards playable" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game where AI has no playable cards
       ai_draw_game = %Game{
@@ -328,7 +328,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "AI thinking state transitions" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game with AI player
       ai_game = %Game{
@@ -379,7 +379,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
 
   describe "winner banner and game completion" do
     test "check_and_show_winner_banner with various winner scenarios" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test different winner scenarios
       winner_scenarios = [
@@ -453,7 +453,7 @@ defmodule RachelWeb.GameLiveHelpersTest do
     end
 
     test "winner banner acknowledgment" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up winner state
       winner_game = %{

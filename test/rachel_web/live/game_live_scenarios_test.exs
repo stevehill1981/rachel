@@ -44,11 +44,12 @@ defmodule RachelWeb.GameLiveScenariosTest do
         build_conn()
         |> Phoenix.ConnTest.init_test_session(%{})
 
-      {:ok, view, html} = live(conn, ~p"/play")
+      {:ok, view, html} = live(conn, ~p"/game")
 
       assert html =~ "Rachel"
-      # In single-player mode, we default to "You" as the player name
-      assert html =~ "You"
+      # In single-player mode, we create a game with the player
+      # The PlayerSessionHook now generates a random name instead of "You"
+      assert html =~ "Player" || html =~ "Player 1" || html =~ "Human"
 
       # Should create practice game with AI players
       view_state = :sys.get_state(view.pid)
@@ -61,7 +62,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     test "handles mount with missing cookies gracefully" do
       conn = build_conn() |> fetch_cookies()
 
-      {:ok, view, html} = live(conn, ~p"/play")
+      {:ok, view, html} = live(conn, ~p"/game")
 
       # Should work with auto-generated player info
       assert html =~ "Rachel"
@@ -77,7 +78,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     test "handles get_player_id with various session states" do
       # Test with nil session
       conn = build_conn() |> fetch_cookies()
-      {:ok, _view, _html} = live(conn, ~p"/play")
+      {:ok, _view, _html} = live(conn, ~p"/game")
 
       # Test with empty string player_id
       conn2 =
@@ -85,7 +86,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
         |> put_req_cookie("player_id", "")
         |> fetch_cookies()
 
-      {:ok, _view, _html} = live(conn2, ~p"/play")
+      {:ok, _view, _html} = live(conn2, ~p"/game")
 
       # Test with valid player_id
       conn3 =
@@ -93,7 +94,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
         |> put_req_cookie("player_id", "valid_id")
         |> fetch_cookies()
 
-      {:ok, _view, _html} = live(conn3, ~p"/play")
+      {:ok, _view, _html} = live(conn3, ~p"/game")
     end
 
     test "handles get_player_name with various session states" do
@@ -103,7 +104,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
         |> put_req_cookie("player_id", "test")
         |> fetch_cookies()
 
-      {:ok, _view, _html} = live(conn, ~p"/play")
+      {:ok, _view, _html} = live(conn, ~p"/game")
 
       # Test with empty name
       conn2 =
@@ -112,7 +113,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
         |> put_req_cookie("player_name", "")
         |> fetch_cookies()
 
-      {:ok, _view, _html} = live(conn2, ~p"/play")
+      {:ok, _view, _html} = live(conn2, ~p"/game")
 
       # Test with valid name
       conn3 =
@@ -121,13 +122,13 @@ defmodule RachelWeb.GameLiveScenariosTest do
         |> put_req_cookie("player_name", "Valid Name")
         |> fetch_cookies()
 
-      {:ok, _view, _html} = live(conn3, ~p"/play")
+      {:ok, _view, _html} = live(conn3, ~p"/game")
     end
   end
 
   describe "card selection and game interaction edge cases" do
     test "handles count_other_cards_with_rank function" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Get current game state
       view_state = :sys.get_state(view.pid)
@@ -151,7 +152,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles can_select_card with various game states" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test selecting cards when game is in waiting state
       view_state = :sys.get_state(view.pid)
@@ -167,7 +168,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles card selection with empty hand" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Create game state with empty hand for human player
       view_state = :sys.get_state(view.pid)
@@ -193,7 +194,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles invalid card index selection" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Try to trigger select_card event with invalid index
       # This tests the card selection validation logic
@@ -204,7 +205,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
 
   describe "winner banner and game completion logic" do
     test "handles check_and_show_winner_banner function" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Create finished game state with winner
       view_state = :sys.get_state(view.pid)
@@ -221,7 +222,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles auto_hide_winner_banner timing" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send auto hide winner banner message
       send(view.pid, :auto_hide_winner_banner)
@@ -231,7 +232,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles winner acknowledgment" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up winner state and test acknowledgment
       view_state = :sys.get_state(view.pid)
@@ -251,7 +252,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
 
   describe "helper function coverage" do
     test "handles create_test_game variations" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # The create_test_game function should be called during mount
       view_state = :sys.get_state(view.pid)
@@ -265,7 +266,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles format_error with different error types" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # These error scenarios would trigger format_error internally
       error_scenarios = [
@@ -282,7 +283,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles get_player_name_by_id with various inputs" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test with different message scenarios that would use get_player_name_by_id
       test_messages = [
@@ -315,7 +316,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles schedule_ai_move function" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Create game state where AI should move
       view_state = :sys.get_state(view.pid)
@@ -340,7 +341,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
 
   describe "PubSub message edge cases" do
     test "handles malformed PubSub messages" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send messages that test edge cases without crashing
       # Some malformed messages would crash the current implementation
@@ -401,7 +402,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles game_updated with invalid game state" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # This test would crash the GameLive process due to missing :winners key
       # The GameLive code should be more defensive, but for now we'll test
@@ -427,7 +428,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles player messages with missing player data" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test messages that won't crash but test edge cases
       # The messages with nil values crash the current implementation
@@ -463,7 +464,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
 
   describe "event handling edge cases" do
     test "handles events when game is nil" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send a game_updated with nil to test nil handling
       send(view.pid, {:game_updated, nil})
@@ -475,7 +476,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles rapid consecutive events" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send multiple events rapidly
       for i <- 1..5 do
@@ -501,7 +502,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles events during game state transitions" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test events during different game states
       states = [:waiting, :playing, :finished]
@@ -532,7 +533,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
 
   describe "complex game scenarios" do
     test "handles game with multiple pending effects" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Create complex game state with multiple pending effects
       view_state = :sys.get_state(view.pid)
@@ -556,7 +557,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles game direction changes" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test game with different directions
       directions = [:clockwise, :counterclockwise]
@@ -577,7 +578,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
     end
 
     test "handles game with extreme card counts" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test with players having extreme card counts
       view_state = :sys.get_state(view.pid)

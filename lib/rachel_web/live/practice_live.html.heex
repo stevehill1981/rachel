@@ -5,21 +5,78 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold">🎯 Practice Mode</h1>
-          <p class="text-gray-300 mt-1">Train against AI opponents with unique personalities</p>
+          <p class="text-gray-300 mt-1">Customize your AI opponents and practice strategies</p>
         </div>
 
-        <.link
-          navigate={~p"/"}
-          class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-        >
-          ← Back to Menu
-        </.link>
+        <div class="flex gap-3">
+          <.link
+            navigate={~p"/play"}
+            class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+          >
+            ⚡ Quick Game
+          </.link>
+          <.link
+            navigate={~p"/"}
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+          >
+            ← Back to Menu
+          </.link>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="max-w-6xl mx-auto p-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+<!-- Ready to Play Section -->
+    <div class="bg-gradient-to-r from-green-600 to-blue-600 rounded-xl p-8 mb-8 text-center text-white shadow-xl">
+      <h2 class="text-2xl font-bold mb-4">🎮 Ready to Play!</h2>
+      <p class="text-lg mb-6">
+        Playing as <strong>{@player_name}</strong>
+        against {length(@selected_opponents)} AI opponent{if length(@selected_opponents) != 1,
+          do: "s"}
+      </p>
+
+      <div class="flex flex-wrap justify-center gap-3 mb-6">
+        <%= for opponent <- @selected_opponents do %>
+          <div class="flex items-center space-x-2 bg-white/20 rounded-full px-4 py-2">
+            <div class={[
+              "w-6 h-6 rounded-full flex items-center justify-center text-sm",
+              personality_color(opponent.type)
+            ]}>
+              {personality_icon(opponent.type)}
+            </div>
+            <span class="text-sm font-medium">{opponent.name}</span>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button
+          phx-click="start_practice_game"
+          disabled={@player_name == "" or length(@selected_opponents) == 0}
+          class="px-10 py-4 bg-white text-green-600 font-bold text-lg rounded-xl hover:bg-gray-100 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-all shadow-lg"
+        >
+          🚀 Start Game Now
+        </button>
+
+        <button
+          phx-click="toggle_advanced_options"
+          class="px-6 py-4 border-2 border-white text-white font-semibold rounded-xl hover:bg-white hover:text-blue-600 transition-all"
+        >
+          <%= if @show_advanced_options do %>
+            ↑ Hide Options
+          <% else %>
+            ⚙️ Customize Setup
+          <% end %>
+        </button>
+      </div>
+    </div>
+
+    <div class={[
+      "grid grid-cols-1 lg:grid-cols-3 gap-8",
+      if(not @show_advanced_options, do: "hidden")
+    ]}>
       
 <!-- Quick Start Options -->
       <div class="lg:col-span-3 mb-8">
@@ -167,30 +224,6 @@
               🗑️ Clear
             </button>
           </div>
-        </div>
-        
-<!-- Start Game -->
-        <div class="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-          <button
-            phx-click="start_practice_game"
-            disabled={@player_name == "" or length(@selected_opponents) == 0}
-            class="w-full py-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed rounded-lg font-semibold text-lg transition-all"
-          >
-            🎮 Start Practice Game
-          </button>
-
-          <%= if @player_name == "" or length(@selected_opponents) == 0 do %>
-            <p class="text-center text-sm text-gray-400 mt-2">
-              <%= cond do %>
-                <% @player_name == "" -> %>
-                  Enter your name to continue
-                <% length(@selected_opponents) == 0 -> %>
-                  Select at least one opponent
-                <% true -> %>
-                  Ready to start!
-              <% end %>
-            </p>
-          <% end %>
         </div>
       </div>
       

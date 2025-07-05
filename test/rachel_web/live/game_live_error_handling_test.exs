@@ -126,12 +126,12 @@ defmodule RachelWeb.GameLiveErrorHandlingTest do
     end
 
     test "handles GameServer timeout during operations" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
-      # Get the game from view state
+      # Get the game from view state  
       view_state = :sys.get_state(view.pid)
 
-      if view_state.socket.assigns.game do
+      if Map.get(view_state.socket.assigns, :game) do
         # Try to play a card when game might be unresponsive
         html = render(view)
 

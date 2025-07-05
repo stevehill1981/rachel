@@ -49,7 +49,7 @@ defmodule RachelWeb.GameLiveMultiplayerTest do
     end
 
     test "single-player mode still works without game_id", %{conn: conn} do
-      {:ok, view, html} = live(conn, "/play")
+      {:ok, view, html} = live(conn, "/game")
 
       # Should show the single-player game
       assert html =~ "Rachel"

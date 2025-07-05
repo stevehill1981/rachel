@@ -34,7 +34,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
 
         {:error, {:live_redirect, _}} ->
           # If redirected, use practice mode instead
-          {:ok, view, _html} = live(conn, ~p"/play")
+          {:ok, view, _html} = live(conn, ~p"/game")
           {:ok, view: view, game_id: nil}
       end
     end
@@ -126,7 +126,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
 
   describe "AI movement system" do
     test "handles AI move in practice mode", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Send AI move message
       send(view.pid, :ai_move)
@@ -136,7 +136,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles AI move when AI can play card", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Set up AI as current player
       view_state = :sys.get_state(view.pid)
@@ -160,7 +160,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles AI move when AI must draw", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Create scenario where AI must draw (no playable cards)
       # This will test the AI draw card fallback logic
@@ -171,7 +171,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles AI suit nomination", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Set up game state where AI might nominate suit
       view_state = :sys.get_state(view.pid)
@@ -284,7 +284,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
 
   describe "card selection edge cases" do
     test "handles auto-play for single card of rank", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Set up game state where player has only one card of a certain rank
       view_state = :sys.get_state(view.pid)
@@ -326,7 +326,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles can_select_card with various game states", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Test card selection behavior
       html = render(view)
@@ -355,7 +355,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles invalid card index selection", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # This should be handled gracefully (invalid index)
       html = render(view)
@@ -365,7 +365,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
 
   describe "helper functions coverage" do
     test "format_error handles all error types", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Test various error scenarios that would use format_error
       error_scenarios = [
@@ -384,7 +384,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "get_player_name_by_id with missing player", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Send message with non-existent player ID
       send(view.pid, {:player_disconnected, %{player_id: "nonexistent", player_name: "Ghost"}})
@@ -395,7 +395,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "winner banner logic", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Create game state with winner
       finished_game = %Game{
@@ -475,7 +475,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
 
   describe "complex game scenarios" do
     test "handles rapid user interactions", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Rapid interactions
       for _i <- 1..5 do
@@ -497,7 +497,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles concurrent game state updates", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Send multiple game updates rapidly
       view_state = :sys.get_state(view.pid)
@@ -517,7 +517,7 @@ defmodule RachelWeb.GameLiveAdvancedTest do
     end
 
     test "handles game state transitions", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Test transition from waiting to playing to finished
       states = [:waiting, :playing, :finished]

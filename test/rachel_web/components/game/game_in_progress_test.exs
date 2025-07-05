@@ -146,7 +146,7 @@ defmodule RachelWeb.Components.Game.GameInProgressTest do
       html = render_component(&GameInProgress.game_in_progress/1, assigns)
 
       # Should render spectator view
-      assert html =~ "Spectating"
+      assert html =~ "Spectator Mode"
     end
   end
 end

@@ -113,6 +113,11 @@ defmodule Rachel.Games.GameServer do
     GenServer.call(via_tuple(game_id), {:disconnect_player, player_id})
   end
 
+  @spec stop(game_id()) :: :ok
+  def stop(game_id) do
+    GenServer.stop(via_tuple(game_id), :normal)
+  end
+
   # Server Callbacks
 
   @impl true

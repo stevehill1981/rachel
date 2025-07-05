@@ -45,6 +45,7 @@ defmodule RachelWeb.GameComponents do
       data-effect={card_effect_text(@card)}
       aria-label={card_aria_label(@card, @selected)}
       aria-pressed={(@selected && "true") || "false"}
+      id={"touch-card-#{@index}"}
       phx-hook="TouchCard"
       data-card-index={@index}
       {@rest}

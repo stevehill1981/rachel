@@ -20,10 +20,10 @@ defmodule Test.AITestHelper do
 
   @doc "Creates specific AI test scenarios"
   def ai_scenario(:play_ace, ai_id) do
-    # AI has only an ace that doesn't match current card
+    # AI has only an ace that matches current card suit
     ai_turn_game(
       [
-        GameBuilder.card({:spades, :ace})
+        GameBuilder.card({:hearts, :ace})
       ],
       GameBuilder.card({:hearts, :king})
     )

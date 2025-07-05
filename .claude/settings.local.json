@@ -48,7 +48,15 @@
       "Bash(mix phx.gen:*)",
       "Bash(mix ecto.migrate:*)",
       "Bash(mix sobelow:*)",
-      "Bash(mix deps.audit:*)"
+      "Bash(mix deps.audit:*)",
+      "Bash(mix phx.server:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(timeout 10s iex -S mix:*)",
+      "Bash(elixir:*)",
+      "Bash(mix format:*)",
+      "Bash(gh api:*)"
     ],
     "deny": []
   }

@@ -60,8 +60,8 @@ defmodule Rachel.Games.AIPlayerEdgeCasesTest do
       ai = %{
         ai
         | hand: [
-            # Only an ace
-            %Card{suit: :spades, rank: :ace}
+            # Ace that matches current card suit
+            %Card{suit: :hearts, rank: :ace}
           ]
       }
 

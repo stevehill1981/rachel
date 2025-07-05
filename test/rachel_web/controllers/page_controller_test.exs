@@ -5,7 +5,7 @@ defmodule RachelWeb.PageControllerTest do
     conn = get(conn, ~p"/")
     response = html_response(conn, 200)
     assert response =~ "Rachel Card Game"
-    assert response =~ "Play Now"
-    assert response =~ "Enter Game Lobby"
+    assert response =~ "Play Instantly"
+    assert response =~ "Play with Friends"
   end
 end

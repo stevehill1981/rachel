@@ -11,7 +11,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "format_error function coverage" do
     test "format_error handles all error types" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test all error types that format_error should handle
       error_types = [
@@ -81,7 +81,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "action helper error handling" do
     test "play_cards_action handles GameServer timeouts" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Get the game from view
       view_state = :sys.get_state(view.pid)
@@ -101,7 +101,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "draw_card_action handles GameServer errors" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Try to draw card in various scenarios that might cause errors
       html = render(view)
@@ -119,7 +119,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "nominate_suit_action handles GameServer failures" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Try to nominate suit without playing an ace
       # This should trigger error handling
@@ -189,7 +189,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
         |> put_req_cookie("player_name", "Solo Player")
         |> fetch_cookies()
 
-      {:ok, view, html} = live(conn, ~p"/play")
+      {:ok, view, html} = live(conn, ~p"/game")
 
       # Should create a single-player game
       assert html =~ "Rachel"
@@ -237,7 +237,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "nominate_suit event when no ace was played" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Try to nominate suit without playing an ace
       view |> render_hook("nominate_suit", %{"suit" => "hearts"})
@@ -247,7 +247,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "copy_game_code when game_id is nil" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # In single-player mode, there's no game code to copy
       if has_element?(view, "[phx-click=\"copy_game_code\"]") do
@@ -264,7 +264,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "AI logic edge cases" do
     test "AI move when play card fails should fallback to draw" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game where AI has no playable cards
       view_state = :sys.get_state(view.pid)
@@ -301,7 +301,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "AI nominate suit failure handling" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game where AI played an ace and needs to nominate
       view_state = :sys.get_state(view.pid)
@@ -338,7 +338,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "AI unrecognized move type handling" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # This tests the fallback case in AI move handling
       view_state = :sys.get_state(view.pid)
@@ -361,7 +361,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "helper function variations" do
     test "count_other_cards_with_rank with various hand compositions" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Create specific hand composition to test card counting
       view_state = :sys.get_state(view.pid)
@@ -411,7 +411,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "get_player_name_by_id when player not found returns 'Unknown'" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send PubSub messages with unknown player IDs
       test_messages = [
@@ -472,7 +472,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "terminate when GameServer already dead" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # In single-player mode, terminate should handle gracefully
       # We'll test this by just verifying the process can be stopped normally
@@ -494,7 +494,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "PubSub message edge cases" do
     test "cards_played message without player_name field" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send cards_played message with minimal data
       test_card = %Card{suit: :hearts, rank: :ace}
@@ -529,7 +529,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "suit_nominated message edge cases" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       test_game = %{
         id: "test-game",
@@ -572,7 +572,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "GameServer action error simulation" do
     test "play_cards_action catches noproc and timeout errors" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Force create a multiplayer scenario that might cause GameServer errors
       # by simulating rapid card plays that could cause process issues
@@ -627,7 +627,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "draw_card_action handles server errors gracefully" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up multiplayer scenario to trigger GameServer calls
       view_state = :sys.get_state(view.pid)
@@ -653,7 +653,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "nominate_suit_action handles server failures" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test nominate suit with potential server errors
       view_state = :sys.get_state(view.pid)
@@ -766,7 +766,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
           build_conn()
           |> Phoenix.ConnTest.init_test_session(session)
 
-        {:ok, view, html} = live(conn, ~p"/play")
+        {:ok, view, html} = live(conn, ~p"/game")
 
         # Should handle gracefully and create game
         assert html =~ "Rachel"
@@ -779,7 +779,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "auto-draw logic comprehensive testing" do
     test "auto_draw_pending_cards message handling" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game with pending pickups
       view_state = :sys.get_state(view.pid)
@@ -805,7 +805,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "check_auto_draw conditions and scheduling" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test various auto-draw scenarios
       auto_draw_scenarios = [
@@ -861,7 +861,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "card selection edge cases" do
     test "select_card with nil clicked_card" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Try to select valid but edge case card indices 
       # We use strings that convert to integers but test edge cases
@@ -886,7 +886,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "select_card when not current player" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game where human is not current player
       view_state = :sys.get_state(view.pid)
@@ -925,7 +925,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "auto-play when other_same_rank > 0" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game where human has multiple cards of same rank
       view_state = :sys.get_state(view.pid)
@@ -967,7 +967,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "can_select_card with nil first_card" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up game with empty hand
       view_state = :sys.get_state(view.pid)
@@ -998,7 +998,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
   describe "AI logic comprehensive coverage" do
     test "AI move in multiplayer vs single-player" do
       # Test single-player AI move (current behavior)
-      {:ok, view1, _html} = live(build_conn(), ~p"/play")
+      {:ok, view1, _html} = live(build_conn(), ~p"/game")
 
       view_state = :sys.get_state(view1.pid)
 
@@ -1041,7 +1041,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "AI unrecognized move type handling" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Mock a scenario where AI returns unrecognized move
       view_state = :sys.get_state(view.pid)
@@ -1077,7 +1077,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
     end
 
     test "handle_ai_draw failure scenarios" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Set up scenario where AI draw might fail
       view_state = :sys.get_state(view.pid)
@@ -1116,7 +1116,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "string to atom conversion errors" do
     test "nominate_suit with valid and edge case inputs" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Test suit nomination with edge cases but avoid crashing the LiveView
       # This tests the nominate_suit event handler's atom conversion
@@ -1133,7 +1133,7 @@ defmodule RachelWeb.GameLiveCoverageTest do
 
   describe "current_player edge cases" do
     test "current_player with non-Game struct" do
-      {:ok, view, _html} = live(build_conn(), ~p"/play")
+      {:ok, view, _html} = live(build_conn(), ~p"/game")
 
       # Send updates with minimal valid game structures to test edge cases
       # Note: Completely invalid structures crash the template, so we test minimal valid ones

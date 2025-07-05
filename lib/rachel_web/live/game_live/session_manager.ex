@@ -29,11 +29,8 @@ defmodule RachelWeb.GameLive.SessionManager do
   """
   @spec get_player_id(map()) :: player_id()
   def get_player_id(session) do
-    Map.get(
-      session,
-      "player_id",
+    session[:player_id] ||
       "player_#{:crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower)}"
-    )
   end
 
   @doc """
@@ -41,7 +38,7 @@ defmodule RachelWeb.GameLive.SessionManager do
   """
   @spec get_player_name(map()) :: player_name()
   def get_player_name(session) do
-    Map.get(session, "player_name", "Anonymous")
+    session[:player_name] || "Anonymous"
   end
 
   @doc """
@@ -69,7 +66,9 @@ defmodule RachelWeb.GameLive.SessionManager do
   @spec join_or_reconnect_player(game_id(), map(), player_id(), player_name()) ::
           {:ok, map()} | {:ok, map(), :spectator} | {:error, join_error()}
   def join_or_reconnect_player(game_id, game, player_id, player_name) do
-    if player_in_game?(game, player_id) do
+    in_game = player_in_game?(game, player_id)
+
+    if in_game do
       reconnect_existing_player(game_id, player_id)
     else
       join_new_player(game_id, player_id, player_name)

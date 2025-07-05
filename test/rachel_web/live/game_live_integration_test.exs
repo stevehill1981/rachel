@@ -159,7 +159,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
 
   describe "AI move handling" do
     test "handles AI move in single player practice game", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Send AI move message
       send(view.pid, :ai_move)
@@ -171,7 +171,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
     end
 
     test "handles auto_hide_winner_banner message", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Set winner banner to true first
       # We'll trigger this by sending the message directly
@@ -183,7 +183,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
     end
 
     test "handles auto_draw_pending_cards message", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Send auto draw message
       send(view.pid, :auto_draw_pending_cards)
@@ -213,7 +213,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
 
         {:error, {:live_redirect, _}} ->
           # If redirected, use practice mode instead
-          {:ok, view, _html} = live(conn, ~p"/play")
+          {:ok, view, _html} = live(conn, ~p"/game")
           {:ok, view: view, game_id: nil}
       end
     end
@@ -430,7 +430,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
 
   describe "complex game scenarios" do
     test "handles rapid card selection and deselection", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Rapidly select and deselect cards (only if not disabled)
       html = render(view)
@@ -462,7 +462,7 @@ defmodule RachelWeb.GameLiveIntegrationTest do
     end
 
     test "handles winner banner auto-hide timing", %{conn: conn} do
-      {:ok, view, _html} = live(conn, ~p"/play")
+      {:ok, view, _html} = live(conn, ~p"/game")
 
       # Simulate winning condition by sending message directly
       # First need to set up a winning scenario

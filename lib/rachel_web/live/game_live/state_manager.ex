@@ -79,10 +79,11 @@ defmodule RachelWeb.GameLive.StateManager do
   def check_auto_draw_updates(game, player_id) do
     current_player = current_player(game)
 
-    # Check if it's the human player's turn with pending pickups and no valid plays
+    # Only auto-draw if player has MULTIPLE cards to pick up (2s or black jacks)
+    # Single card draws should be manual
     if current_player &&
          current_player.id == player_id &&
-         game.pending_pickups > 0 &&
+         game.pending_pickups > 1 &&
          !Game.has_valid_play?(game, current_player) &&
          game.status == :playing do
       # Schedule auto-draw after a delay

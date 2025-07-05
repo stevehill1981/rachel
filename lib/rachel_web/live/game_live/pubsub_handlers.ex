@@ -140,10 +140,10 @@ defmodule RachelWeb.GameLive.PubSubHandlers do
   def handle_auto_draw_pending_cards(game, player_id) do
     current_player = current_player(game)
 
-    # Double-check conditions are still met
+    # Double-check conditions are still met - only auto-draw multiple cards
     if current_player &&
          current_player.id == player_id &&
-         game.pending_pickups > 0 &&
+         game.pending_pickups > 1 &&
          !Rachel.Games.Game.has_valid_play?(game, current_player) &&
          game.status == :playing do
       pickup_count = game.pending_pickups

@@ -56,7 +56,7 @@ defmodule AIDebugTest do
 
       valid_card =
         Enum.find(current_player.hand, fn card ->
-          card.suit == current_card.suit or card.rank == current_card.rank or card.rank == :ace
+          card.suit == current_card.suit or card.rank == current_card.rank
         end)
 
       # If no valid card found, human must draw

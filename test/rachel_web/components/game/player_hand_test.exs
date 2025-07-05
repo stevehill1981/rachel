@@ -55,7 +55,7 @@ defmodule RachelWeb.Components.Game.PlayerHandTest do
       html = render_component(&PlayerHand.player_hand/1, assigns)
 
       # Should show spectator view
-      assert html =~ "Spectating"
+      assert html =~ "Spectator Mode"
       assert html =~ "Player 1"
       assert html =~ "Player 2"
     end
