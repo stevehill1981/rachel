@@ -389,15 +389,33 @@ defmodule Rachel.AI.Personality do
 
     modifier = 1.0
 
-    if context[:affects_opponents],
-      do: modifier = modifier + (weights.opponent_impact - 0.5) * 0.4
+    modifier =
+      if context[:affects_opponents] do
+        modifier + (weights.opponent_impact - 0.5) * 0.4
+      else
+        modifier
+      end
 
-    if context[:is_defensive], do: modifier = modifier + (weights.self_protection - 0.5) * 0.3
+    modifier =
+      if context[:is_defensive] do
+        modifier + (weights.self_protection - 0.5) * 0.3
+      else
+        modifier
+      end
 
-    if context[:uses_special_card],
-      do: modifier = modifier + (weights.special_effects - 0.5) * 0.5
+    modifier =
+      if context[:uses_special_card] do
+        modifier + (weights.special_effects - 0.5) * 0.5
+      else
+        modifier
+      end
 
-    if context[:controls_suit], do: modifier = modifier + (weights.suit_control - 0.5) * 0.3
+    modifier =
+      if context[:controls_suit] do
+        modifier + (weights.suit_control - 0.5) * 0.3
+      else
+        modifier
+      end
 
     modifier
   end
@@ -407,25 +425,40 @@ defmodule Rachel.AI.Personality do
     modifier = 0
 
     # Apply quirk-specific bonuses
-    if :early_special_cards in quirks and context[:early_game] and context[:uses_special_card] do
-      modifier = modifier + 15
-    end
+    modifier =
+      if :early_special_cards in quirks and context[:early_game] and context[:uses_special_card] do
+        modifier + 15
+      else
+        modifier
+      end
 
-    if :hoard_special_cards in quirks and context[:uses_special_card] and context[:hand_size] > 5 do
-      modifier = modifier - 10
-    end
+    modifier =
+      if :hoard_special_cards in quirks and context[:uses_special_card] and context[:hand_size] > 5 do
+        modifier - 10
+      else
+        modifier
+      end
 
-    if :random_plays in quirks do
-      modifier = modifier + (:rand.uniform() - 0.5) * 20
-    end
+    modifier =
+      if :random_plays in quirks do
+        modifier + (:rand.uniform() - 0.5) * 20
+      else
+        modifier
+      end
 
-    if :card_counting in quirks and context[:uses_memory] do
-      modifier = modifier + 10
-    end
+    modifier =
+      if :card_counting in quirks and context[:uses_memory] do
+        modifier + 10
+      else
+        modifier
+      end
 
-    if :psychological_warfare in quirks and context[:affects_multiple_opponents] do
-      modifier = modifier + 8
-    end
+    modifier =
+      if :psychological_warfare in quirks and context[:affects_multiple_opponents] do
+        modifier + 8
+      else
+        modifier
+      end
 
     modifier
   end
