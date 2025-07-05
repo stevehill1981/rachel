@@ -118,9 +118,9 @@ defmodule Rachel.Games.Commentary do
     total_excitement = Enum.sum(factors)
 
     case total_excitement do
-      0..1 -> :low
-      2..3 -> :medium
-      4..5 -> :high
+      x when x in 0..1 -> :low
+      x when x in 2..3 -> :medium
+      x when x in 4..5 -> :high
       _ -> :extreme
     end
   end
