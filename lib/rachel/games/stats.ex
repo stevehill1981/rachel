@@ -3,7 +3,7 @@ defmodule Rachel.Games.Stats do
   Game statistics tracking and scoring system.
   """
 
-  alias Rachel.Games.Card
+  alias Rachel.Games.{Card, Game}
 
   @type player_stats :: %{
           games_played: integer(),
@@ -48,6 +48,7 @@ defmodule Rachel.Games.Stats do
             },
             start_time: nil
 
+  @spec new([String.t()]) :: t()
   def new(player_ids) do
     start_time = DateTime.utc_now()
 
@@ -74,6 +75,7 @@ defmodule Rachel.Games.Stats do
     }
   end
 
+  @spec record_card_played(t(), String.t(), [Card.t()]) :: t()
   def record_card_played(%__MODULE__{} = stats, player_id, cards) when is_list(cards) do
     # Return unchanged stats if player doesn't exist
     if Map.has_key?(stats.player_stats, player_id) do
@@ -98,6 +100,7 @@ defmodule Rachel.Games.Stats do
     end
   end
 
+  @spec record_card_drawn(t(), String.t(), integer()) :: t()
   def record_card_drawn(%__MODULE__{} = stats, player_id, card_count) do
     # Return unchanged stats if player doesn't exist
     if Map.has_key?(stats.player_stats, player_id) do
@@ -115,6 +118,7 @@ defmodule Rachel.Games.Stats do
     end
   end
 
+  @spec record_turn_advance(t()) :: t()
   def record_turn_advance(%__MODULE__{} = stats) do
     updated_game_stats =
       Map.update!(stats.game_stats, :total_turns, &(&1 + 1))
@@ -122,6 +126,7 @@ defmodule Rachel.Games.Stats do
     %{stats | game_stats: updated_game_stats}
   end
 
+  @spec record_direction_change(t()) :: t()
   def record_direction_change(%__MODULE__{} = stats) do
     updated_game_stats =
       Map.update!(stats.game_stats, :direction_changes, &(&1 + 1))
@@ -129,6 +134,7 @@ defmodule Rachel.Games.Stats do
     %{stats | game_stats: updated_game_stats}
   end
 
+  @spec record_suit_nomination(t()) :: t()
   def record_suit_nomination(%__MODULE__{} = stats) do
     updated_game_stats =
       Map.update!(stats.game_stats, :suit_nominations, &(&1 + 1))
@@ -136,6 +142,7 @@ defmodule Rachel.Games.Stats do
     %{stats | game_stats: updated_game_stats}
   end
 
+  @spec record_winner(t(), String.t()) :: t()
   def record_winner(%__MODULE__{} = stats, winner_id) do
     updated_game_stats = calculate_game_duration_if_first_winner(stats)
     position = length(stats.game_stats.finish_positions) + 1
@@ -189,6 +196,7 @@ defmodule Rachel.Games.Stats do
     |> Map.update(:winner_id, winner_id, fn existing -> existing || winner_id end)
   end
 
+  @spec record_finish_position(t(), String.t()) :: t()
   def record_finish_position(%__MODULE__{} = stats, player_id) do
     updated_positions = stats.game_stats.finish_positions ++ [player_id]
     updated_game_stats = Map.put(stats.game_stats, :finish_positions, updated_positions)
@@ -196,6 +204,7 @@ defmodule Rachel.Games.Stats do
     %{stats | game_stats: updated_game_stats}
   end
 
+  @spec calculate_player_score(player_stats(), game_stats()) :: integer()
   def calculate_player_score(player_stats, _game_stats) do
     base_score =
       if player_stats.games_won > 0 do
@@ -222,6 +231,7 @@ defmodule Rachel.Games.Stats do
     base_score + card_efficiency + special_bonus + speed_bonus
   end
 
+  @spec get_leaderboard(t()) :: [{String.t(), integer()}]
   def get_leaderboard(%__MODULE__{} = stats) do
     stats.player_stats
     |> Enum.map(fn {player_id, player_stats} ->
@@ -231,6 +241,7 @@ defmodule Rachel.Games.Stats do
     |> Enum.sort_by(fn {_, _, score} -> score end, :desc)
   end
 
+  @spec format_stats(t()) :: map()
   def format_stats(%__MODULE__{} = stats) do
     %{
       game: %{
@@ -269,6 +280,7 @@ defmodule Rachel.Games.Stats do
   Calculate stats from a completed game instance.
   This is used for persisting stats when a game ends.
   """
+  @spec calculate_stats(Game.t()) :: map()
   def calculate_stats(game) do
     player_names =
       game.players
@@ -286,14 +298,14 @@ defmodule Rachel.Games.Stats do
       direction_changes: if(game.stats, do: game.stats.game_stats.direction_changes, else: 0),
       suit_nominations: if(game.stats, do: game.stats.game_stats.suit_nominations, else: 0),
       finish_positions: game.winners,
-      player_names: player_names
+      game_duration_seconds: nil
     }
 
     # Extract player-specific stats
     player_stats =
       game.players
       |> Enum.map(fn player ->
-        stats =
+        player_stats_from_game =
           if game.stats && Map.has_key?(game.stats.player_stats, player.id) do
             game.stats.player_stats[player.id]
           else
@@ -307,15 +319,28 @@ defmodule Rachel.Games.Stats do
 
         finish_position = Enum.find_index(game.winners, &(&1 == player.id))
         won = player.id in game.winners
-        score = calculate_player_score(stats, game_stats)
+
+        # Build full player_stats record for score calculation
+        full_player_stats = %{
+          games_played: 1,
+          games_won: if(won, do: 1, else: 0),
+          total_cards_played: Map.get(player_stats_from_game, :total_cards_played, 0),
+          total_cards_drawn: Map.get(player_stats_from_game, :total_cards_drawn, 0),
+          special_cards_played: Map.get(player_stats_from_game, :special_cards_played, 0),
+          average_finish_position: 0.0,
+          quickest_win_turns: nil,
+          longest_game_turns: 0
+        }
+
+        score = calculate_player_score(full_player_stats, game_stats)
 
         {player.id,
          %{
            player_name: player.name,
            finish_position: finish_position,
-           cards_played: stats.total_cards_played,
-           cards_drawn: stats.total_cards_drawn,
-           special_cards_played: stats.special_cards_played,
+           cards_played: full_player_stats.total_cards_played,
+           cards_drawn: full_player_stats.total_cards_drawn,
+           special_cards_played: full_player_stats.special_cards_played,
            won: won,
            score: score
          }}
@@ -331,7 +356,7 @@ defmodule Rachel.Games.Stats do
       direction_changes: game_stats.direction_changes,
       suit_nominations: game_stats.suit_nominations,
       finish_positions: game_stats.finish_positions,
-      player_names: game_stats.player_names,
+      player_names: player_names,
       player_stats: player_stats
     }
   end

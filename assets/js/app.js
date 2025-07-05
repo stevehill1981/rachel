@@ -24,10 +24,18 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
+// Import custom hooks
+import { TouchCard } from "./touch_card_hook"
+import { SuitSelector } from "./suit_selector_hook"
+import { SpectatorDashboard } from "./spectator_dashboard_hook"
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 
 // Hooks for custom client-side behavior
 const Hooks = {
+  TouchCard,
+  SuitSelector,
+  SpectatorDashboard,
   AutoHideFlash: {
     mounted() {
       // Auto-hide flash messages after 5 seconds

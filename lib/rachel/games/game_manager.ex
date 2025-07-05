@@ -5,10 +5,20 @@ defmodule Rachel.Games.GameManager do
 
   alias Rachel.Games.GameServer
 
+  @type game_id :: String.t()
+  @type player_id :: String.t()
+  @type game_info :: %{
+          id: game_id(),
+          players: non_neg_integer(),
+          status: atom(),
+          host_id: player_id() | nil
+        }
+
   @doc """
   Creates a new game session with a unique game ID.
   Returns the game ID for players to join.
   """
+  @spec create_game(String.t()) :: {:ok, game_id()} | {:error, any()}
   def create_game(_creator_name \\ "Host") do
     game_id = generate_game_id()
 
@@ -26,6 +36,7 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Creates a game and immediately joins the creator.
   """
+  @spec create_and_join_game(player_id(), String.t()) :: {:ok, game_id()} | {:error, any()}
   def create_and_join_game(creator_id, creator_name) do
     case create_game() do
       {:ok, game_id} ->
@@ -47,6 +58,7 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Joins an existing game by game ID.
   """
+  @spec join_game(game_id(), player_id(), String.t()) :: {:ok, map()} | {:error, atom()}
   def join_game(game_id, player_id, player_name) do
     if game_exists?(game_id) do
       try do
@@ -66,6 +78,7 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Lists all active games with their basic info.
   """
+  @spec list_active_games() :: [game_info()]
   def list_active_games do
     Registry.select(Rachel.GameRegistry, [{{:"$1", :"$2", :"$3"}, [], [:"$1"]}])
     |> Enum.map(fn game_id ->
@@ -86,9 +99,6 @@ defmodule Rachel.Games.GameManager do
               # We could track this in GameServer if needed
               created_at: DateTime.utc_now()
             }
-
-          _ ->
-            nil
         end
       catch
         :exit, {:noproc, _} ->
@@ -110,6 +120,8 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Gets detailed info about a specific game.
   """
+  @spec get_game_info(game_id()) ::
+          {:ok, map()} | {:error, :game_not_found | :server_error | :server_timeout}
   def get_game_info(game_id) do
     if game_exists?(game_id) do
       try do
@@ -134,9 +146,6 @@ defmodule Rachel.Games.GameManager do
                current_player_id: state.current_player_id,
                can_join: state.status == :waiting and length(state.players) < 8
              }}
-
-          _ ->
-            {:error, :server_error}
         end
       catch
         :exit, {:noproc, _} ->
@@ -156,6 +165,7 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Stops a game session (for cleanup or admin purposes).
   """
+  @spec stop_game(game_id()) :: :ok | {:error, :not_found}
   def stop_game(game_id) do
     case Registry.lookup(Rachel.GameRegistry, game_id) do
       [{pid, _}] ->
@@ -172,6 +182,7 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Checks if a game exists and is running.
   """
+  @spec game_exists?(game_id()) :: boolean()
   def game_exists?(game_id) do
     case Registry.lookup(Rachel.GameRegistry, game_id) do
       [{_pid, _}] -> true
@@ -182,6 +193,7 @@ defmodule Rachel.Games.GameManager do
   @doc """
   Generates a short, user-friendly game code.
   """
+  @spec generate_game_code() :: String.t()
   def generate_game_code do
     # Generate a 6-character alphanumeric code
     :crypto.strong_rand_bytes(3)
@@ -193,6 +205,7 @@ defmodule Rachel.Games.GameManager do
   Cleans up finished games that have been inactive.
   Could be called periodically or triggered by game completion.
   """
+  @spec cleanup_finished_games(non_neg_integer()) :: :ok
   def cleanup_finished_games(_max_age_hours \\ 24) do
     list_active_games()
     |> Enum.filter(fn game ->
@@ -200,9 +213,9 @@ defmodule Rachel.Games.GameManager do
       # For now, just clean up games with no players
       game.player_count == 0 or game.status == :finished
     end)
-    |> Enum.each(fn game ->
+    |> Enum.each(fn %{id: id} = _game ->
       try do
-        stop_game(game.id)
+        stop_game(id)
       rescue
         # Any other error, continue cleanup
         _ -> :ok

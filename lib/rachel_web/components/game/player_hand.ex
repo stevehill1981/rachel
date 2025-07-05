@@ -4,6 +4,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   """
   use Phoenix.Component
   import RachelWeb.GameComponents
+  import RachelWeb.Components.Game.SpectatorDashboard
   alias Rachel.Games.Game
 
   attr :game, :map, required: true
@@ -11,34 +12,22 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   attr :selected_cards, :list, default: []
   attr :current_player, :any, required: true
   attr :is_spectator, :boolean, default: false
+  attr :commentary_feed, :list, default: []
+  attr :show_cards, :boolean, default: false
+  attr :show_statistics, :boolean, default: false
 
   def player_hand(assigns) do
     assigns = assign(assigns, :player, find_player(assigns.game, assigns.player_id))
 
     ~H"""
     <%= if @is_spectator do %>
-      <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
-        <div class="text-center mb-4">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-            Spectating
-          </span>
-        </div>
-        <.spectator_view game={@game} current_player={@current_player} />
-      </div>
+      <.spectator_dashboard
+        game={@game}
+        current_player={@current_player}
+        commentary_feed={@commentary_feed}
+        show_cards={@show_cards}
+        show_statistics={@show_statistics}
+      />
     <% else %>
       <%= if @player_id not in @game.winners do %>
         <div class="bg-white/10 backdrop-blur rounded-2xl p-6">

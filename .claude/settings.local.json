@@ -41,7 +41,14 @@
       "Bash(chmod:*)",
       "Bash(./reorganize_game_server.sh:*)",
       "Bash(rm:*)",
-      "Bash(mix dialyzer:*)"
+      "Bash(mix dialyzer:*)",
+      "Bash(for file in lib/rachel/games/*.ex)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(done)",
+      "Bash(mix phx.gen:*)",
+      "Bash(mix ecto.migrate:*)",
+      "Bash(mix sobelow:*)",
+      "Bash(mix deps.audit:*)"
     ],
     "deny": []
   }

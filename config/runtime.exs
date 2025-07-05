@@ -31,7 +31,16 @@ if config_env() == :prod do
   maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
 
   config :rachel, Rachel.Repo,
-    # ssl: true,
+    # Default to SSL unless explicitly disabled
+    ssl: System.get_env("DATABASE_SSL") != "false",
+    ssl_opts: [
+      verify: :verify_peer,
+      cacerts: :public_key.cacerts_get(),
+      server_name_indication: :disable,
+      customize_hostname_check: [
+        match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+      ]
+    ],
     url: database_url,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     # For machines with several cores, consider starting multiple pools of `pool_size`
@@ -64,6 +73,15 @@ if config_env() == :prod do
       # for details about using IPv6 vs IPv4 and loopback vs public addresses.
       ip: {0, 0, 0, 0, 0, 0, 0, 0},
       port: port
+    ],
+    # Force all traffic to HTTPS
+    force_ssl: [
+      rewrite_on: [:x_forwarded_proto],
+      hsts: true,
+      # 1 year
+      expires: 31_536_000,
+      preload: true,
+      subdomains: true
     ],
     secret_key_base: secret_key_base
 

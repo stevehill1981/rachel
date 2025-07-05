@@ -4,7 +4,7 @@ defmodule RachelWeb.GameComponents do
   """
   use Phoenix.Component
 
-  alias Rachel.Games.{Card, Game}
+  alias Rachel.Games.Card
 
   @doc """
   Renders a playing card with animations and proper styling.
@@ -19,18 +19,34 @@ defmodule RachelWeb.GameComponents do
     ~H"""
     <button
       type="button"
-      class={[
-        "playing-card relative w-20 h-28 text-2xl font-bold rounded-lg",
-        "bg-white border-2 border-gray-300 shadow-lg",
-        "transition-all duration-300 transform flex items-center justify-center",
-        @selected && "selected ring-4 ring-blue-500 -translate-y-4",
-        @disabled && "opacity-50 cursor-not-allowed",
-        !@disabled && "hover:shadow-xl cursor-pointer",
-        special_card?(@card) && "special-card-glow",
-        pickup_card?(@card) && "pickup-card-indicator"
-      ]}
+      class={
+        [
+          "playing-card relative rounded-lg bg-white border-2 border-gray-300 shadow-lg",
+          "transition-all duration-300 transform flex items-center justify-center",
+          # Larger minimum touch targets
+          "min-h-[120px] min-w-[85px]",
+          # Responsive sizing - larger on mobile
+          "sm:w-20 sm:h-28 w-24 h-32",
+          # Responsive text sizing
+          "text-xl sm:text-2xl font-bold",
+          # Optimize for touch
+          "touch-manipulation",
+          @selected && "selected ring-4 ring-blue-500 -translate-y-2 sm:-translate-y-4 scale-105",
+          @disabled && "opacity-50 cursor-not-allowed",
+          # Touch feedback
+          !@disabled && "active:scale-95 cursor-pointer touch-card",
+          # Hover for non-touch
+          !@disabled && "hover:shadow-xl hover:-translate-y-2",
+          special_card?(@card) && "special-card-glow",
+          pickup_card?(@card) && "pickup-card-indicator"
+        ]
+      }
       disabled={@disabled}
       data-effect={card_effect_text(@card)}
+      aria-label={card_aria_label(@card, @selected)}
+      aria-pressed={(@selected && "true") || "false"}
+      phx-hook="TouchCard"
+      data-card-index={@index}
       {@rest}
     >
       <span class={[
@@ -40,15 +56,18 @@ defmodule RachelWeb.GameComponents do
         {card_display(@card)}
       </span>
       <%= if @selected do %>
-        <span class="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full text-sm flex items-center justify-center animate-bounce-in">
+        <span class="absolute -top-2 -right-2 w-7 h-7 sm:w-6 sm:h-6 bg-blue-500 text-white rounded-full text-sm flex items-center justify-center animate-bounce-in">
           ✓
         </span>
       <% end %>
       <%= if special_card?(@card) && !@selected do %>
-        <span class="absolute -top-1 -left-1 text-xs opacity-70">
+        <span class="absolute -top-1 -left-1 text-sm sm:text-xs opacity-70">
           {special_icon(@card)}
         </span>
       <% end %>
+      <!-- Touch ripple effect container -->
+      <span class="touch-ripple absolute inset-0 rounded-lg overflow-hidden pointer-events-none">
+      </span>
     </button>
     """
   end
@@ -150,15 +169,16 @@ defmodule RachelWeb.GameComponents do
         <button
           id="deck-draw-button"
           phx-click="draw_card"
-          class="absolute inset-0 z-20 rounded-2xl hover:ring-4 hover:ring-green-400 transition-all duration-300 cursor-pointer group"
-          title="Draw cards"
+          class="absolute inset-0 z-20 rounded-2xl hover:ring-4 hover:ring-green-400 focus:ring-4 focus:ring-green-400 transition-all duration-300 cursor-pointer group touch-manipulation"
+          title="Draw cards from deck"
+          aria-label={"Draw cards from deck, #{@deck_size} cards remaining"}
           phx-hook="SoundEffect"
           data-sound="card-draw"
         >
-          <div class="absolute inset-0 bg-green-400/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div class="absolute inset-0 bg-green-400/20 rounded-2xl opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity duration-300">
           </div>
-          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-            Click to Draw
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
+            Draw Cards
           </div>
         </button>
       <% end %>
@@ -182,33 +202,43 @@ defmodule RachelWeb.GameComponents do
 
   def player_card(assigns) do
     ~H"""
-    <div class={[
-      "relative p-4 rounded-lg transition-all duration-300",
-      @is_current &&
-        "current-player bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105",
-      !@is_current && "bg-gray-100 hover:bg-gray-200"
-    ]}>
+    <div
+      class={[
+        "relative p-4 rounded-lg transition-all duration-300",
+        @is_current &&
+          "current-player bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105",
+        !@is_current && "bg-gray-100 hover:bg-gray-200"
+      ]}
+      role="status"
+      aria-label={player_status_label(@player, @is_current, @card_count)}
+    >
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <div class={[
-            "w-10 h-10 rounded-full flex items-center justify-center font-bold",
-            @is_current && "bg-white text-blue-600",
-            !@is_current && "bg-gray-300 text-gray-700"
-          ]}>
+          <div
+            class={[
+              "w-10 h-10 rounded-full flex items-center justify-center font-bold",
+              @is_current && "bg-white text-blue-600",
+              !@is_current && "bg-gray-300 text-gray-700"
+            ]}
+            aria-hidden="true"
+          >
             {String.first(@player.name)}
           </div>
           <div class="flex items-center gap-2">
             <div class="font-semibold">{@player.name}</div>
             <%= if @player.is_ai do %>
-              <div class="text-xs opacity-80">🖥️</div>
+              <div class="text-xs opacity-80" aria-label="Computer player">🖥️</div>
             <% end %>
           </div>
         </div>
-        <div class={[
-          "px-3 py-1 rounded-full text-sm font-bold",
-          @is_current && "bg-white/20",
-          !@is_current && "bg-gray-200"
-        ]}>
+        <div
+          class={[
+            "px-3 py-1 rounded-full text-sm font-bold",
+            @is_current && "bg-white/20",
+            !@is_current && "bg-gray-200"
+          ]}
+          aria-label={"#{@card_count} cards in hand"}
+        >
           {format_card_count(@card_count)}
         </div>
       </div>
@@ -271,7 +301,7 @@ defmodule RachelWeb.GameComponents do
   @doc """
   Renders game status indicators with animations.
   """
-  attr :game, Game, required: true
+  attr :game, :map, required: true
 
   def game_status(assigns) do
     ~H"""
@@ -297,7 +327,7 @@ defmodule RachelWeb.GameComponents do
       <% end %>
       
     <!-- Nominated Suit -->
-      <%= if @game.nominated_suit && @game.nominated_suit != :pending do %>
+      <%= if Map.get(@game, :nominated_suit) && @game.nominated_suit != :pending do %>
         <div class="nominated-suit-indicator rounded-xl p-4 text-center">
           <div class="text-sm mb-1">Must Play</div>
           <div class="text-2xl font-bold">
@@ -316,43 +346,76 @@ defmodule RachelWeb.GameComponents do
 
   def suit_selector(assigns) do
     ~H"""
-    <div class="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl p-8 shadow-2xl transform scale-100 animate-bounce-in max-w-md w-full mx-4">
-        <h2 class="text-2xl font-bold text-center mb-6">Choose a Suit</h2>
-        <p class="text-gray-600 text-center mb-8">
-          Select the suit that the next player must play
+    <div
+      class="fixed inset-0 bg-black/50 backdrop-blur flex items-center justify-center z-50"
+      role="dialog"
+      aria-labelledby="suit-selector-title"
+      aria-describedby="suit-selector-description"
+    >
+      <div
+        id="suit-selector-modal"
+        class="bg-white rounded-2xl p-8 shadow-2xl transform scale-100 animate-bounce-in max-w-md w-full mx-4"
+        phx-hook="SuitSelector"
+      >
+        <h2 id="suit-selector-title" class="text-2xl font-bold text-center mb-6">Choose a Suit</h2>
+        <p id="suit-selector-description" class="text-gray-600 text-center mb-8">
+          Select the suit that the next player must play. Use arrow keys to navigate and Enter to select.
         </p>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4" role="radiogroup" aria-labelledby="suit-selector-title">
           <button
             phx-click="nominate_suit"
             phx-value-suit="hearts"
-            class="p-6 rounded-xl bg-red-50 hover:bg-red-100 transition-colors group"
+            class="p-6 rounded-xl bg-red-50 hover:bg-red-100 focus:bg-red-100 focus:ring-4 focus:ring-red-300 transition-colors group touch-manipulation"
+            aria-label="Hearts suit"
+            role="radio"
+            tabindex="0"
+            data-suit="hearts"
           >
-            <div class="text-6xl text-red-500 group-hover:scale-110 transition-transform">♥</div>
+            <div class="text-6xl text-red-500 group-hover:scale-110 group-focus:scale-110 transition-transform">
+              ♥
+            </div>
             <div class="mt-2 font-semibold">Hearts</div>
           </button>
           <button
             phx-click="nominate_suit"
             phx-value-suit="diamonds"
-            class="p-6 rounded-xl bg-red-50 hover:bg-red-100 transition-colors group"
+            class="p-6 rounded-xl bg-red-50 hover:bg-red-100 focus:bg-red-100 focus:ring-4 focus:ring-red-300 transition-colors group touch-manipulation"
+            aria-label="Diamonds suit"
+            role="radio"
+            tabindex="-1"
+            data-suit="diamonds"
           >
-            <div class="text-6xl text-red-500 group-hover:scale-110 transition-transform">♦</div>
+            <div class="text-6xl text-red-500 group-hover:scale-110 group-focus:scale-110 transition-transform">
+              ♦
+            </div>
             <div class="mt-2 font-semibold">Diamonds</div>
           </button>
           <button
             phx-click="nominate_suit"
             phx-value-suit="clubs"
-            class="p-6 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
+            class="p-6 rounded-xl bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 focus:ring-4 focus:ring-gray-300 transition-colors group touch-manipulation"
+            aria-label="Clubs suit"
+            role="radio"
+            tabindex="-1"
+            data-suit="clubs"
           >
-            <div class="text-6xl text-black group-hover:scale-110 transition-transform">♣</div>
+            <div class="text-6xl text-black group-hover:scale-110 group-focus:scale-110 transition-transform">
+              ♣
+            </div>
             <div class="mt-2 font-semibold">Clubs</div>
           </button>
           <button
             phx-click="nominate_suit"
             phx-value-suit="spades"
-            class="p-6 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
+            class="p-6 rounded-xl bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 focus:ring-4 focus:ring-gray-300 transition-colors group touch-manipulation"
+            aria-label="Spades suit"
+            role="radio"
+            tabindex="-1"
+            data-suit="spades"
           >
-            <div class="text-6xl text-black group-hover:scale-110 transition-transform">♠</div>
+            <div class="text-6xl text-black group-hover:scale-110 group-focus:scale-110 transition-transform">
+              ♠
+            </div>
             <div class="mt-2 font-semibold">Spades</div>
           </button>
         </div>
@@ -400,17 +463,108 @@ defmodule RachelWeb.GameComponents do
   """
   def ai_thinking_indicator(assigns) do
     ~H"""
-    <div class="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur rounded-full">
+    <div
+      class="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur rounded-full"
+      role="status"
+      aria-label="AI is thinking"
+    >
       <div class="text-white/80 text-sm font-medium">AI is thinking</div>
       <div class="flex gap-1">
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 0ms">
+        <div
+          class="w-2 h-2 bg-white/60 rounded-full animate-bounce"
+          style="animation-delay: 0ms"
+          aria-hidden="true"
+        >
         </div>
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 150ms">
+        <div
+          class="w-2 h-2 bg-white/60 rounded-full animate-bounce"
+          style="animation-delay: 150ms"
+          aria-hidden="true"
+        >
         </div>
-        <div class="w-2 h-2 bg-white/60 rounded-full animate-bounce" style="animation-delay: 300ms">
+        <div
+          class="w-2 h-2 bg-white/60 rounded-full animate-bounce"
+          style="animation-delay: 300ms"
+          aria-hidden="true"
+        >
         </div>
       </div>
     </div>
+    """
+  end
+
+  @doc """
+  Renders a loading spinner for game actions.
+  """
+  attr :text, :string, default: "Loading..."
+  attr :size, :string, default: "medium", values: ["small", "medium", "large"]
+
+  def loading_spinner(assigns) do
+    ~H"""
+    <div
+      class={[
+        "flex items-center gap-3",
+        @size == "small" && "text-sm",
+        @size == "medium" && "text-base",
+        @size == "large" && "text-lg"
+      ]}
+      role="status"
+      aria-label={@text}
+    >
+      <div
+        class={[
+          "animate-spin rounded-full border-2 border-transparent border-t-current",
+          @size == "small" && "w-4 h-4",
+          @size == "medium" && "w-5 h-5",
+          @size == "large" && "w-6 h-6"
+        ]}
+        aria-hidden="true"
+      >
+      </div>
+      <span class="font-medium">{@text}</span>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders action buttons with loading states.
+  """
+  attr :loading, :boolean, default: false
+  attr :disabled, :boolean, default: false
+  attr :variant, :string, default: "primary", values: ["primary", "secondary", "danger"]
+  attr :text, :string, required: true
+  attr :loading_text, :string, default: nil
+  attr :rest, :global, include: ~w(phx-click phx-value-suit)
+
+  def action_button(assigns) do
+    assigns = assign(assigns, :loading_text, assigns[:loading_text] || "#{assigns.text}...")
+
+    ~H"""
+    <button
+      class={[
+        "relative px-6 py-3 rounded-xl font-semibold transition-all duration-300 min-h-[48px] touch-manipulation",
+        "focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+        @variant == "primary" && "bg-blue-500 hover:bg-blue-600 focus:ring-blue-300 text-white",
+        @variant == "secondary" && "bg-gray-500 hover:bg-gray-600 focus:ring-gray-300 text-white",
+        @variant == "danger" && "bg-red-500 hover:bg-red-600 focus:ring-red-300 text-white",
+        (@loading || @disabled) && "pointer-events-none"
+      ]}
+      disabled={@loading || @disabled}
+      aria-label={if @loading, do: @loading_text, else: @text}
+      {@rest}
+    >
+      <!-- Normal content -->
+      <span class={["transition-opacity duration-200", @loading && "opacity-0"]}>
+        {@text}
+      </span>
+      
+    <!-- Loading content -->
+      <%= if @loading do %>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <.loading_spinner text={@loading_text} size="small" />
+        </div>
+      <% end %>
+    </button>
     """
   end
 
@@ -443,5 +597,25 @@ defmodule RachelWeb.GameComponents do
       card.rank == :ace -> "🌟"
       true -> ""
     end
+  end
+
+  defp card_aria_label(card, selected) do
+    base_label = "#{rank_to_string(card.rank)} of #{String.capitalize(Atom.to_string(card.suit))}"
+
+    effect_text =
+      case card_effect_text(card) do
+        "" -> ""
+        effect -> ", special effect: #{effect}"
+      end
+
+    selected_text = if selected, do: ", selected", else: ""
+    base_label <> effect_text <> selected_text
+  end
+
+  defp player_status_label(player, is_current, card_count) do
+    base = "#{player.name}, #{card_count} cards"
+    ai_text = if player.is_ai, do: ", computer player", else: ""
+    current_text = if is_current, do: ", current turn", else: ""
+    base <> ai_text <> current_text
   end
 end

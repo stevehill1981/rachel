@@ -6,10 +6,12 @@ defmodule RachelWeb.Router do
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
+    plug RachelWeb.Plugs.SessionSecurity
     plug :fetch_live_flash
     plug :put_root_layout, html: {RachelWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug RachelWeb.Plugs.SecurityHeaders
     plug :fetch_current_scope_for_user
     plug RachelWeb.Plugs.PlayerSession
   end
@@ -23,6 +25,7 @@ defmodule RachelWeb.Router do
 
     get "/", PageController, :home
     live "/lobby", LobbyLive
+    live "/practice", PracticeLive
     live "/play", GameLive
     live "/game/:game_id", GameLive
   end

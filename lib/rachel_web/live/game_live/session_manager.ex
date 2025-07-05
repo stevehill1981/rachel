@@ -11,9 +11,23 @@ defmodule RachelWeb.GameLive.SessionManager do
 
   alias Rachel.Games.GameServer
 
+  @type game_id :: String.t()
+  @type player_id :: String.t()
+  @type player_name :: String.t()
+  @type join_error ::
+          :game_not_found
+          | :game_started
+          | :game_full
+          | :already_joined
+          | :game_not_started
+          | :already_spectating
+          | :already_playing
+          | any()
+
   @doc """
   Extracts or generates a player ID from the session.
   """
+  @spec get_player_id(map()) :: player_id()
   def get_player_id(session) do
     Map.get(
       session,
@@ -25,6 +39,7 @@ defmodule RachelWeb.GameLive.SessionManager do
   @doc """
   Extracts a player name from the session, defaulting to "Anonymous".
   """
+  @spec get_player_name(map()) :: player_name()
   def get_player_name(session) do
     Map.get(session, "player_name", "Anonymous")
   end
@@ -33,6 +48,8 @@ defmodule RachelWeb.GameLive.SessionManager do
   Handles the complete game joining process.
   Returns {:ok, game}, {:ok, game, :spectator}, or {:error, reason}.
   """
+  @spec handle_game_join(game_id(), player_id(), player_name()) ::
+          {:ok, map()} | {:ok, map(), :spectator} | {:error, join_error()}
   def handle_game_join(game_id, player_id, player_name) do
     case GameServer.get_state(game_id) do
       game when is_map(game) ->
@@ -49,6 +66,8 @@ defmodule RachelWeb.GameLive.SessionManager do
   @doc """
   Determines whether to join as a new player or reconnect an existing player.
   """
+  @spec join_or_reconnect_player(game_id(), map(), player_id(), player_name()) ::
+          {:ok, map()} | {:ok, map(), :spectator} | {:error, join_error()}
   def join_or_reconnect_player(game_id, game, player_id, player_name) do
     if player_in_game?(game, player_id) do
       reconnect_existing_player(game_id, player_id)
@@ -60,15 +79,12 @@ defmodule RachelWeb.GameLive.SessionManager do
   @doc """
   Reconnects an existing player to the game.
   """
+  @spec reconnect_existing_player(game_id(), player_id()) :: {:ok, map()}
   def reconnect_existing_player(game_id, player_id) do
-    case GameServer.reconnect_player(game_id, player_id) do
-      :ok ->
-        updated_game = GameServer.get_state(game_id)
-        {:ok, updated_game}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
+    # GameServer.reconnect_player only returns :ok
+    :ok = GameServer.reconnect_player(game_id, player_id)
+    updated_game = GameServer.get_state(game_id)
+    {:ok, updated_game}
   end
 
   @doc """
@@ -110,12 +126,20 @@ defmodule RachelWeb.GameLive.SessionManager do
   @doc """
   Formats join error messages for display to users.
   """
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:game_not_found), do: "Game not found"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:game_started), do: "Game has already started"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:game_full), do: "Game is full"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:already_joined), do: "You're already in this game"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:game_not_started), do: "Cannot spectate a game that hasn't started yet"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:already_spectating), do: "You're already spectating this game"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(:already_playing), do: "You're already playing in this game"
+  @spec format_join_error(join_error()) :: String.t()
   def format_join_error(error), do: "Error joining game: #{inspect(error)}"
 end

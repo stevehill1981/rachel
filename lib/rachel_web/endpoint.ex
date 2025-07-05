@@ -8,7 +8,17 @@ defmodule RachelWeb.Endpoint do
     store: :cookie,
     key: "_rachel_key",
     signing_salt: "No/GUMQ1",
-    same_site: "Lax"
+    # Encrypt session data
+    encryption_salt: "session_encryption_salt",
+    # 24 hours session expiry
+    max_age: 24 * 60 * 60,
+    same_site: "Lax",
+    # Only send over HTTPS in production
+    secure: Mix.env() == :prod,
+    # Prevent JavaScript access to session cookie
+    http_only: true,
+    # Additional protection against CSRF
+    extra: "SameSite=Lax"
   ]
 
   socket "/live", Phoenix.LiveView.Socket,

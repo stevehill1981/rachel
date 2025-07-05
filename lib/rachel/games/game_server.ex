@@ -7,54 +7,84 @@ defmodule Rachel.Games.GameServer do
 
   alias Phoenix.PubSub
   alias Rachel.Accounts.Stats, as: AccountsStats
-  alias Rachel.Games.{Game, Player}
+  alias Rachel.Games.{Card, Game, Player}
 
   @max_players 8
   @min_players 2
 
+  @type game_id :: String.t()
+  @type player_id :: String.t()
+  @type timer_ref :: reference() | nil
+  @type state :: %{
+          game: Game.t(),
+          connected_players: %{player_id() => boolean()},
+          player_monitors: %{pid() => player_id()},
+          spectators: %{player_id() => %{name: String.t(), connected: boolean()}},
+          host_id: player_id() | nil,
+          created_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          started_at: DateTime.t() | nil,
+          timeout: timeout(),
+          timeout_ref: timer_ref(),
+          ai_timer_ref: timer_ref(),
+          disconnect_check_timers: %{player_id() => timer_ref()}
+        }
+
   # Client API
 
+  @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts) do
     game_id = Keyword.fetch!(opts, :game_id)
     GenServer.start_link(__MODULE__, opts, name: via_tuple(game_id))
   end
 
+  @spec join_game(game_id(), player_id(), String.t()) :: {:ok, Game.t()} | {:error, atom()}
   def join_game(game_id, player_id, player_name) do
     GenServer.call(via_tuple(game_id), {:join_game, player_id, player_name})
   end
 
+  @spec join_as_spectator(game_id(), player_id(), String.t()) ::
+          {:ok, Game.t()} | {:error, atom()}
   def join_as_spectator(game_id, player_id, player_name) do
     GenServer.call(via_tuple(game_id), {:join_as_spectator, player_id, player_name})
   end
 
+  @spec player_connected(game_id(), player_id(), pid()) :: :ok
   def player_connected(game_id, player_id, pid) do
     GenServer.cast(via_tuple(game_id), {:player_connected, player_id, pid})
   end
 
+  @spec player_disconnected(game_id(), player_id()) :: :ok
   def player_disconnected(game_id, player_id) do
     GenServer.cast(via_tuple(game_id), {:player_disconnected, player_id})
   end
 
+  @spec leave_game(game_id(), player_id()) :: {:ok, Game.t()} | {:error, atom()}
   def leave_game(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:leave_game, player_id})
   end
 
+  @spec start_game(game_id(), player_id()) :: {:ok, Game.t()} | {:error, atom()}
   def start_game(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:start_game, player_id})
   end
 
+  @spec play_cards(game_id(), player_id(), [Card.t()]) :: {:ok, Game.t()} | {:error, atom()}
   def play_cards(game_id, player_id, cards) do
     GenServer.call(via_tuple(game_id), {:play_cards, player_id, cards})
   end
 
+  @spec draw_card(game_id(), player_id()) :: {:ok, Game.t()} | {:error, atom()}
   def draw_card(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:draw_card, player_id})
   end
 
+  @spec nominate_suit(game_id(), player_id(), Card.suit()) :: {:ok, Game.t()} | {:error, atom()}
   def nominate_suit(game_id, player_id, suit) do
     GenServer.call(via_tuple(game_id), {:nominate_suit, player_id, suit})
   end
 
+  @spec get_state(game_id()) :: map() | nil
   def get_state(game_id) do
     GenServer.call(via_tuple(game_id), :get_state)
   catch
@@ -62,19 +92,23 @@ defmodule Rachel.Games.GameServer do
     :exit, _ -> nil
   end
 
+  @spec add_ai_player(game_id(), String.t()) :: {:ok, Game.t()} | {:error, atom()}
   def add_ai_player(game_id, name) do
     GenServer.call(via_tuple(game_id), {:add_ai_player, name})
   end
 
   # Test helper to set state directly
+  @spec set_state(game_id(), Game.t()) :: :ok
   def set_state(game_id, game) do
     GenServer.call(via_tuple(game_id), {:set_state, game})
   end
 
+  @spec reconnect_player(game_id(), player_id()) :: :ok
   def reconnect_player(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:reconnect_player, player_id})
   end
 
+  @spec disconnect_player(game_id(), player_id()) :: :ok
   def disconnect_player(game_id, player_id) do
     GenServer.call(via_tuple(game_id), {:disconnect_player, player_id})
   end
