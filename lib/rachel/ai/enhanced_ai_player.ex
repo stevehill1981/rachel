@@ -4,8 +4,8 @@ defmodule Rachel.AI.EnhancedAIPlayer do
   Replaces the basic AI with personality-aware strategic thinking.
   """
 
-  alias Rachel.Games.{Game, Card}
   alias Rachel.AI.Personality
+  alias Rachel.Games.{Card, Game}
 
   @type ai_state :: %{
           personality: Personality.personality(),
@@ -179,7 +179,7 @@ defmodule Rachel.AI.EnhancedAIPlayer do
     }
   end
 
-  defp calculate_base_score(cards, game, context) do
+  defp calculate_base_score(cards, _game, context) do
     # Basic scoring factors
     hand_reduction_score = length(cards) * 10
     card_value_score = Enum.sum(Enum.map(cards, &get_card_value/1))
@@ -193,13 +193,13 @@ defmodule Rachel.AI.EnhancedAIPlayer do
     hand_reduction_score + card_value_score + special_bonus + defensive_score
   end
 
-  defp build_play_context(cards, game, context) do
+  defp build_play_context(cards, _game, context) do
     %{
       is_aggressive_play: has_special_cards(cards),
       requires_patience: context.game_phase == :early and length(cards) == 1,
-      is_risky: is_risky_play(cards, context),
+      is_risky: risky_play?(cards, context),
       affects_opponents: affects_other_players(cards),
-      is_defensive: is_defensive_play(cards, context),
+      is_defensive: defensive_play?(cards, context),
       uses_special_card: has_special_cards(cards),
       controls_suit: changes_suit(cards),
       early_game: context.game_phase == :early,
@@ -282,13 +282,13 @@ defmodule Rachel.AI.EnhancedAIPlayer do
     hand = get_ai_hand(game, ai_player.id)
 
     # Score based on special cards and hand composition
-    special_card_count = Enum.count(hand, &is_special_card/1)
+    special_card_count = Enum.count(hand, &special_card?/1)
     hand_size_factor = max(0.1, 1.0 - length(hand) / 15.0)
 
     special_card_count * 0.3 + hand_size_factor * 0.7
   end
 
-  defp determine_strategic_priorities(game, personality, memory) do
+  defp determine_strategic_priorities(_game, personality, _memory) do
     base_priorities = %{
       hand_reduction: 0.5,
       opponent_disruption: 0.3,
@@ -397,10 +397,10 @@ defmodule Rachel.AI.EnhancedAIPlayer do
   end
 
   defp has_special_cards(cards) do
-    Enum.any?(cards, &is_special_card/1)
+    Enum.any?(cards, &special_card?/1)
   end
 
-  defp is_special_card(%Card{rank: rank}) do
+  defp special_card?(%Card{rank: rank}) do
     rank in [2, 7, :jack, :queen, :ace]
   end
 
@@ -410,12 +410,12 @@ defmodule Rachel.AI.EnhancedAIPlayer do
     end)
   end
 
-  defp is_risky_play(cards, context) do
+  defp risky_play?(cards, context) do
     # Playing special cards early or when not under threat could be risky
     has_special_cards(cards) and context.game_phase == :early and context.threat_level < 0.3
   end
 
-  defp is_defensive_play(cards, context) do
+  defp defensive_play?(cards, context) do
     context.threat_level > 0.5 and
       Enum.any?(cards, fn card ->
         card.rank in [2, 7, :jack]

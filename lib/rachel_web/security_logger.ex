@@ -213,7 +213,7 @@ defmodule RachelWeb.SecurityLogger do
   defp send_critical_alert(event) do
     # In production, integrate with:
     # - PagerDuty
-    # - Slack notifications  
+    # - Slack notifications
     # - Email alerts
     # - SMS alerts
     Logger.critical("🚨 CRITICAL SECURITY EVENT: #{inspect(event)}")
@@ -229,7 +229,7 @@ defmodule RachelWeb.SecurityLogger do
   defp should_alert?(event) do
     # Implement logic for when to send alerts
     # - Frequency thresholds
-    # - Severity combinations  
+    # - Severity combinations
     # - Time-based rules
     case event.event_type do
       :authorization_failure -> true

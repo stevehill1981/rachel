@@ -1,9 +1,9 @@
 defmodule RachelWeb.GameLive do
   use RachelWeb, :live_view
 
-  alias Phoenix.PubSub
   alias Phoenix.LiveView.Socket
-  alias Rachel.Games.GameServer
+  alias Phoenix.PubSub
+  alias Rachel.Games.{Game, GameServer}
 
   alias RachelWeb.GameLive.{
     Actions,
@@ -28,10 +28,10 @@ defmodule RachelWeb.GameLive do
 
   @impl true
   @spec mount(map(), map(), Socket.t()) :: {:ok, Socket.t()}
-  def mount(%{"game_id" => game_id}, session, socket) do
-    # Generate or get player identity
-    player_id = SessionManager.get_player_id(session)
-    player_name = SessionManager.get_player_name(session)
+  def mount(%{"game_id" => game_id}, _session, socket) do
+    # Use player identity from the hook
+    player_id = socket.assigns.player_id
+    player_name = socket.assigns.player_name
 
     case SessionManager.handle_game_join(game_id, player_id, player_name) do
       {:ok, game} ->
@@ -100,16 +100,15 @@ defmodule RachelWeb.GameLive do
   # Fallback for single-player mode (no game_id)
   @spec mount(map(), map(), Socket.t()) :: {:ok, Socket.t()}
   def mount(_params, _session, socket) do
-    # For single-player practice games, always use "You" for better UX
-    player_name = "You"
+    # Use the player name from session for consistency
+    player_name = socket.assigns.player_name
     game = PracticeGame.create_test_game(player_name)
 
     socket =
       socket
       |> assign(:game, StateManager.normalize_game_data(game))
       |> assign(:game_id, nil)
-      |> assign(:player_id, "human")
-      |> assign(:player_name, player_name)
+      # player_id and player_name are already set by the hook
       |> assign(:selected_cards, [])
       |> assign(:show_ai_thinking, false)
       |> assign(:show_winner_banner, false)
@@ -141,7 +140,25 @@ defmodule RachelWeb.GameLive do
                  index
                ) do
             {:ok, update} ->
-              {:noreply, apply_socket_update(socket, update)}
+              updated_socket = apply_socket_update(socket, update)
+
+              # Check if we should auto-play (only one valid card)
+              if should_auto_play?(updated_socket) do
+                # Auto-play the card
+                case EventHandlers.handle_play_cards(
+                       updated_socket.assigns.game,
+                       updated_socket.assigns.player_id,
+                       updated_socket.assigns.selected_cards
+                     ) do
+                  {:ok, {:play_cards_action, selected_cards}} ->
+                    execute_play_cards_action(updated_socket, selected_cards)
+
+                  {:error, _reason} ->
+                    {:noreply, updated_socket}
+                end
+              else
+                {:noreply, updated_socket}
+              end
 
             {:error, _reason} ->
               {:noreply, socket}
@@ -161,19 +178,20 @@ defmodule RachelWeb.GameLive do
 
   @spec handle_event(String.t(), map(), Socket.t()) :: {:noreply, Socket.t()}
   def handle_event("play_cards", _, socket) do
-    with {:ok, _} <- Validation.validate_rate_limit(socket.assigns.player_id, :play_card) do
-      case EventHandlers.handle_play_cards(
-             socket.assigns.game,
-             socket.assigns.player_id,
-             socket.assigns.selected_cards
-           ) do
-        {:ok, {:play_cards_action, selected_cards}} ->
-          execute_play_cards_action(socket, selected_cards)
+    case Validation.validate_rate_limit(socket.assigns.player_id, :play_card) do
+      {:ok, _} ->
+        case EventHandlers.handle_play_cards(
+               socket.assigns.game,
+               socket.assigns.player_id,
+               socket.assigns.selected_cards
+             ) do
+          {:ok, {:play_cards_action, selected_cards}} ->
+            execute_play_cards_action(socket, selected_cards)
 
-        {:error, _reason} ->
-          {:noreply, socket}
-      end
-    else
+          {:error, _reason} ->
+            {:noreply, socket}
+        end
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, reason)}
     end
@@ -181,21 +199,22 @@ defmodule RachelWeb.GameLive do
 
   @spec handle_event(String.t(), map(), Socket.t()) :: {:noreply, Socket.t()}
   def handle_event("draw_card", _, socket) do
-    with {:ok, _} <- Validation.validate_rate_limit(socket.assigns.player_id, :draw_card) do
-      case StateManager.validate_player_turn(socket) do
-        {:ok, _current_player} ->
-          case EventHandlers.handle_draw_card(socket) do
-            {:ok, updates} ->
-              {:noreply, apply_socket_updates(socket, updates)}
+    case Validation.validate_rate_limit(socket.assigns.player_id, :draw_card) do
+      {:ok, _} ->
+        case StateManager.validate_player_turn(socket) do
+          {:ok, _current_player} ->
+            case EventHandlers.handle_draw_card(socket) do
+              {:ok, updates} ->
+                {:noreply, apply_socket_updates(socket, updates)}
 
-            {:error, reason} ->
-              {:noreply, socket |> clear_flash() |> put_flash(:error, reason)}
-          end
+              {:error, reason} ->
+                {:noreply, socket |> clear_flash() |> put_flash(:error, reason)}
+            end
 
-        :not_player_turn ->
-          {:noreply, socket}
-      end
-    else
+          :not_player_turn ->
+            {:noreply, socket}
+        end
+
       {:error, reason} ->
         {:noreply, put_flash(socket, :error, reason)}
     end
@@ -512,5 +531,49 @@ defmodule RachelWeb.GameLive do
     game = socket.assigns.game
     current_player_id = socket.assigns.player_id
     Enum.find(game.players, &(&1.id == current_player_id))
+  end
+
+  defp should_auto_play?(socket) do
+    # Auto-play if:
+    # 1. It's the player's turn
+    # 2. They've selected exactly one card
+    # 3. There are no other cards with the same rank that could be stacked
+
+    game = socket.assigns.game
+    player_id = socket.assigns.player_id
+    selected_cards = socket.assigns.selected_cards
+
+    with {:ok, current_player} <- get_current_player_if_valid(game, player_id),
+         true <- length(selected_cards) == 1,
+         {:ok, selected_card} <- get_selected_card(current_player, selected_cards),
+         {:ok, valid_plays} <- {:ok, Game.get_valid_plays(game, current_player)} do
+      has_no_stackable_cards?(valid_plays, selected_card, hd(selected_cards))
+    else
+      _ -> false
+    end
+  end
+
+  defp get_current_player_if_valid(game, player_id) do
+    case Game.current_player(game) do
+      %{id: ^player_id} = player -> {:ok, player}
+      _ -> {:error, :not_current_player}
+    end
+  end
+
+  defp get_selected_card(current_player, selected_cards) do
+    selected_index = hd(selected_cards)
+    case Enum.at(current_player.hand, selected_index) do
+      nil -> {:error, :invalid_card}
+      card -> {:ok, card}
+    end
+  end
+
+  defp has_no_stackable_cards?(valid_plays, selected_card, selected_index) do
+    stackable_cards =
+      Enum.filter(valid_plays, fn {card, idx} ->
+        card.rank == selected_card.rank && idx != selected_index
+      end)
+
+    Enum.empty?(stackable_cards)
   end
 end

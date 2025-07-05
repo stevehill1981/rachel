@@ -248,16 +248,18 @@ defmodule Rachel.Tournaments.TournamentPlayer do
   Checks if a tournament is full.
   """
   def tournament_full?(tournament_id) do
-    with %Tournament{max_players: max_players} <- Repo.get(Tournament, tournament_id) do
-      current_count =
-        Repo.aggregate(
-          from(tp in __MODULE__, where: tp.tournament_id == ^tournament_id),
-          :count
-        )
+    case Repo.get(Tournament, tournament_id) do
+      %Tournament{max_players: max_players} ->
+        current_count =
+          Repo.aggregate(
+            from(tp in __MODULE__, where: tp.tournament_id == ^tournament_id),
+            :count
+          )
 
-      current_count >= max_players
-    else
-      nil -> false
+        current_count >= max_players
+      
+      nil ->
+        false
     end
   end
 

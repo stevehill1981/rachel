@@ -4,22 +4,31 @@ defmodule RachelWeb.PracticeLive do
   """
 
   use RachelWeb, :live_view
-  alias Rachel.AI.{Personality, EnhancedAIPlayer}
+  alias Rachel.AI.{EnhancedAIPlayer, Personality}
   alias Rachel.Games.GameServer
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     personalities = Personality.all_personalities()
+
+    # Smart defaults to reduce friction
+    player_name = session[:player_name] || generate_friendly_name()
+
+    default_opponents = [
+      Personality.get_personality(:conservative),
+      Personality.get_personality(:strategic)
+    ]
 
     socket =
       socket
       |> assign(:page_title, "Practice Mode")
       |> assign(:personalities, personalities)
-      |> assign(:selected_opponents, [])
+      |> assign(:selected_opponents, default_opponents)
       |> assign(:max_opponents, 3)
       |> assign(:game_started, false)
-      |> assign(:player_name, "")
+      |> assign(:player_name, player_name)
       |> assign(:difficulty_level, :mixed)
+      |> assign(:show_advanced_options, false)
 
     {:ok, socket}
   end
@@ -92,6 +101,11 @@ defmodule RachelWeb.PracticeLive do
   end
 
   @impl true
+  def handle_event("toggle_advanced_options", _params, socket) do
+    {:noreply, assign(socket, :show_advanced_options, not socket.assigns.show_advanced_options)}
+  end
+
+  @impl true
   def handle_event("start_practice_game", _params, socket) do
     if socket.assigns.player_name != "" and length(socket.assigns.selected_opponents) > 0 do
       # Create game with AI players
@@ -119,16 +133,17 @@ defmodule RachelWeb.PracticeLive do
         {:ok, _pid} ->
           # Add human player
           GameServer.join_game(game_id, human_player.id, human_player.name)
-          
+
           # Add AI players
           Enum.each(ai_players, fn ai_player ->
             GameServer.add_ai_player(game_id, ai_player.name)
           end)
-          
+
           # Start the game
           case GameServer.start_game(game_id, human_player.id) do
             {:ok, _game} ->
               {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
+
             {:error, reason} ->
               {:noreply, put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
           end
@@ -225,5 +240,15 @@ defmodule RachelWeb.PracticeLive do
 
   defp generate_game_id do
     :crypto.strong_rand_bytes(8) |> Base.encode16() |> String.downcase()
+  end
+
+  defp generate_friendly_name do
+    adjectives = ["Happy", "Clever", "Lucky", "Swift", "Bright", "Cheerful", "Bold", "Wise"]
+    nouns = ["Player", "Gamer", "Friend", "Explorer", "Hero", "Champion", "Ace", "Star"]
+
+    adjective = Enum.random(adjectives)
+    noun = Enum.random(nouns)
+
+    "#{adjective} #{noun}"
   end
 end

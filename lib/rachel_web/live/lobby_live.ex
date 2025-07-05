@@ -4,8 +4,8 @@ defmodule RachelWeb.LobbyLive do
   """
   use RachelWeb, :live_view
 
-  alias Phoenix.PubSub
   alias Phoenix.LiveView.Socket
+  alias Phoenix.PubSub
   alias Rachel.Games.GameManager
   alias RachelWeb.Validation
 

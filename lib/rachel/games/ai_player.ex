@@ -4,8 +4,8 @@ defmodule Rachel.Games.AIPlayer do
   Implements basic strategy for playing cards. Now with enhanced AI support.
   """
 
-  alias Rachel.Games.{Card, Game}
   alias Rachel.AI.EnhancedAIPlayer
+  alias Rachel.Games.{Card, Game}
 
   @spec make_move(Game.t(), String.t()) ::
           {:play, integer() | [integer()]}
