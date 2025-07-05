@@ -45,8 +45,7 @@ defmodule AISimpleTest do
       valid_card =
         Enum.find(initial_player.hand, fn card ->
           card.suit == initial_card.suit or
-            card.rank == initial_card.rank or
-            card.rank == :ace
+            card.rank == initial_card.rank
         end)
 
       # Human plays
