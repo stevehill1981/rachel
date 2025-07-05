@@ -21,6 +21,7 @@ defmodule Rachel.Games.Player do
           has_drawn: boolean()
         }
 
+  @spec new(String.t(), String.t(), keyword()) :: t()
   def new(id, name, opts \\ []) do
     %__MODULE__{
       id: id,

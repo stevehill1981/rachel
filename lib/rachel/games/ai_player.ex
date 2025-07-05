@@ -6,6 +6,11 @@ defmodule Rachel.Games.AIPlayer do
 
   alias Rachel.Games.{Card, Game}
 
+  @spec make_move(Game.t(), String.t()) ::
+          {:play, integer() | [integer()]}
+          | {:draw, nil}
+          | {:nominate, Card.suit()}
+          | {:error, atom()}
   def make_move(%Game{} = game, player_id) do
     case validate_ai_turn(game, player_id) do
       {:ok, player} ->

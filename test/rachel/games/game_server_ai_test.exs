@@ -82,12 +82,19 @@ defmodule Rachel.Games.GameServerAITest do
 
       # Make human play a valid card (instead of trying to draw)
       # Find a card the human can play
+      # Find a card that doesn't have special effects (not 2, 7, J, Q, A)
+      # If no non-special card, just find any valid card
       valid_card =
         Enum.find(human_player.hand, fn card ->
-          card.suit == initial_game.current_card.suit ||
-            card.rank == initial_game.current_card.rank ||
-            card.rank == :ace
-        end)
+          (card.suit == initial_game.current_card.suit ||
+             card.rank == initial_game.current_card.rank) &&
+            card.rank not in [2, 7, :jack, :queen, :ace]
+        end) ||
+          Enum.find(human_player.hand, fn card ->
+            card.suit == initial_game.current_card.suit ||
+              card.rank == initial_game.current_card.rank ||
+              card.rank == :ace
+          end)
 
       # Human plays a card to pass turn to AI
       if valid_card do

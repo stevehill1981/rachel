@@ -40,7 +40,8 @@
       "Bash(gsed:*)",
       "Bash(chmod:*)",
       "Bash(./reorganize_game_server.sh:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mix dialyzer:*)"
     ],
     "deny": []
   }

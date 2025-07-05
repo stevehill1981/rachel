@@ -28,7 +28,7 @@ defmodule Rachel.Games.Game do
           pending_pickups: integer(),
           pending_pickup_type: :twos | :black_jacks | nil,
           pending_skips: integer(),
-          nominated_suit: Card.suit() | nil,
+          nominated_suit: Card.suit() | :pending | nil,
           status: game_status(),
           winners: [player_id()],
           stats: Stats.t() | nil,
@@ -53,15 +53,18 @@ defmodule Rachel.Games.Game do
     last_action: nil
   ]
 
+  @spec new(String.t() | nil) :: t()
   def new(id \\ generate_id()) do
     %__MODULE__{id: id, deck: Deck.new()}
   end
 
+  @spec add_player(t(), player_id(), String.t(), boolean()) :: t()
   def add_player(%__MODULE__{status: :waiting} = game, player_id, name, is_ai \\ false) do
     player = %{id: player_id, name: name, hand: [], is_ai: is_ai}
     %{game | players: game.players ++ [player]}
   end
 
+  @spec start_game(t()) :: t()
   def start_game(%__MODULE__{players: players} = game) when length(players) >= 2 do
     deck = Deck.new()
 
@@ -87,6 +90,7 @@ defmodule Rachel.Games.Game do
     }
   end
 
+  @spec play_card(t(), player_id(), [integer()] | integer()) :: {:ok, t()} | {:error, atom()}
   def play_card(%__MODULE__{status: :playing} = game, player_id, card_indices)
       when is_list(card_indices) do
     with {:ok, player_index} <- find_player_index(game, player_id),
@@ -123,6 +127,7 @@ defmodule Rachel.Games.Game do
     play_card(game, player_id, [card_index])
   end
 
+  @spec draw_card(t(), player_id()) :: {:ok, t()} | {:error, atom()}
   def draw_card(%__MODULE__{status: :playing} = game, player_id) do
     with {:ok, player_index} <- find_player_index(game, player_id),
          true <- player_index == game.current_player_index,
@@ -151,6 +156,7 @@ defmodule Rachel.Games.Game do
     end
   end
 
+  @spec nominate_suit(t(), player_id(), Card.suit()) :: {:ok, t()} | {:error, atom()}
   def nominate_suit(%__MODULE__{nominated_suit: :pending} = game, player_id, suit)
       when suit in [:hearts, :diamonds, :clubs, :spades] do
     with {:ok, player_index} <- find_player_index(game, player_id),
@@ -172,16 +178,19 @@ defmodule Rachel.Games.Game do
     {:error, :no_ace_played}
   end
 
+  @spec current_player(t()) :: player() | nil
   def current_player(%__MODULE__{players: players, current_player_index: index}) do
     Enum.at(players, index)
   end
 
+  @spec get_valid_plays(t(), player()) :: [{Card.t(), integer()}]
   def get_valid_plays(%__MODULE__{} = game, %{hand: hand}) do
     hand
     |> Enum.with_index()
     |> Enum.filter(fn {card, _index} -> valid_play?(game, card) end)
   end
 
+  @spec has_valid_play?(t(), player()) :: boolean()
   def has_valid_play?(game, player) do
     get_valid_plays(game, player) != []
   end
@@ -536,6 +545,7 @@ defmodule Rachel.Games.Game do
     end
   end
 
+  @spec get_game_stats(t()) :: map() | nil
   def get_game_stats(%__MODULE__{stats: nil}), do: nil
   def get_game_stats(%__MODULE__{stats: stats}), do: Stats.format_stats(stats)
 end

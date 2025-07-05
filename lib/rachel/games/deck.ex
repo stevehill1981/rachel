@@ -13,6 +13,7 @@ defmodule Rachel.Games.Deck do
 
   defstruct cards: [], discarded: []
 
+  @spec new() :: t()
   def new do
     cards =
       for suit <- Card.suits(), rank <- Card.ranks() do
@@ -22,6 +23,7 @@ defmodule Rachel.Games.Deck do
     %__MODULE__{cards: Enum.shuffle(cards), discarded: []}
   end
 
+  @spec draw(t(), non_neg_integer()) :: {[Card.t()], t()}
   def draw(%__MODULE__{cards: []} = deck, count) do
     reshuffle_and_draw(deck, count)
   end
@@ -43,6 +45,7 @@ defmodule Rachel.Games.Deck do
     {drawn, %{deck | cards: remaining}}
   end
 
+  @spec draw_one(t()) :: {Card.t() | nil, t()}
   def draw_one(deck) do
     case draw(deck, 1) do
       {[card], new_deck} -> {card, new_deck}
@@ -50,6 +53,7 @@ defmodule Rachel.Games.Deck do
     end
   end
 
+  @spec add_to_discard(t(), [Card.t()] | Card.t()) :: t()
   def add_to_discard(%__MODULE__{discarded: discarded} = deck, cards) when is_list(cards) do
     %{deck | discarded: cards ++ discarded}
   end
@@ -58,6 +62,7 @@ defmodule Rachel.Games.Deck do
     add_to_discard(deck, [card])
   end
 
+  @spec size(t()) :: non_neg_integer()
   def size(%__MODULE__{cards: cards}), do: length(cards)
 
   defp reshuffle_and_draw(%__MODULE__{discarded: []} = deck, _count) do
