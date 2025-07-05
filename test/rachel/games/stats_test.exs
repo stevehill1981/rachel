@@ -8,10 +8,10 @@ defmodule Rachel.Games.StatsTest do
       player_ids = ["p1", "p2", "p3"]
       stats = Stats.new(player_ids)
 
-      assert stats.start_time != nil
-      assert stats.player_stats["p1"] != nil
-      assert stats.player_stats["p2"] != nil
-      assert stats.player_stats["p3"] != nil
+      assert not is_nil(stats.start_time)
+      assert not is_nil(stats.player_stats["p1"])
+      assert not is_nil(stats.player_stats["p2"])
+      assert not is_nil(stats.player_stats["p3"])
 
       # Each player starts with zero stats
       Enum.each(player_ids, fn id ->

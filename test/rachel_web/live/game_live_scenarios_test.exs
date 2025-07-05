@@ -12,7 +12,7 @@ defmodule RachelWeb.GameLiveScenariosTest do
   use RachelWeb.ConnCase
   import Phoenix.LiveViewTest
 
-  alias Rachel.Games.{Card, Deck, Player}
+  alias Rachel.Games.{Card, Deck}
 
   describe "mount variations and edge cases" do
     test "handles mount with invalid game_id format" do

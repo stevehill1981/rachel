@@ -25,13 +25,11 @@ defmodule Rachel.Games.AIPlayer do
   end
 
   defp determine_ai_action(game, player) do
-    cond do
-      game.nominated_suit == :pending ->
-        suit = choose_best_suit(player.hand)
-        {:nominate, suit}
-
-      true ->
-        execute_ai_turn(game, player)
+    if game.nominated_suit == :pending do
+      suit = choose_best_suit(player.hand)
+      {:nominate, suit}
+    else
+      execute_ai_turn(game, player)
     end
   end
 

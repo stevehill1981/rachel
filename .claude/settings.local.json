@@ -35,7 +35,12 @@
       "Bash(gh run view:*)",
       "Bash(gh run list:*)",
       "Bash(git commit:*)",
-      "Bash(mix coveralls:*)"
+      "Bash(mix coveralls:*)",
+      "Bash(git reset:*)",
+      "Bash(gsed:*)",
+      "Bash(chmod:*)",
+      "Bash(./reorganize_game_server.sh:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

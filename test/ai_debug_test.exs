@@ -6,7 +6,7 @@ defmodule AIDebugTest do
   test "debug AI turn - simple case" do
     # Use GameManager to create game properly
     {:ok, game_id} = Rachel.Games.GameManager.create_and_join_game("human-1", "Human Player")
-    {:ok, game} = GameServer.add_ai_player(game_id, "AI Player")
+    {:ok, _game} = GameServer.add_ai_player(game_id, "AI Player")
 
     # Start game
     {:ok, started_game} = GameServer.start_game(game_id, "human-1")
@@ -28,7 +28,7 @@ defmodule AIDebugTest do
 
         # Manually trigger AI turn
         IO.puts("Manually triggering AI turn...")
-        ai_action = AIPlayer.make_move(started_game, first_player.id)
+        _ai_action = AIPlayer.make_move(started_game, first_player.id)
 
         # Send manual AI turn message
         game_pid = GenServer.whereis({:via, Registry, {Rachel.GameRegistry, game_id}})
@@ -59,13 +59,21 @@ defmodule AIDebugTest do
           card.suit == current_card.suit or card.rank == current_card.rank or card.rank == :ace
         end)
 
-      card_to_play = valid_card || hd(current_player.hand)
-
-      {:ok, after_human} = GameServer.play_cards(game_id, "human-1", [card_to_play])
+      # If no valid card found, human must draw
+      after_human =
+        if valid_card do
+          {:ok, game} = GameServer.play_cards(game_id, "human-1", [valid_card])
+          game
+        else
+          # No valid card, human must draw
+          IO.puts("No valid card for human, drawing...")
+          {:ok, game} = GameServer.draw_card(game_id, "human-1")
+          game
+        end
 
       # If we played an ace, nominate a suit
       after_nomination =
-        if card_to_play.rank == :ace do
+        if valid_card && valid_card.rank == :ace do
           IO.puts("Played ace, nominating suit...")
           {:ok, game_after_nomination} = GameServer.nominate_suit(game_id, "human-1", :hearts)
           game_after_nomination

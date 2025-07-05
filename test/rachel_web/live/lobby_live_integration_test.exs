@@ -336,7 +336,7 @@ defmodule RachelWeb.LobbyLiveIntegrationTest do
   end
 
   describe "session handling" do
-    test "generates default player ID and name when not in session", %{conn: conn} do
+    test "generates default player ID and name when not in session", %{conn: _conn} do
       # Create a conn without session data
       bare_conn =
         Phoenix.ConnTest.build_conn()

@@ -189,15 +189,7 @@ defmodule Rachel.Games.GameServer do
 
       :playing ->
         # Convert to AI player during game
-        new_players =
-          Enum.map(state.game.players, fn player ->
-            if player.id == player_id do
-              %{player | is_ai: true}
-            else
-              player
-            end
-          end)
-
+        new_players = convert_player_to_ai(state.game.players, player_id)
         new_game = %{state.game | players: new_players}
 
         new_state = %{
@@ -232,23 +224,6 @@ defmodule Rachel.Games.GameServer do
     end
   end
 
-  defp execute_game_start(state) do
-    case validate_start(state.game) do
-      :ok ->
-        new_game = Game.start_game(state.game)
-        started_at = DateTime.utc_now()
-        new_state = %{state | game: new_game, updated_at: started_at, started_at: started_at}
-
-        broadcast_game_started(new_state)
-        schedule_ai_turn_if_needed(new_state)
-
-        {:reply, {:ok, new_state.game}, new_state}
-
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
-    end
-  end
-
   @impl true
   def handle_call({:play_cards, player_id, cards}, _from, state) do
     case validate_play_cards_request(state, player_id, cards) do
@@ -258,56 +233,6 @@ defmodule Rachel.Games.GameServer do
       {:error, reason} ->
         {:reply, {:error, reason}, state}
     end
-  end
-
-  defp validate_play_cards_request(state, player_id, cards) do
-    case Enum.find(state.game.players, &(&1.id == player_id)) do
-      nil ->
-        {:error, :player_not_found}
-
-      player ->
-        card_indices =
-          cards
-          |> Enum.map(fn card -> Enum.find_index(player.hand, &(&1 == card)) end)
-          |> Enum.reject(&is_nil/1)
-
-        if length(card_indices) == length(cards) do
-          {:ok, player, card_indices}
-        else
-          {:error, :cards_not_in_hand}
-        end
-    end
-  end
-
-  defp execute_play_cards_request(state, player_id, cards, card_indices) do
-    case Game.play_card(state.game, player_id, card_indices) do
-      {:ok, new_game} ->
-        new_state = process_successful_play(state, new_game, player_id, cards)
-        {:reply, {:ok, new_state.game}, new_state}
-
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
-    end
-  end
-
-  defp process_successful_play(state, new_game, player_id, cards) do
-    new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
-    broadcast_cards_played(new_state, player_id, cards)
-
-    # Check for winner
-    if player_id in new_game.winners do
-      broadcast_winner(new_state, player_id)
-    end
-
-    # Check if game just finished and record stats
-    if state.game.status != :finished and new_game.status == :finished do
-      record_game_stats(new_state)
-    end
-
-    # Schedule AI turn if next player is AI
-    schedule_ai_turn_if_needed(new_state)
-
-    new_state
   end
 
   @impl true
@@ -504,15 +429,7 @@ defmodule Rachel.Games.GameServer do
     # Check if player is still disconnected after grace period
     if Map.get(state.connected_players, player_id) == false && state.game.status == :playing do
       # Convert to AI
-      new_players =
-        Enum.map(state.game.players, fn player ->
-          if player.id == player_id do
-            %{player | is_ai: true}
-          else
-            player
-          end
-        end)
-
+      new_players = convert_player_to_ai(state.game.players, player_id)
       new_game = %{state.game | players: new_players}
       new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
 
@@ -539,6 +456,22 @@ defmodule Rachel.Games.GameServer do
       {:noreply, state}
     end
   end
+
+  @impl true
+  def handle_info(:ai_timeout, state) do
+    if should_process_ai_turn?(state) do
+      {:noreply, process_ai_turn(state)}
+    else
+      {:noreply, state}
+    end
+  end
+
+  @impl true
+  def handle_info(:timeout, state) do
+    {:stop, :normal, state}
+  end
+
+  # AI-related private functions
 
   defp should_process_ai_turn?(state) do
     state.game.status == :playing &&
@@ -636,20 +569,6 @@ defmodule Rachel.Games.GameServer do
       _ ->
         state
     end
-  end
-
-  @impl true
-  def handle_info(:ai_timeout, state) do
-    if should_process_ai_turn?(state) do
-      {:noreply, process_ai_turn(state)}
-    else
-      {:noreply, state}
-    end
-  end
-
-  @impl true
-  def handle_info(:timeout, state) do
-    {:stop, :normal, state}
   end
 
   # Helper Functions
@@ -820,5 +739,82 @@ defmodule Rachel.Games.GameServer do
       {:spectator_joined,
        %{spectator_id: spectator_id, spectator_name: spectator_name, game: state.game}}
     )
+  end
+
+  defp validate_play_cards_request(state, player_id, cards) do
+    case Enum.find(state.game.players, &(&1.id == player_id)) do
+      nil ->
+        {:error, :player_not_found}
+
+      player ->
+        card_indices =
+          cards
+          |> Enum.map(fn card -> Enum.find_index(player.hand, &(&1 == card)) end)
+          |> Enum.reject(&is_nil/1)
+
+        if length(card_indices) == length(cards) do
+          {:ok, player, card_indices}
+        else
+          {:error, :cards_not_in_hand}
+        end
+    end
+  end
+
+  defp execute_play_cards_request(state, player_id, cards, card_indices) do
+    case Game.play_card(state.game, player_id, card_indices) do
+      {:ok, new_game} ->
+        new_state = process_successful_play(state, new_game, player_id, cards)
+        {:reply, {:ok, new_state.game}, new_state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  defp process_successful_play(state, new_game, player_id, cards) do
+    new_state = %{state | game: new_game, updated_at: DateTime.utc_now()}
+    broadcast_cards_played(new_state, player_id, cards)
+
+    # Check for winner
+    if player_id in new_game.winners do
+      broadcast_winner(new_state, player_id)
+    end
+
+    # Check if game just finished and record stats
+    if state.game.status != :finished and new_game.status == :finished do
+      record_game_stats(new_state)
+    end
+
+    # Schedule AI turn if next player is AI
+    schedule_ai_turn_if_needed(new_state)
+
+    new_state
+  end
+
+  defp execute_game_start(state) do
+    case validate_start(state.game) do
+      :ok ->
+        new_game = Game.start_game(state.game)
+        started_at = DateTime.utc_now()
+        new_state = %{state | game: new_game, updated_at: started_at, started_at: started_at}
+
+        broadcast_game_started(new_state)
+        schedule_ai_turn_if_needed(new_state)
+
+        {:reply, {:ok, new_state.game}, new_state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  defp convert_player_to_ai(players, player_id) do
+    Enum.map(players, fn player ->
+      if player.id == player_id do
+        %{player | is_ai: true}
+      else
+        player
+      end
+    end)
   end
 end

@@ -311,11 +311,11 @@ defmodule RachelWeb.GameLive do
     <div class="game-board min-h-screen">
       <RachelWeb.Components.Game.GameHeader.game_header game_id={@game_id} />
       
-      <!-- Flash Messages -->
+    <!-- Flash Messages -->
       <.flash kind={:info} flash={@flash} />
       <.flash kind={:error} flash={@flash} />
       
-      <!-- Main Game Area -->
+    <!-- Main Game Area -->
       <main class="relative z-10 p-4 max-w-7xl mx-auto">
         <%= cond do %>
           <% !@game -> %>
@@ -324,10 +324,10 @@ defmodule RachelWeb.GameLive do
               <p>Loading game...</p>
             </div>
           <% @game.status == :waiting -> %>
-            <RachelWeb.Components.Game.WaitingRoom.waiting_room 
-              game={@game} 
-              game_id={@game_id} 
-              player_id={@player_id} 
+            <RachelWeb.Components.Game.WaitingRoom.waiting_room
+              game={@game}
+              game_id={@game_id}
+              player_id={@player_id}
             />
           <% true -> %>
             <RachelWeb.Components.Game.GameInProgress.game_in_progress
@@ -340,7 +340,7 @@ defmodule RachelWeb.GameLive do
         <% end %>
       </main>
       
-      <!-- Winner celebration -->
+    <!-- Winner celebration -->
       <%= if @show_winner_banner do %>
         <div id="confetti-container" class="winner-celebration" phx-hook="WinnerCelebration"></div>
       <% end %>

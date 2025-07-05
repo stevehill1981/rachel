@@ -112,7 +112,13 @@ defmodule Rachel.Games.GameServerAITest do
       updated_game = GameServer.get_state(game_id)
 
       # Should be back to human's turn (index 0) after AI played
-      assert updated_game.current_player_index == 0
+      # Unless the game ended (AI won by playing their last card)
+      if updated_game.status == :playing do
+        assert updated_game.current_player_index == 0
+      else
+        # Game is finished, which is also valid
+        assert updated_game.status == :finished
+      end
     end
 
     test "AI plays valid cards when available", %{game_id: game_id} do
