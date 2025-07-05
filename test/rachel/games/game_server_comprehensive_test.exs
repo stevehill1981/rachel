@@ -169,8 +169,7 @@ defmodule Rachel.Games.GameServerComprehensiveTest do
       valid_card =
         Enum.find(current_player.hand, fn card ->
           card.suit == game.current_card.suit ||
-            card.rank == game.current_card.rank ||
-            card.rank == :ace
+            card.rank == game.current_card.rank
         end)
 
       if valid_card do
