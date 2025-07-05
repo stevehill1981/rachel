@@ -107,22 +107,29 @@ defmodule Rachel.Games.Commentary do
   """
   @spec get_excitement_level(map()) :: :low | :medium | :high | :extreme
   def get_excitement_level(game) do
-    factors = [
-      if(game.pending_pickups > 5, do: 2, else: 0),
-      if(game.pending_skips > 2, do: 1, else: 0),
-      if(close_game(game), do: 3, else: 0),
-      if(multiple_low_cards(game), do: 2, else: 0),
-      if(game.direction == :counter_clockwise, do: 1, else: 0)
-    ]
-
-    total_excitement = Enum.sum(factors)
-
-    case total_excitement do
-      x when x in 0..1 -> :low
-      x when x in 2..3 -> :medium
-      x when x in 4..5 -> :high
-      _ -> :extreme
+    total_excitement = calculate_excitement_score(game)
+    
+    cond do
+      total_excitement <= 1 -> :low
+      total_excitement <= 3 -> :medium
+      total_excitement <= 5 -> :high
+      true -> :extreme
     end
+  end
+  
+  defp calculate_excitement_score(game) do
+    excitement_factors = [
+      {game.pending_pickups > 5, 2},
+      {game.pending_skips > 2, 1},
+      {close_game(game), 3},
+      {multiple_low_cards(game), 2},
+      {game.direction == :counter_clockwise, 1}
+    ]
+    
+    excitement_factors
+    |> Enum.filter(fn {condition, _} -> condition end)
+    |> Enum.map(fn {_, score} -> score end)
+    |> Enum.sum()
   end
 
   # Private helper functions

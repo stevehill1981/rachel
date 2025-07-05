@@ -277,23 +277,8 @@ defmodule Rachel.Games.GamePersistence do
   # Handle datetime strings
   defp deserialize_nested_data(str) when is_binary(str) do
     case DateTime.from_iso8601(str) do
-      {:ok, dt, _} ->
-        dt
-
-      _ ->
-        # Try to convert back to atom for enums
-        case str do
-          "waiting" -> :waiting
-          "playing" -> :playing
-          "finished" -> :finished
-          "hearts" -> :hearts
-          "diamonds" -> :diamonds
-          "clubs" -> :clubs
-          "spades" -> :spades
-          "clockwise" -> :clockwise
-          "counter_clockwise" -> :counter_clockwise
-          _ -> str
-        end
+      {:ok, dt, _} -> dt
+      _ -> deserialize_string_to_atom(str)
     end
   end
 
@@ -308,6 +293,23 @@ defmodule Rachel.Games.GamePersistence do
   end
 
   defp deserialize_key(key), do: key
+
+  # Convert known string values back to atoms
+  defp deserialize_string_to_atom(str) do
+    string_to_atom_map = %{
+      "waiting" => :waiting,
+      "playing" => :playing,
+      "finished" => :finished,
+      "hearts" => :hearts,
+      "diamonds" => :diamonds,
+      "clubs" => :clubs,
+      "spades" => :spades,
+      "clockwise" => :clockwise,
+      "counter_clockwise" => :counter_clockwise
+    }
+    
+    Map.get(string_to_atom_map, str, str)
+  end
 
   defp convert_to_game_struct(data) do
     # Convert back to Game struct if it has the right shape

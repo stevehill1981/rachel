@@ -422,46 +422,43 @@ defmodule Rachel.AI.Personality do
 
   defp calculate_quirk_modifier(personality, context) do
     quirks = personality.quirks
-    modifier = 0
-
-    # Apply quirk-specific bonuses
-    modifier =
-      if :early_special_cards in quirks and context[:early_game] and context[:uses_special_card] do
-        modifier + 15
-      else
-        modifier
-      end
-
-    modifier =
-      if :hoard_special_cards in quirks and context[:uses_special_card] and
-           context[:hand_size] > 5 do
-        modifier - 10
-      else
-        modifier
-      end
-
-    modifier =
-      if :random_plays in quirks do
-        modifier + (:rand.uniform() - 0.5) * 20
-      else
-        modifier
-      end
-
-    modifier =
-      if :card_counting in quirks and context[:uses_memory] do
-        modifier + 10
-      else
-        modifier
-      end
-
-    modifier =
-      if :psychological_warfare in quirks and context[:affects_multiple_opponents] do
-        modifier + 8
-      else
-        modifier
-      end
-
-    modifier
+    
+    quirk_modifiers = [
+      # Early special cards bonus
+      {:early_special_cards, fn ->
+        context[:early_game] and context[:uses_special_card]
+      end, 15},
+      
+      # Hoard special cards penalty
+      {:hoard_special_cards, fn ->
+        context[:uses_special_card] and context[:hand_size] > 5
+      end, -10},
+      
+      # Random plays modifier
+      {:random_plays, fn -> true end, fn -> (:rand.uniform() - 0.5) * 20 end},
+      
+      # Card counting bonus
+      {:card_counting, fn -> context[:uses_memory] end, 10},
+      
+      # Psychological warfare bonus
+      {:psychological_warfare, fn -> context[:affects_multiple_opponents] end, 8}
+    ]
+    
+    Enum.reduce(quirk_modifiers, 0, fn
+      {quirk, condition, modifier}, acc when is_function(modifier) ->
+        if quirk in quirks and condition.() do
+          acc + modifier.()
+        else
+          acc
+        end
+        
+      {quirk, condition, modifier}, acc ->
+        if quirk in quirks and condition.() do
+          acc + modifier
+        else
+          acc
+        end
+    end)
   end
 
   defp get_randomness_factor(personality) do

@@ -269,23 +269,26 @@ defmodule Rachel.AI.EnhancedAIPlayer do
   defp calculate_threat_level(game, ai_player) do
     opponents = get_opponent_info(game, ai_player.id)
 
-    if length(opponents) == 0 do
-      0.0
-    else
-      # Threat based on opponent hand sizes and special cards
-      total_threat = Enum.reduce(opponents, 0.0, fn opponent, acc ->
-        hand_threat =
-          case opponent.hand_size do
-            size when size <= 2 -> 0.8
-            size when size <= 4 -> 0.5
-            size when size <= 6 -> 0.3
-            _ -> 0.1
-          end
-
-        acc + hand_threat
-      end)
+    case opponents do
+      [] -> 0.0
+      _ -> calculate_average_threat(opponents)
+    end
+  end
+  
+  defp calculate_average_threat(opponents) do
+    total_threat = opponents
+      |> Enum.map(&calculate_opponent_threat/1)
+      |> Enum.sum()
       
-      total_threat / length(opponents)
+    total_threat / length(opponents)
+  end
+  
+  defp calculate_opponent_threat(opponent) do
+    case opponent.hand_size do
+      size when size <= 2 -> 0.8
+      size when size <= 4 -> 0.5
+      size when size <= 6 -> 0.3
+      _ -> 0.1
     end
   end
 
@@ -377,33 +380,42 @@ defmodule Rachel.AI.EnhancedAIPlayer do
   end
 
   defp get_special_card_bonus(%Card{rank: rank}, context) do
-    case rank do
-      2 -> if context.threat_level > 0.5, do: 20, else: 10
-      7 -> if context.threat_level > 0.3, do: 15, else: 8
-      :jack -> 25
-      :queen -> if context.opportunity_score > 0.6, do: 18, else: 12
-      :ace -> 20
-      _ -> 0
+    base_bonuses = %{
+      2 => {10, 20, 0.5},      # base, threat_bonus, threat_threshold
+      7 => {8, 15, 0.3},
+      :jack => {25, 25, 1.0},  # Always 25
+      :queen => {12, 18, 0.6}, # Based on opportunity score instead
+      :ace => {20, 20, 1.0}    # Always 20
+    }
+    
+    case Map.get(base_bonuses, rank) do
+      {base, threat_bonus, threshold} ->
+        score_to_check = if rank == :queen, do: context.opportunity_score, else: context.threat_level
+        if score_to_check > threshold, do: threat_bonus, else: base
+        
+      nil ->
+        0
     end
   end
 
   defp get_defensive_score(cards, context) do
     if context.threat_level > 0.6 do
       # Prioritize defensive special cards when under threat
-      Enum.sum(
-        Enum.map(cards, fn card ->
-          case card.rank do
-            # Force pickup
-            2 -> 15
-            # Skip
-            7 -> 10
-            :jack -> if card.suit in [:clubs, :spades], do: 25, else: -5
-            _ -> 0
-          end
-        end)
-      )
+      cards
+      |> Enum.map(&score_defensive_card/1)
+      |> Enum.sum()
     else
       0
+    end
+  end
+  
+  defp score_defensive_card(card) do
+    case card.rank do
+      2 -> 15      # Force pickup
+      7 -> 10      # Skip
+      :jack -> 
+        if card.suit in [:clubs, :spades], do: 25, else: -5
+      _ -> 0
     end
   end
 

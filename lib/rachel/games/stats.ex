@@ -288,18 +288,7 @@ defmodule Rachel.Games.Stats do
       |> Map.new()
 
     # Extract basic game stats
-    game_stats = %{
-      winner_id: List.first(game.winners),
-      total_turns: if(game.stats, do: game.stats.game_stats.total_turns, else: 0),
-      total_cards_played: if(game.stats, do: game.stats.game_stats.total_cards_played, else: 0),
-      total_cards_drawn: if(game.stats, do: game.stats.game_stats.total_cards_drawn, else: 0),
-      special_effects_triggered:
-        if(game.stats, do: game.stats.game_stats.special_effects_triggered, else: 0),
-      direction_changes: if(game.stats, do: game.stats.game_stats.direction_changes, else: 0),
-      suit_nominations: if(game.stats, do: game.stats.game_stats.suit_nominations, else: 0),
-      finish_positions: game.winners,
-      game_duration_seconds: nil
-    }
+    game_stats = build_game_stats(game)
 
     # Extract player-specific stats
     player_stats =
@@ -359,5 +348,32 @@ defmodule Rachel.Games.Stats do
       player_names: player_names,
       player_stats: player_stats
     }
+  end
+
+  defp build_game_stats(game) do
+    default_stats = %{
+      winner_id: List.first(game.winners),
+      total_turns: 0,
+      total_cards_played: 0,
+      total_cards_drawn: 0,
+      special_effects_triggered: 0,
+      direction_changes: 0,
+      suit_nominations: 0,
+      finish_positions: game.winners,
+      game_duration_seconds: nil
+    }
+    
+    if game.stats && game.stats.game_stats do
+      Map.merge(default_stats, %{
+        total_turns: game.stats.game_stats.total_turns,
+        total_cards_played: game.stats.game_stats.total_cards_played,
+        total_cards_drawn: game.stats.game_stats.total_cards_drawn,
+        special_effects_triggered: game.stats.game_stats.special_effects_triggered,
+        direction_changes: game.stats.game_stats.direction_changes,
+        suit_nominations: game.stats.game_stats.suit_nominations
+      })
+    else
+      default_stats
+    end
   end
 end
