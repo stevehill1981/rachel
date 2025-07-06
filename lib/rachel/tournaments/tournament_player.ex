@@ -211,15 +211,19 @@ defmodule Rachel.Tournaments.TournamentPlayer do
         :alphabetical -> Enum.sort_by(players, & &1.player_name)
       end
 
-    seeded_players
-    |> Enum.with_index(1)
-    |> Enum.each(fn {player, seed} ->
-      player
-      |> changeset(%{seed: seed})
-      |> Repo.update()
-    end)
+    updated_players =
+      seeded_players
+      |> Enum.with_index(1)
+      |> Enum.map(fn {player, seed} ->
+        {:ok, updated} =
+          player
+          |> changeset(%{seed: seed})
+          |> Repo.update()
+        
+        updated
+      end)
 
-    {:ok, seeded_players}
+    {:ok, updated_players}
   end
 
   @doc """

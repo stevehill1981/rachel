@@ -29,7 +29,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         show_statistics={@show_statistics}
       />
     <% else %>
-      <%= if @player_id not in @game.winners do %>
+      <%= if @player && @player_id not in @game.winners do %>
         <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
           <.play_button selected_cards={@selected_cards} />
           <.game_messages game={@game} current_player={@current_player} player_id={@player_id} />
@@ -129,7 +129,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   attr :current_player, :any, required: true
 
   defp hand_display(assigns) do
-    assigns = assign(assigns, :hand_size, length(assigns.player.hand))
+    assigns = assign(assigns, :hand_size, if(assigns.player, do: length(assigns.player.hand), else: 0))
     
     ~H"""
     <%= if @player do %>
@@ -147,6 +147,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
             <.playing_card
               card={card}
               index={idx}
+              player_id={@player_id}
               selected={idx in @selected_cards}
               disabled={
                 @current_player == nil ||
@@ -172,6 +173,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
             <.playing_card
               card={card}
               index={idx}
+              player_id={@player_id}
               selected={idx in @selected_cards}
               disabled={
                 @current_player == nil ||
@@ -232,6 +234,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
                 <.playing_card
                   card={card}
                   index={0}
+                  player_id={player.id}
                   selected={false}
                   disabled={true}
                   class="transform scale-75"

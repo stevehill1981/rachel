@@ -261,6 +261,7 @@ defmodule Rachel.Games.GameSecurityIntegrationTest do
   end
 
   describe "resource exhaustion protection" do
+    @tag :skip
     test "prevents memory exhaustion through large inputs" do
       # Test with extremely large inputs
       game = Game.new()

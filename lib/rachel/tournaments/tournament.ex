@@ -20,7 +20,8 @@ defmodule Rachel.Tournaments.Tournament do
       values: [:single_elimination, :double_elimination, :round_robin, :swiss]
 
     field :status, Ecto.Enum,
-      values: [:registration, :starting, :in_progress, :completed, :cancelled]
+      values: [:registration, :starting, :in_progress, :completed, :cancelled],
+      default: :registration
 
     field :max_players, :integer
     field :entry_fee, :integer, default: 0
@@ -73,6 +74,14 @@ defmodule Rachel.Tournaments.Tournament do
     |> validate_change(:registration_deadline, &validate_future_datetime/2)
     |> validate_change(:start_time, &validate_future_datetime/2)
     |> calculate_total_rounds()
+  end
+
+  @doc false
+  def start_tournament_changeset(tournament, attrs) do
+    # Special changeset for starting tournaments that doesn't validate start_time as future
+    tournament
+    |> cast(attrs, [:status, :start_time, :current_round])
+    |> validate_required([:status, :start_time, :current_round])
   end
 
   @doc """
@@ -153,7 +162,7 @@ defmodule Rachel.Tournaments.Tournament do
          {:ok, _} <- validate_start_conditions(tournament) do
       # Update tournament status
       tournament
-      |> changeset(%{
+      |> start_tournament_changeset(%{
         status: :starting,
         start_time: DateTime.utc_now(),
         current_round: 1

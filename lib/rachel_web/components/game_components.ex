@@ -13,6 +13,7 @@ defmodule RachelWeb.GameComponents do
   attr :selected, :boolean, default: false
   attr :disabled, :boolean, default: false
   attr :index, :integer, default: nil
+  attr :player_id, :string, default: nil
   attr :rest, :global
 
   def playing_card(assigns) do
@@ -45,7 +46,16 @@ defmodule RachelWeb.GameComponents do
       data-effect={card_effect_text(@card)}
       aria-label={card_aria_label(@card, @selected)}
       aria-pressed={(@selected && "true") || "false"}
-      id={"touch-card-#{@index}"}
+      id={
+        case {@player_id, @index} do
+          {nil, nil} -> nil
+          {player_id, index} when not is_nil(player_id) and not is_nil(index) -> 
+            "touch-card-#{player_id}-#{index}"
+          {nil, index} when not is_nil(index) -> 
+            "touch-card-#{index}"
+          _ -> nil
+        end
+      }
       phx-hook="TouchCard"
       data-card-index={@index}
       {@rest}

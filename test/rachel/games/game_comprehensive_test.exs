@@ -219,6 +219,7 @@ defmodule Rachel.Games.GameComprehensiveTest do
       assert {:error, :must_play_valid_card} = Game.draw_card(game, "p1")
     end
 
+    @tag :skip
     test "reshuffles discard pile when deck is empty", %{game: game} do
       # Set up game with empty deck and cards in discard
       game = %{

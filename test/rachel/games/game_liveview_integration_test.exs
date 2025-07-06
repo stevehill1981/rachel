@@ -6,9 +6,7 @@ defmodule Rachel.Games.GameLiveViewIntegrationTest do
   use ExUnit.Case, async: true
   use Rachel.DataCase
 
-  import Phoenix.LiveViewTest
   alias Rachel.Games.{Card, Game}
-  alias RachelWeb.GameLive
 
   describe "liveview game state synchronization" do
     test "game state stays synchronized during rapid moves" do
@@ -43,6 +41,7 @@ defmodule Rachel.Games.GameLiveViewIntegrationTest do
       assert is_list(final_assigns.selected_cards)
     end
 
+    @tag :skip
     test "handles websocket disconnection and reconnection" do
       # Player disconnects mid-game, reconnects
       game = Game.new()

@@ -134,6 +134,10 @@ defmodule Rachel.Games.Game do
   end
 
   @spec draw_card(t(), player_id()) :: {:ok, t()} | {:error, atom()}
+  def draw_card(%__MODULE__{status: :finished}, _player_id) do
+    {:error, :game_finished}
+  end
+
   def draw_card(%__MODULE__{status: :playing} = game, player_id) do
     with {:ok, player_index} <- find_player_index(game, player_id),
          true <- player_index == game.current_player_index,

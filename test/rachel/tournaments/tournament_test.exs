@@ -1,8 +1,7 @@
 defmodule Rachel.Tournaments.TournamentTest do
   use Rachel.DataCase, async: true
 
-  alias Rachel.Repo
-  alias Rachel.Tournaments.{Tournament, TournamentMatch, TournamentPlayer}
+  alias Rachel.Tournaments.{Tournament, TournamentMatch}
 
   describe "changeset/2" do
     test "validates required fields" do

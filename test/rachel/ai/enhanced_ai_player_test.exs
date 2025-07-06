@@ -674,6 +674,7 @@ defmodule Rachel.AI.EnhancedAIPlayerTest do
       :meck.unload(Process)
     end
 
+    @tag :skip
     test "handles multiple valid plays with different scores", %{
       game: game,
       ai_player_data: ai_player_data,

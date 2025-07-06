@@ -1,7 +1,6 @@
 defmodule Rachel.Tournaments.TournamentMatchTest do
   use Rachel.DataCase, async: true
 
-  alias Rachel.Repo
   alias Rachel.Tournaments.{Tournament, TournamentMatch, TournamentPlayer}
 
   setup do
@@ -520,11 +519,12 @@ defmodule Rachel.Tournaments.TournamentMatchTest do
           status: :pending
         })
 
-      # 1 hour from now
+      # 1 hour from now, truncated to second precision
       new_time = DateTime.add(DateTime.utc_now(), 60 * 60, :second)
+                 |> DateTime.truncate(:second)
 
       assert {:ok, updated_match} = TournamentMatch.reschedule_match(match.id, new_time)
-      assert updated_match.scheduled_time == new_time
+      assert DateTime.truncate(updated_match.scheduled_time, :second) == new_time
     end
 
     test "fails when match not found" do

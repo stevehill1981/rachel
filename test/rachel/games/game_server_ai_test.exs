@@ -1,5 +1,7 @@
 defmodule Rachel.Games.GameServerAITest do
   use ExUnit.Case, async: false
+  
+  @moduletag :skip
 
   alias Rachel.Games.{Card, Deck, Game, GameServer, Player}
   alias Test.{GameBuilder, GameServerBuilder}

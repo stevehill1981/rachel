@@ -1,7 +1,6 @@
 defmodule Rachel.Tournaments.TournamentPlayerTest do
   use Rachel.DataCase, async: true
 
-  alias Rachel.Repo
   alias Rachel.Tournaments.{Tournament, TournamentPlayer}
 
   setup do
@@ -34,7 +33,7 @@ defmodule Rachel.Tournaments.TournamentPlayerTest do
       }
 
       changeset = TournamentPlayer.changeset(%TournamentPlayer{}, attrs)
-      assert "should be at least 1 character(s)" in errors_on(changeset).player_name
+      assert "can't be blank" in errors_on(changeset).player_name
 
       # Too long
       long_name = String.duplicate("a", 51)
@@ -409,12 +408,14 @@ defmodule Rachel.Tournaments.TournamentPlayerTest do
         Tournament.create_tournament(%{
           name: "Small Tournament",
           format: :single_elimination,
-          max_players: 1,
+          max_players: 2,
           creator_id: "creator123"
         })
 
       {:ok, _} =
         TournamentPlayer.create_registration(small_tournament.id, "player1", "Player One")
+      {:ok, _} =
+        TournamentPlayer.create_registration(small_tournament.id, "player2", "Player Two")
 
       assert TournamentPlayer.tournament_full?(small_tournament.id) == true
     end
