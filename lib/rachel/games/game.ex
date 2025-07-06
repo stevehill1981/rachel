@@ -72,8 +72,8 @@ defmodule Rachel.Games.Game do
     {first_card, deck} = Deck.draw_one(deck)
     deck = Deck.add_to_discard(deck, first_card)
 
-    # Deal 7 cards to each player
-    cards_per_player = 7
+    # Deal cards based on player count: 7 for ≤6 players, 5 for 7-8 players
+    cards_per_player = if length(players) <= 6, do: 7, else: 5
     {players_with_cards, deck} = deal_initial_hands(players, deck, cards_per_player)
 
     # Initialize stats tracking

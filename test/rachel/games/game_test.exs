@@ -392,4 +392,82 @@ defmodule Rachel.Games.GameTest do
       assert game_after_draw.pending_pickup_type == nil
     end
   end
+
+  describe "card dealing rules" do
+    test "deals 7 cards for 6 or fewer players" do
+      # Test with 2 players
+      game_2p = Game.new()
+      |> Game.add_player("p1", "Player 1", false)
+      |> Game.add_player("p2", "Player 2", false)
+      |> Game.start_game()
+
+      assert length(hd(game_2p.players).hand) == 7
+      assert length(hd(tl(game_2p.players)).hand) == 7
+
+      # Test with 6 players
+      game_6p = Game.new()
+      |> Game.add_player("p1", "Player 1", false)
+      |> Game.add_player("p2", "Player 2", false)
+      |> Game.add_player("p3", "Player 3", false)
+      |> Game.add_player("p4", "Player 4", false)
+      |> Game.add_player("p5", "Player 5", false)
+      |> Game.add_player("p6", "Player 6", false)
+      |> Game.start_game()
+
+      Enum.each(game_6p.players, fn player ->
+        assert length(player.hand) == 7
+      end)
+    end
+
+    test "deals 5 cards for 7-8 players" do
+      # Test with 7 players
+      game_7p = Game.new()
+      |> Game.add_player("p1", "Player 1", false)
+      |> Game.add_player("p2", "Player 2", false)
+      |> Game.add_player("p3", "Player 3", false)
+      |> Game.add_player("p4", "Player 4", false)
+      |> Game.add_player("p5", "Player 5", false)
+      |> Game.add_player("p6", "Player 6", false)
+      |> Game.add_player("p7", "Player 7", false)
+      |> Game.start_game()
+
+      Enum.each(game_7p.players, fn player ->
+        assert length(player.hand) == 5
+      end)
+
+      # Test with 8 players
+      game_8p = Game.new()
+      |> Game.add_player("p1", "Player 1", false)
+      |> Game.add_player("p2", "Player 2", false)
+      |> Game.add_player("p3", "Player 3", false)
+      |> Game.add_player("p4", "Player 4", false)
+      |> Game.add_player("p5", "Player 5", false)
+      |> Game.add_player("p6", "Player 6", false)
+      |> Game.add_player("p7", "Player 7", false)
+      |> Game.add_player("p8", "Player 8", false)
+      |> Game.start_game()
+
+      Enum.each(game_8p.players, fn player ->
+        assert length(player.hand) == 5
+      end)
+    end
+
+    test "leaves healthy deck size for 8 players" do
+      game = Game.new()
+      |> Game.add_player("p1", "Player 1", false)
+      |> Game.add_player("p2", "Player 2", false)
+      |> Game.add_player("p3", "Player 3", false)
+      |> Game.add_player("p4", "Player 4", false)
+      |> Game.add_player("p5", "Player 5", false)
+      |> Game.add_player("p6", "Player 6", false)
+      |> Game.add_player("p7", "Player 7", false)
+      |> Game.add_player("p8", "Player 8", false)
+      |> Game.start_game()
+
+      # 52 cards - 40 dealt (8×5) - 1 starting card = 11 cards remaining
+      # Healthy enough for Black Jack stacks (max 10 cards pickup)
+      remaining_cards = length(game.deck.cards)
+      assert remaining_cards == 11
+    end
+  end
 end
