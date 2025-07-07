@@ -69,20 +69,16 @@ defmodule RachelWeb.Plugs.SecurityHeaders do
   end
 
   defp maybe_put_hsts_header(conn) do
-    case Mix.env() do
-      :prod ->
-        put_resp_header(
-          conn,
-          "strict-transport-security",
-          "max-age=31536000; includeSubDomains; preload"
-        )
-
-      :dev ->
-        # Don't add HSTS in development to avoid browser caching issues
-        conn
-
-      _ ->
-        conn
+    # In production, HSTS is handled by Fly.io or the endpoint force_ssl config
+    # We check if the connection is using HTTPS
+    if conn.scheme == :https do
+      put_resp_header(
+        conn,
+        "strict-transport-security",
+        "max-age=31536000; includeSubDomains; preload"
+      )
+    else
+      conn
     end
   end
 end

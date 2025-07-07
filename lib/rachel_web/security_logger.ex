@@ -32,7 +32,7 @@ defmodule RachelWeb.SecurityLogger do
       severity: severity,
       metadata: metadata,
       node: Node.self(),
-      environment: Mix.env()
+      environment: Application.get_env(:rachel, :env, :prod)
     }
 
     # Log to standard logger with appropriate level
