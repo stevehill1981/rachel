@@ -413,7 +413,7 @@ defmodule Rachel.Games.GameTest do
 
       # Test that player has NO valid plays
       valid_plays = Game.get_valid_plays(game, p1)
-      assert length(valid_plays) == 0
+      assert valid_plays == []
       assert Game.has_valid_play?(game, p1) == false
 
       # Test that draw_card works and picks up the correct number

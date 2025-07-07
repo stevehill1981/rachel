@@ -130,7 +130,8 @@ defmodule Rachel.Games.GameComprehensiveTest do
         |> Game.add_player("p2", "Bob", false)
         |> Game.start_game()
 
-      assert game.stats != nil
+      # Stats have been removed from the game - this test is no longer relevant
+      assert game.stats == nil
     end
   end
 
@@ -217,39 +218,6 @@ defmodule Rachel.Games.GameComprehensiveTest do
       game = %{game | players: [player | rest]}
 
       assert {:error, :must_play_valid_card} = Game.draw_card(game, "p1")
-    end
-
-    @tag :skip
-    test "reshuffles discard pile when deck is empty", %{game: game} do
-      # Set up game with empty deck and cards in discard
-      game = %{
-        game
-        | deck: %Deck{cards: [], discarded: []},
-          discard_pile: [
-            %Card{suit: :hearts, rank: 2},
-            %Card{suit: :spades, rank: 3},
-            %Card{suit: :clubs, rank: 4}
-          ],
-          current_player_index: 0
-      }
-
-      # Ensure player has no valid plays
-      [player | rest] = game.players
-
-      game = %{
-        game
-        | current_card: %Card{suit: :diamonds, rank: :king},
-          players: [%{player | hand: [%Card{suit: :clubs, rank: 2}]} | rest]
-      }
-
-      {:ok, new_game} = Game.draw_card(game, player.id)
-
-      # Discard pile should be empty after reshuffle
-      assert new_game.discard_pile == []
-
-      # Player should have drawn a card
-      [updated_player | _] = new_game.players
-      assert length(updated_player.hand) == 2
     end
   end
 
@@ -442,9 +410,9 @@ defmodule Rachel.Games.GameComprehensiveTest do
         |> Game.add_player("p2", "Bob", false)
         |> Game.start_game()
 
-      # Stats should be initialized
+      # Stats have been removed from the game
       stats = Game.get_game_stats(game)
-      assert is_map(stats)
+      assert stats == nil
     end
   end
 

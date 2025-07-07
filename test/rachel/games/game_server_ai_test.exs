@@ -169,7 +169,7 @@ defmodule Rachel.Games.GameServerAITest do
         # AI can play seven of hearts
         current_card: %Card{suit: :hearts, rank: :six},
         # Empty deck for testing
-        deck: %Deck{cards: [], discarded: []},
+        deck: %Deck{cards: []},
         status: :playing,
         direction: :clockwise,
         pending_pickups: 0,
@@ -292,7 +292,7 @@ defmodule Rachel.Games.GameServerAITest do
         current_player_index: 0,
         current_card: %Card{suit: :hearts, rank: :six},
         # Empty deck for testing
-        deck: %Deck{cards: [], discarded: []},
+        deck: %Deck{cards: []},
         status: :playing,
         direction: :clockwise,
         pending_pickups: 0,

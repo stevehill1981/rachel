@@ -9,7 +9,6 @@ defmodule Rachel.Games.DeckTest do
 
       assert %Deck{} = deck
       assert length(deck.cards) == 52
-      assert deck.discarded == []
     end
 
     test "deck contains all unique cards" do
@@ -51,72 +50,52 @@ defmodule Rachel.Games.DeckTest do
       assert drawn == Enum.take(deck.cards, 5)
     end
 
-    test "draws all remaining cards when requested more than available" do
-      deck = Deck.new()
-      # Keep only 3 cards
-      deck = %{deck | cards: Enum.take(deck.cards, 3)}
+    test "drawing more cards than available returns all available" do
+      deck = %Deck{cards: [Card.new(:hearts, :king), Card.new(:spades, :ace)]}
 
       {drawn, new_deck} = Deck.draw(deck, 5)
 
-      assert length(drawn) == 3
+      assert length(drawn) == 2
       assert new_deck.cards == []
     end
 
-    test "draws zero cards returns empty list" do
+    test "drawing from empty deck returns empty list" do
+      deck = %Deck{cards: []}
+
+      {drawn, new_deck} = Deck.draw(deck, 5)
+
+      assert drawn == []
+      assert new_deck.cards == []
+    end
+
+    test "drawing zero cards returns empty list" do
       deck = Deck.new()
 
       {drawn, new_deck} = Deck.draw(deck, 0)
 
       assert drawn == []
-      assert new_deck == deck
+      assert new_deck.cards == deck.cards
     end
   end
 
   describe "draw_one/1" do
-    test "draws exactly one card" do
+    test "draws one card from deck" do
       deck = Deck.new()
-      [expected_card | rest] = deck.cards
+      initial_size = length(deck.cards)
 
       {card, new_deck} = Deck.draw_one(deck)
 
-      assert card == expected_card
-      assert new_deck.cards == rest
+      assert %Card{} = card
+      assert length(new_deck.cards) == initial_size - 1
     end
 
     test "returns nil when deck is empty" do
-      deck = %Deck{cards: [], discarded: []}
+      deck = %Deck{cards: []}
 
       {card, new_deck} = Deck.draw_one(deck)
 
       assert card == nil
       assert new_deck.cards == []
-    end
-  end
-
-  describe "add_to_discard/2" do
-    test "adds card to discard pile" do
-      deck = Deck.new()
-      card = Card.new(:hearts, :king)
-
-      new_deck = Deck.add_to_discard(deck, card)
-
-      assert card in new_deck.discarded
-      assert length(new_deck.discarded) == 1
-      # Original cards unchanged
-      assert new_deck.cards == deck.cards
-    end
-
-    test "preserves order - newest cards first" do
-      deck = Deck.new()
-      card1 = Card.new(:hearts, :king)
-      card2 = Card.new(:spades, :ace)
-
-      deck =
-        deck
-        |> Deck.add_to_discard(card1)
-        |> Deck.add_to_discard(card2)
-
-      assert deck.discarded == [card2, card1]
     end
   end
 
@@ -135,7 +114,7 @@ defmodule Rachel.Games.DeckTest do
 
   describe "checking if deck is empty" do
     test "deck is empty when no cards left" do
-      deck = %Deck{cards: [], discarded: []}
+      deck = %Deck{cards: []}
       assert Deck.size(deck) == 0
       assert deck.cards == []
     end
@@ -145,39 +124,12 @@ defmodule Rachel.Games.DeckTest do
       assert Deck.size(deck) > 0
       assert deck.cards != []
 
-      deck = %Deck{cards: [Card.new(:hearts, :king)], discarded: []}
+      deck = %Deck{cards: [Card.new(:hearts, :king)]}
       assert Deck.size(deck) == 1
     end
   end
 
   describe "integration scenarios" do
-    test "drawing from empty deck returns empty list" do
-      deck = %Deck{cards: [], discarded: []}
-
-      {drawn, new_deck} = Deck.draw(deck, 5)
-
-      assert drawn == []
-      assert new_deck.cards == []
-    end
-
-    test "deck maintains card conservation" do
-      deck = Deck.new()
-
-      # Draw some cards
-      {drawn, deck} = Deck.draw(deck, 10)
-
-      # Add some to discard
-      deck =
-        Enum.reduce(Enum.take(drawn, 5), deck, fn card, d ->
-          Deck.add_to_discard(d, card)
-        end)
-
-      # Total cards should still be 52
-      # 5 cards not discarded
-      total = length(deck.cards) + length(deck.discarded) + 5
-      assert total == 52
-    end
-
     test "can draw entire deck" do
       deck = Deck.new()
 
@@ -185,6 +137,33 @@ defmodule Rachel.Games.DeckTest do
 
       assert length(drawn) == 52
       assert Deck.size(empty_deck) == 0
+    end
+
+    test "drawing multiple times reduces deck size correctly" do
+      deck = Deck.new()
+
+      {_drawn1, deck} = Deck.draw(deck, 10)
+      assert Deck.size(deck) == 42
+
+      {_drawn2, deck} = Deck.draw(deck, 20)
+      assert Deck.size(deck) == 22
+
+      {_drawn3, deck} = Deck.draw(deck, 22)
+      assert Deck.size(deck) == 0
+    end
+
+    test "drawing preserves card order" do
+      cards = [
+        Card.new(:hearts, :king),
+        Card.new(:spades, :ace),
+        Card.new(:clubs, 5)
+      ]
+
+      deck = %Deck{cards: cards}
+
+      {drawn, _new_deck} = Deck.draw(deck, 2)
+
+      assert drawn == [Card.new(:hearts, :king), Card.new(:spades, :ace)]
     end
   end
 end

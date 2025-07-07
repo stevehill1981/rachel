@@ -307,7 +307,7 @@ defmodule Rachel.Games.GameServerTest do
 
     test "allows current player to nominate suit when ace is played", %{game_id: game_id} do
       # This test requires the game to be in a state where nomination is pending
-      # For now, we'll test the error case since setting up a nomination state 
+      # For now, we'll test the error case since setting up a nomination state
       # would require complex game state manipulation
       current_player_id = GameServer.get_state(game_id).current_player_id
 

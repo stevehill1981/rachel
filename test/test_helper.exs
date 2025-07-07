@@ -1,5 +1,5 @@
 ExUnit.start()
-Ecto.Adapters.SQL.Sandbox.mode(Rachel.Repo, :manual)
+# No database in simplified version
 
 # Clean up any leftover game processes before running tests
 defmodule TestHelper do

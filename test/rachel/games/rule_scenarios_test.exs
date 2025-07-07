@@ -409,7 +409,7 @@ defmodule Rachel.Games.RuleScenariosTest do
       assert game_after_p1_wins.current_player_index == 1
       assert "p1" in game_after_p1_wins.winners
 
-      # Now simulate p2 also winning their turn  
+      # Now simulate p2 also winning their turn
       # Current card should be 6 of Hearts from p1's play
       [_p1, p2, p3, p4] = game_after_p1_wins.players
       # p2 can win (matches suit)

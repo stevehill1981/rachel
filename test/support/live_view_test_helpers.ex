@@ -6,6 +6,8 @@ defmodule RachelWeb.LiveViewTestHelpers do
   import Phoenix.LiveViewTest
   import ExUnit.Assertions
 
+  alias Rachel.Games.Deck
+
   @doc """
   Clicks an element only if it's enabled. Returns :ok if clicked, :disabled if not.
   """
@@ -93,7 +95,7 @@ defmodule RachelWeb.LiveViewTestHelpers do
       ],
       current_player_index: 0,
       current_card: %{suit: :hearts, rank: :king},
-      deck: %{cards: [], discarded: []},
+      deck: %Deck{cards: []},
       discard_pile: [],
       pending_pickups: 0,
       pending_skips: 0,

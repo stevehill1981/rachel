@@ -4,7 +4,7 @@ defmodule Rachel.Games.Game do
   Manages game state, rules, and player actions.
   """
 
-  alias Rachel.Games.{Card, Deck, Stats}
+  alias Rachel.Games.{Card, Deck}
 
   @type player_id :: String.t()
   @type direction :: :clockwise | :counterclockwise
@@ -31,7 +31,7 @@ defmodule Rachel.Games.Game do
           nominated_suit: Card.suit() | :pending | nil,
           status: game_status(),
           winners: [player_id()],
-          stats: Stats.t() | nil,
+          stats: nil,
           last_action: {:skipped, String.t()} | nil
         }
 
@@ -70,15 +70,12 @@ defmodule Rachel.Games.Game do
 
     # Draw first card to start the discard pile
     {first_card, deck} = Deck.draw_one(deck)
-    deck = Deck.add_to_discard(deck, first_card)
 
     # Deal cards based on player count: 7 for ≤6 players, 5 for 7-8 players
     cards_per_player = if length(players) <= 6, do: 7, else: 5
     {players_with_cards, deck} = deal_initial_hands(players, deck, cards_per_player)
 
-    # Initialize stats tracking
-    player_ids = Enum.map(players, & &1.id)
-    stats = Stats.new(player_ids)
+    # No stats tracking for simplified version
 
     %{
       game
@@ -88,7 +85,7 @@ defmodule Rachel.Games.Game do
         # CRITICAL FIX: Add first card to discard pile
         discard_pile: [first_card],
         status: :playing,
-        stats: stats
+        stats: nil
     }
   end
 
@@ -420,8 +417,8 @@ defmodule Rachel.Games.Game do
   end
 
   defp update_current_card(game, card) do
-    deck = Deck.add_to_discard(game.deck, card)
-    %{game | current_card: card, deck: deck}
+    # Don't add to deck's discarded - we use game.discard_pile for reshuffling
+    %{game | current_card: card}
   end
 
   defp check_for_winner(game, player_index) do
@@ -525,44 +522,44 @@ defmodule Rachel.Games.Game do
   # Stats tracking helpers
   defp record_cards_played(%__MODULE__{stats: nil} = game, _player_id, _cards), do: game
 
-  defp record_cards_played(%__MODULE__{stats: stats} = game, player_id, cards) do
-    new_stats = Stats.record_card_played(stats, player_id, cards)
-    %{game | stats: new_stats}
+  defp record_cards_played(%__MODULE__{stats: _stats} = game, _player_id, _cards) do
+    # No stats tracking - just return game unchanged
+    game
   end
 
   defp record_cards_drawn(%__MODULE__{stats: nil} = game, _player_id, _count), do: game
 
-  defp record_cards_drawn(%__MODULE__{stats: stats} = game, player_id, count) do
-    new_stats = Stats.record_card_drawn(stats, player_id, count)
-    %{game | stats: new_stats}
+  defp record_cards_drawn(%__MODULE__{stats: _stats} = game, _player_id, _count) do
+    # No stats tracking - just return game unchanged
+    game
   end
 
   defp record_turn_advance(%__MODULE__{stats: nil} = game), do: game
 
-  defp record_turn_advance(%__MODULE__{stats: stats} = game) do
-    new_stats = Stats.record_turn_advance(stats)
-    %{game | stats: new_stats}
+  defp record_turn_advance(%__MODULE__{stats: _stats} = game) do
+    # No stats tracking - just return game unchanged
+    game
   end
 
   defp record_direction_change(%__MODULE__{stats: nil} = game), do: game
 
-  defp record_direction_change(%__MODULE__{stats: stats} = game) do
-    new_stats = Stats.record_direction_change(stats)
-    %{game | stats: new_stats}
+  defp record_direction_change(%__MODULE__{stats: _stats} = game) do
+    # No stats tracking - just return game unchanged
+    game
   end
 
   defp record_suit_nomination(%__MODULE__{stats: nil} = game), do: game
 
-  defp record_suit_nomination(%__MODULE__{stats: stats} = game) do
-    new_stats = Stats.record_suit_nomination(stats)
-    %{game | stats: new_stats}
+  defp record_suit_nomination(%__MODULE__{stats: _stats} = game) do
+    # No stats tracking - just return game unchanged
+    game
   end
 
   defp record_winner(%__MODULE__{stats: nil} = game, _winner_id), do: game
 
-  defp record_winner(%__MODULE__{stats: stats} = game, winner_id) do
-    new_stats = Stats.record_winner(stats, winner_id)
-    %{game | stats: new_stats}
+  defp record_winner(%__MODULE__{stats: _stats} = game, _winner_id) do
+    # No stats tracking - just return game unchanged
+    game
   end
 
   defp clear_nominated_suit_if_played(%__MODULE__{nominated_suit: nil} = game, _cards), do: game
@@ -583,5 +580,5 @@ defmodule Rachel.Games.Game do
 
   @spec get_game_stats(t()) :: map() | nil
   def get_game_stats(%__MODULE__{stats: nil}), do: nil
-  def get_game_stats(%__MODULE__{stats: stats}), do: Stats.format_stats(stats)
+  def get_game_stats(%__MODULE__{stats: _stats}), do: nil
 end

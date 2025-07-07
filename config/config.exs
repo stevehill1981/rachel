@@ -7,21 +7,7 @@
 # General application configuration
 import Config
 
-config :rachel, :scopes,
-  user: [
-    default: true,
-    module: Rachel.Accounts.Scope,
-    assign_key: :current_scope,
-    access_path: [:user, :id],
-    schema_key: :user_id,
-    schema_type: :id,
-    schema_table: :users,
-    test_data_fixture: Rachel.AccountsFixtures,
-    test_login_helper: :register_and_log_in_user
-  ]
-
 config :rachel,
-  ecto_repos: [Rachel.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
@@ -35,14 +21,7 @@ config :rachel, RachelWeb.Endpoint,
   pubsub_server: Rachel.PubSub,
   live_view: [signing_salt: "h/XpBGat"]
 
-# Configures the mailer
-#
-# By default it uses the "Local" adapter which stores the emails
-# locally. You can see the emails in your browser, at "/dev/mailbox".
-#
-# For production it's recommended to configure a different adapter
-# at the `config/runtime.exs`.
-config :rachel, Rachel.Mailer, adapter: Swoosh.Adapters.Local
+# Mailer removed - no user accounts, no emails needed
 
 # Configure esbuild (the version is required)
 config :esbuild,

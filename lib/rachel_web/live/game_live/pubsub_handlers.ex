@@ -89,10 +89,17 @@ defmodule RachelWeb.GameLive.PubSubHandlers do
   Handles player_won PubSub messages.
   Returns socket updates.
   """
-  def handle_player_won(%{player_id: _player_id, game: game}, current_player_id) do
-    updates = [{:assign, :game, StateManager.normalize_game_data(game)}]
-    winner_updates = StateManager.check_and_show_winner_banner_updates(game, current_player_id)
-    updates ++ winner_updates
+  def handle_player_won(%{player_id: winner_player_id} = _msg, current_player_id) do
+    # Simple winner handling without game updates
+    if winner_player_id == current_player_id do
+      [
+        {:assign, :show_winner_banner, true},
+        {:assign, :winner_acknowledged, true},
+        {:send_after_self, :auto_hide_winner_banner, 5000}
+      ]
+    else
+      []
+    end
   end
 
   @doc """

@@ -132,7 +132,7 @@ defmodule RachelWeb.GameLive.Actions do
   def format_error(:must_play_jacks), do: "You must play Jacks to counter black jacks!"
   def format_error(:must_play_nominated_suit), do: "You must play the nominated suit!"
   def format_error(:can_only_stack_same_rank), do: "You can only stack cards of the same rank!"
-  def format_error(:game_not_found), do: "Game connection lost. Please return to lobby."
+  def format_error(:game_not_found), do: "Game connection lost. Please return home."
   def format_error(:timeout), do: "Game server is not responding. Please try again."
   def format_error(:player_not_found), do: "Player not found in game."
   def format_error(:cards_not_in_hand), do: "Selected cards are not in your hand."

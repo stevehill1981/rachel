@@ -3,21 +3,7 @@ import Config
 # Set the environment for runtime checks
 config :rachel, :env, :test
 
-# Only in tests, remove the complexity from the password hashing algorithm
-config :bcrypt_elixir, :log_rounds, 1
-
-# Configure your database
-#
-# The MIX_TEST_PARTITION environment variable can be used
-# to provide built-in test partitioning in CI environment.
-# Run `mix help test` for more information.
-config :rachel, Rachel.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "rachel_test#{System.get_env("MIX_TEST_PARTITION")}",
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+# Database removed - using in-memory state only
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
@@ -26,8 +12,7 @@ config :rachel, RachelWeb.Endpoint,
   secret_key_base: "pncmtoU1Ol95xJ6dDEAKOLNCQReMOBICyvcWw2b+ks0DZeT9njfiklJmO5WNbw58",
   server: false
 
-# In test we don't send emails
-config :rachel, Rachel.Mailer, adapter: Swoosh.Adapters.Test
+# Mailer removed
 
 # Disable swoosh api client as it is only required for production adapters
 config :swoosh, :api_client, false

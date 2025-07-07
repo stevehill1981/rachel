@@ -6,7 +6,6 @@ defmodule Rachel.Games.GameServer do
   use GenServer
 
   alias Phoenix.PubSub
-  alias Rachel.Accounts.Stats, as: AccountsStats
   alias Rachel.Games.{Card, Game, Player}
 
   @max_players 8
@@ -717,7 +716,7 @@ defmodule Rachel.Games.GameServer do
 
   defp record_game_stats(state) do
     if state.started_at do
-      ended_at = DateTime.utc_now()
+      _ended_at = DateTime.utc_now()
       game_id = state.game.id
 
       # In test environment, skip stats recording to avoid database ownership issues
@@ -728,7 +727,7 @@ defmodule Rachel.Games.GameServer do
         # In production, record stats asynchronously to avoid blocking the game
         Task.start(fn ->
           try do
-            AccountsStats.record_game(state.game, game_id, state.started_at, ended_at)
+            # Game recording removed for simplicity
           rescue
             error ->
               # Log error but don't crash the game server

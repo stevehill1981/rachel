@@ -60,7 +60,8 @@
       "Bash(mix deps.get:*)",
       "Bash(iex:*)",
       "Bash(sed:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(./check.sh:*)"
     ],
     "deny": []
   }

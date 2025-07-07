@@ -4,7 +4,6 @@ defmodule Rachel.Games.AIPlayer do
   Implements basic strategy for playing cards. Now with enhanced AI support.
   """
 
-  alias Rachel.AI.EnhancedAIPlayer
   alias Rachel.Games.{Card, Game}
 
   @spec make_move(Game.t(), String.t()) ::
@@ -27,35 +26,13 @@ defmodule Rachel.Games.AIPlayer do
     end
   end
 
-  # Enhanced AI move using personality system
+  # Enhanced AI removed for simplicity - fallback to basic AI
   defp make_enhanced_move(game, player) do
-    case EnhancedAIPlayer.choose_play(game, player) do
-      {:play_cards, cards, _updated_player} ->
-        # Update the player state in the game
-        # For now, just return the move - game will handle player updates
-        {:play, convert_cards_to_indices(cards, player.hand)}
-
-      {:draw_card, _updated_player} ->
-        {:draw, nil}
-    end
+    determine_ai_action(game, player)
   end
 
   defp has_personality?(player) do
     Map.has_key?(player, :ai_state) and Map.has_key?(player.ai_state, :personality)
-  end
-
-  defp convert_cards_to_indices(cards, hand) do
-    # Convert card structs back to hand indices for the existing game interface
-    Enum.map(cards, fn card ->
-      Enum.find_index(hand, fn h_card ->
-        h_card.rank == card.rank and h_card.suit == card.suit
-      end)
-    end)
-    |> Enum.filter(&(&1 != nil))
-    |> case do
-      [single_index] -> single_index
-      multiple_indices -> multiple_indices
-    end
   end
 
   defp validate_ai_turn(game, player_id) do
