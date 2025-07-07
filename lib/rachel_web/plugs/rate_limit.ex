@@ -11,13 +11,13 @@ defmodule RachelWeb.Plugs.RateLimit do
     %{
       max_requests: Keyword.get(opts, :max_requests, 60),
       window_ms: Keyword.get(opts, :window_ms, :timer.seconds(60)),
-      key_func: Keyword.get(opts, :key_func, &default_key/1),
-      error_response: Keyword.get(opts, :error_response, &default_error_response/1)
+      key_func: Keyword.get(opts, :key_func, :default_key),
+      error_response: Keyword.get(opts, :error_response, :default_error)
     }
   end
   
   def call(conn, %{max_requests: max_requests, window_ms: window_ms, key_func: key_func, error_response: error_response}) do
-    key = key_func.(conn)
+    key = apply_key_func(conn, key_func)
     
     case Rachel.RateLimiter.check_rate(key, max_requests: max_requests, window_ms: window_ms) do
       {:ok, remaining} ->
@@ -35,10 +35,16 @@ defmodule RachelWeb.Plugs.RateLimit do
         |> put_resp_header("x-ratelimit-remaining", "0")
         |> put_resp_header("x-ratelimit-reset", to_string(reset_time(window_ms)))
         |> put_resp_header("retry-after", to_string(div(window_ms, 1000)))
-        |> error_response.()
+        |> apply_error_response(error_response)
         |> halt()
     end
   end
+  
+  defp apply_key_func(conn, :default_key), do: default_key(conn)
+  defp apply_key_func(conn, func) when is_function(func, 1), do: func.(conn)
+  
+  defp apply_error_response(conn, :default_error), do: default_error_response(conn)
+  defp apply_error_response(conn, func) when is_function(func, 1), do: func.(conn)
   
   # Default key function - uses IP address
   defp default_key(conn) do
