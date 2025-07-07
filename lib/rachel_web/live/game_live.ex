@@ -306,6 +306,10 @@ defmodule RachelWeb.GameLive do
     end
   end
 
+  def handle_event("return_to_lobby", _, socket) do
+    {:noreply, push_navigate(socket, to: "/lobby")}
+  end
+
   @impl true
   @spec handle_info(any(), Socket.t()) :: {:noreply, Socket.t()}
   def handle_info(:ai_move, socket) do

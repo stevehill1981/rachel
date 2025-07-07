@@ -29,18 +29,42 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         show_statistics={@show_statistics}
       />
     <% else %>
-      <%= if @player && @player_id not in @game.winners do %>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
-          <.play_button selected_cards={@selected_cards} />
-          <.game_messages game={@game} current_player={@current_player} player_id={@player_id} />
-          <.hand_display
-            player={@player}
-            game={@game}
-            player_id={@player_id}
-            selected_cards={@selected_cards}
-            current_player={@current_player}
-          />
+      <%= if @game.status == :finished do %>
+        <div class="bg-green-500/20 backdrop-blur rounded-2xl p-6 text-center">
+          <%= if @player_id in @game.winners do %>
+            <div class="text-green-200 text-xl font-bold mb-2">🎉 You Won! 🎉</div>
+            <div class="text-green-300">You finished in position #{Enum.find_index(@game.winners, &(&1 == @player_id)) + 1}</div>
+          <% else %>
+            <div class="text-red-200 text-xl font-bold mb-2">Game Over</div>
+            <div class="text-red-300">You were the last player remaining</div>
+          <% end %>
+          <button
+            phx-click="return_to_lobby"
+            class="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          >
+            Return to Lobby
+          </button>
         </div>
+      <% else %>
+        <%= if @player && @player_id not in @game.winners do %>
+          <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
+            <.play_button selected_cards={@selected_cards} />
+            <.game_messages game={@game} current_player={@current_player} player_id={@player_id} />
+            <.hand_display
+              player={@player}
+              game={@game}
+              player_id={@player_id}
+              selected_cards={@selected_cards}
+              current_player={@current_player}
+            />
+          </div>
+        <% else %>
+          <div class="bg-green-500/20 backdrop-blur rounded-2xl p-6 text-center">
+            <div class="text-green-200 text-lg font-bold mb-2">🎉 You Won! 🎉</div>
+            <div class="text-green-300">Waiting for other players to finish...</div>
+            <div class="text-sm text-green-400 mt-2">Position: #{Enum.find_index(@game.winners, &(&1 == @player_id)) + 1}</div>
+          </div>
+        <% end %>
       <% end %>
     <% end %>
     """

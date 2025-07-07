@@ -101,22 +101,27 @@ defmodule RachelWeb.GameLive.EventHandlers do
   Validates if a player can select a specific card.
   """
   def can_select_card?(%Game{} = game, %Card{} = card, selected_indices, hand) do
+    current = Game.current_player(game)
+    valid_plays = Game.get_valid_plays(game, current)
+    
     # Can always select if nothing selected yet
     if Enum.empty?(selected_indices) do
       # Check if it's a valid play
-      current = Game.current_player(game)
-      valid_plays = Game.get_valid_plays(game, current)
-
       Enum.any?(valid_plays, fn {valid_card, _} ->
         valid_card.suit == card.suit && valid_card.rank == card.rank
       end)
     else
-      # If cards are already selected, can only select cards with same rank
+      # If cards are already selected, check if:
+      # 1. New card has same rank as selected cards
+      # 2. At least one card of this rank is a valid play
       first_selected_index = hd(selected_indices)
       first_card = Enum.at(hand, first_selected_index)
 
-      if first_card do
-        card.rank == first_card.rank
+      if first_card && card.rank == first_card.rank do
+        # Check if any card of this rank is a valid play
+        Enum.any?(valid_plays, fn {valid_card, _} ->
+          valid_card.rank == card.rank
+        end)
       else
         false
       end
