@@ -105,7 +105,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   defp game_messages(assigns) do
     ~H"""
     <%= if @current_player && @current_player.id == @player_id && @game.pending_pickups > 0 && !Game.has_valid_play?(@game, @current_player) && @game.status == :playing do %>
-      <div class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse game-message">
+      <div id="drawing-cards-message" class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse">
         <div class="text-center text-red-200 font-semibold">
           Drawing {@game.pending_pickups} cards...
         </div>
@@ -113,7 +113,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
     <% end %>
 
     <%= if @current_player && @current_player.id != @player_id && @game.status == :playing do %>
-      <div class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30 game-message">
+      <div id="waiting-turn-message" class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30">
         <div class="text-center text-gray-200 font-semibold">
           Waiting for {@current_player.name}'s turn...
         </div>

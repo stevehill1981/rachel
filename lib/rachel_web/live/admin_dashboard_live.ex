@@ -161,7 +161,7 @@ defmodule RachelWeb.AdminDashboardLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gray-100">
+    <div class="admin-dashboard min-h-screen bg-gray-100">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="bg-white shadow rounded-lg p-6 mb-6">
