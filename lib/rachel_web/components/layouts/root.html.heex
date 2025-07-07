@@ -12,14 +12,14 @@
       name="keywords"
       content="Rachel card game, online card game, multiplayer card game, real-time card game, play cards online, card game with friends"
     />
-    <meta property="og:title" content="Rachel Card Game - Play Online with Friends" />
+    <meta property="og:title" content="Rachel - Play Online with Friends" />
     <meta
       property="og:description"
       content="Strategic card game bringing friends together for over 30 years. Play multiplayer matches with real-time gameplay and smart AI opponents."
     />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Rachel Card Game - Play Online with Friends" />
+    <meta name="twitter:title" content="Rachel - Play Online with Friends" />
     <meta
       name="twitter:description"
       content="Strategic card game bringing friends together for over 30 years. Play multiplayer matches with real-time gameplay and smart AI opponents."
@@ -51,26 +51,6 @@
     </script>
   </head>
   <body>
-    <ul class="menu menu-horizontal w-full relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
-      <%= if @current_scope do %>
-        <li>
-          {@current_scope.user.email}
-        </li>
-        <li>
-          <.link href={~p"/users/settings"}>Settings</.link>
-        </li>
-        <li>
-          <.link href={~p"/users/log-out"} method="delete">Log out</.link>
-        </li>
-      <% else %>
-        <li>
-          <.link href={~p"/users/register"}>Register</.link>
-        </li>
-        <li>
-          <.link href={~p"/users/log-in"}>Log in</.link>
-        </li>
-      <% end %>
-    </ul>
     {@inner_content}
   </body>
 </html>
