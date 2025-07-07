@@ -108,48 +108,57 @@ defmodule RachelWeb.PracticeLive do
   @impl true
   def handle_event("start_practice_game", _params, socket) do
     if socket.assigns.player_name != "" and length(socket.assigns.selected_opponents) > 0 do
-      # Create game with AI players
-      game_id = generate_game_id()
+      # Check rate limit
+      player_key = "game:player:#{socket.assigns.player_id}"
+      
+      case Rachel.RateLimiter.check_rate(player_key, max_requests: 10, window_ms: :timer.minutes(5)) do
+        {:ok, _remaining} ->
+          # Create game with AI players
+          game_id = generate_game_id()
 
-      # Create human player
-      human_player = %{
-        id: "human_player",
-        name: socket.assigns.player_name,
-        is_ai: false
-      }
+          # Create human player
+          human_player = %{
+            id: "human_player",
+            name: socket.assigns.player_name,
+            is_ai: false
+          }
 
-      # Create AI players with selected personalities
-      ai_players =
-        socket.assigns.selected_opponents
-        |> Enum.with_index()
-        |> Enum.map(fn {personality, _index} ->
-          EnhancedAIPlayer.new_ai_player(personality.name, personality.type)
-        end)
+          # Create AI players with selected personalities
+          ai_players =
+            socket.assigns.selected_opponents
+            |> Enum.with_index()
+            |> Enum.map(fn {personality, _index} ->
+              EnhancedAIPlayer.new_ai_player(personality.name, personality.type)
+            end)
 
-      _all_players = [human_player | ai_players]
+          _all_players = [human_player | ai_players]
 
-      # Start the game server
-      case GameServer.start_link(game_id: game_id) do
-        {:ok, _pid} ->
-          # Add human player
-          GameServer.join_game(game_id, human_player.id, human_player.name)
+          # Start the game server
+          case GameServer.start_link(game_id: game_id) do
+            {:ok, _pid} ->
+              # Add human player
+              GameServer.join_game(game_id, human_player.id, human_player.name)
 
-          # Add AI players
-          Enum.each(ai_players, fn ai_player ->
-            GameServer.add_ai_player(game_id, ai_player.name)
-          end)
+              # Add AI players
+              Enum.each(ai_players, fn ai_player ->
+                GameServer.add_ai_player(game_id, ai_player.name)
+              end)
 
-          # Start the game
-          case GameServer.start_game(game_id, human_player.id) do
-            {:ok, _game} ->
-              {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
+              # Start the game
+              case GameServer.start_game(game_id, human_player.id) do
+                {:ok, _game} ->
+                  {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
+
+                {:error, reason} ->
+                  {:noreply, put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
+              end
 
             {:error, reason} ->
-              {:noreply, put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
+              {:noreply, put_flash(socket, :error, "Failed to create game: #{inspect(reason)}")}
           end
-
-        {:error, reason} ->
-          {:noreply, put_flash(socket, :error, "Failed to create game: #{inspect(reason)}")}
+        
+        {:error, :rate_limited} ->
+          {:noreply, put_flash(socket, :error, "You're creating games too quickly. Please wait a few minutes before trying again.")}
       end
     else
       {:noreply,

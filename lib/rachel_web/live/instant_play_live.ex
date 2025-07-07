@@ -108,15 +108,20 @@ defmodule RachelWeb.InstantPlayLive do
 
   @impl true
   def handle_info(:create_instant_game, socket) do
-    case create_quick_game(socket.assigns.player_id, socket.assigns.player_name) do
-      {:ok, game_id} ->
-        socket =
-          socket
-          |> assign(:game_id, game_id)
-          |> assign(:game_state, :ready)
-          |> assign(:creating_game, false)
+    # Check rate limit before creating game
+    player_key = "game:player:#{socket.assigns.player_id}"
+    
+    case Rachel.RateLimiter.check_rate(player_key, max_requests: 10, window_ms: :timer.minutes(5)) do
+      {:ok, _remaining} ->
+        case create_quick_game(socket.assigns.player_id, socket.assigns.player_name) do
+          {:ok, game_id} ->
+            socket =
+              socket
+              |> assign(:game_id, game_id)
+              |> assign(:game_state, :ready)
+              |> assign(:creating_game, false)
 
-        # If tutorial is skipped, go straight to game
+            # If tutorial is skipped, go straight to game
         if socket.assigns.show_tutorial do
           {:noreply, socket}
         else
@@ -129,6 +134,16 @@ defmodule RachelWeb.InstantPlayLive do
           |> assign(:game_state, :error)
           |> assign(:creating_game, false)
           |> put_flash(:error, "Failed to create game: #{inspect(reason)}")
+
+        {:noreply, socket}
+    end
+      
+      {:error, :rate_limited} ->
+        socket =
+          socket
+          |> assign(:game_state, :rate_limited)
+          |> assign(:creating_game, false)
+          |> put_flash(:error, "You're creating games too quickly. Please wait a few minutes before trying again.")
 
         {:noreply, socket}
     end

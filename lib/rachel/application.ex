@@ -12,6 +12,8 @@ defmodule Rachel.Application do
       Rachel.Repo,
       {DNSCluster, query: Application.get_env(:rachel, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Rachel.PubSub},
+      # Rate limiter for API protection
+      Rachel.RateLimiter,
       # Game Registry for tracking active games
       {Registry, keys: :unique, name: Rachel.GameRegistry},
       # Dynamic supervisor for game servers

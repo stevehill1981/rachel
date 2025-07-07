@@ -77,6 +77,10 @@ defmodule Rachel.MixProject do
       # Additional dependencies for Rachel
       {:bcrypt_elixir, "~> 3.0"},
       {:ex_machina, "~> 2.7", only: :test},
+      
+      # Error tracking and monitoring
+      {:sentry, "~> 10.0"},
+      {:hackney, "~> 1.18"},
 
       # Code quality and analysis tools
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},

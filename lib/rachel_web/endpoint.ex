@@ -60,5 +60,9 @@ defmodule RachelWeb.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
   plug Plug.Session, @session_options
+  
+  # Sentry error boundary to capture all errors
+  plug Sentry.PlugContext
+  
   plug RachelWeb.Router
 end

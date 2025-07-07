@@ -52,6 +52,24 @@ if config_env() == :prod do
 
   config :rachel, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  # Sentry configuration for error tracking
+  config :sentry,
+    dsn: System.get_env("SENTRY_DSN"),
+    environment_name: config_env(),
+    enable_source_code_context: true,
+    root_source_code_paths: [File.cwd!()],
+    tags: %{
+      env: to_string(config_env()),
+      app_version: Application.spec(:rachel, :vsn) |> to_string()
+    },
+    integrations: [
+      oban: [
+        capture_errors: true
+      ]
+    ],
+    filter: Rachel.SentryFilter,
+    before_send_event: {Rachel.SentryFilter, :before_send}
+
   config :rachel, RachelWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
