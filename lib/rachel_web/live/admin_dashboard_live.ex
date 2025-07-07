@@ -140,9 +140,9 @@ defmodule RachelWeb.AdminDashboardLive do
     {uptime, _} = :erlang.statistics(:wall_clock)
     uptime_seconds = div(uptime, 1000)
     
-    days = div(uptime_seconds, 86400)
-    hours = div(rem(uptime_seconds, 86400), 3600)
-    minutes = div(rem(uptime_seconds, 3600), 60)
+    days = div(uptime_seconds, 86_400)
+    hours = div(rem(uptime_seconds, 86_400), 3_600)
+    minutes = div(rem(uptime_seconds, 3_600), 60)
     
     "#{days}d #{hours}h #{minutes}m"
   end
