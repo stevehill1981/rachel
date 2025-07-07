@@ -321,10 +321,12 @@ defmodule RachelWeb.Components.Game.SpectatorDashboard do
           <%= if @show_cards and length(player.hand) > 0 do %>
             <div class="mt-2">
               <div class="grid grid-cols-6 gap-1">
-                <%= for card <- Enum.take(player.hand, 12) do %>
+                <%= for {card, idx} <- Enum.with_index(Enum.take(player.hand, 12)) do %>
                   <.playing_card
                     card={card}
-                    index={0}
+                    index={idx}
+                    player_id={player.id}
+                    context="spectator-cards"
                     selected={false}
                     disabled={true}
                     class="transform scale-50 origin-center"

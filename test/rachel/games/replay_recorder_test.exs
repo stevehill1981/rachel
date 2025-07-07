@@ -1,7 +1,6 @@
 defmodule Rachel.Games.ReplayRecorderTest do
   use Rachel.DataCase, async: true
-  
-  @moduletag :skip
+
 
   alias Rachel.Games.ReplayRecorder
 

@@ -1,6 +1,6 @@
 defmodule RachelWeb.GameLiveAutoPlayTest do
   use RachelWeb.ConnCase, async: true
-  
+
   @moduletag :skip
 
   import Phoenix.LiveViewTest

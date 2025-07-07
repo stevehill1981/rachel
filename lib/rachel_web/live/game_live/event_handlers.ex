@@ -103,7 +103,7 @@ defmodule RachelWeb.GameLive.EventHandlers do
   def can_select_card?(%Game{} = game, %Card{} = card, selected_indices, hand) do
     current = Game.current_player(game)
     valid_plays = Game.get_valid_plays(game, current)
-    
+
     # Can always select if nothing selected yet
     if Enum.empty?(selected_indices) do
       # Check if it's a valid play

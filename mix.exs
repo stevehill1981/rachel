@@ -77,7 +77,7 @@ defmodule Rachel.MixProject do
       # Additional dependencies for Rachel
       {:bcrypt_elixir, "~> 3.0"},
       {:ex_machina, "~> 2.7", only: :test},
-      
+
       # Error tracking and monitoring
       {:sentry, "~> 11.0"},
       {:hackney, "~> 1.18"},
@@ -86,7 +86,10 @@ defmodule Rachel.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
-      {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false}
+      {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
+
+      # Property-based testing
+      {:stream_data, "~> 1.1", only: :test}
     ]
   end
 

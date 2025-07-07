@@ -28,7 +28,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
         <.players_display game={@game} />
       </div>
       
-      <!-- Mobile: Compact middle section with game area and status side by side -->
+    <!-- Mobile: Compact middle section with game area and status side by side -->
       <div class="flex lg:hidden gap-2 flex-shrink-0 px-2">
         <!-- Main Game Area -->
         <div class="flex-1 flex items-center justify-center min-h-[200px]">
@@ -40,13 +40,13 @@ defmodule RachelWeb.Components.Game.GameInProgress do
           />
         </div>
         
-        <!-- Side Game Info - Compact vertical -->
+    <!-- Side Game Info - Compact vertical -->
         <div class="w-20 flex flex-col items-center justify-center">
           <.game_status game={@game} />
         </div>
       </div>
       
-      <!-- Desktop: Original grid layout -->
+    <!-- Desktop: Original grid layout -->
       <div class="hidden lg:flex lg:col-start-2 lg:row-start-2 items-center justify-center">
         <.deck_area
           game={@game}
@@ -55,7 +55,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
           current_player={@current_player}
         />
       </div>
-      
+
       <div class="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:col-start-3 lg:row-start-2 flex-col items-center justify-center">
         <.game_status game={@game} />
       </div>

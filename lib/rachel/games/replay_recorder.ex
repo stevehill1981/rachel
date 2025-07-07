@@ -150,7 +150,17 @@ defmodule Rachel.Games.ReplayRecorder do
 
   # Private helper functions
 
-  defp recording_table(game_id), do: :"replay_#{game_id}"
+  defp recording_table(game_id) do
+    # Use string_to_existing_atom to avoid atom table pollution
+    table_name = "replay_#{game_id}"
+    try do
+      String.to_existing_atom(table_name)
+    rescue
+      ArgumentError ->
+        # Table doesn't exist, create it with safe name
+        String.to_atom(table_name)
+    end
+  end
 
   defp save_replay(game_id, events) do
     metadata = build_metadata(events)

@@ -85,14 +85,15 @@ defmodule Rachel.Games.Game do
       | players: players_with_cards,
         deck: deck,
         current_card: first_card,
-        discard_pile: [first_card],  # CRITICAL FIX: Add first card to discard pile
+        # CRITICAL FIX: Add first card to discard pile
+        discard_pile: [first_card],
         status: :playing,
         stats: stats
     }
   end
 
   @spec play_card(t(), player_id(), [integer()] | integer()) :: {:ok, t()} | {:error, atom()}
-  def play_card(%__MODULE__{status: status} = _game, _player_id, _card_indices) 
+  def play_card(%__MODULE__{status: status} = _game, _player_id, _card_indices)
       when status != :playing do
     {:error, :game_not_in_progress}
   end
@@ -221,16 +222,16 @@ defmodule Rachel.Games.Game do
 
   defp get_cards_by_indices(hand, indices) do
     hand_size = length(hand)
-    
+
     # Check for duplicate indices first (prevents card duplication exploits)
     cond do
       length(indices) != length(Enum.uniq(indices)) ->
         {:error, :duplicate_card_indices}
-      
+
       # Check for invalid indices (negative or out of bounds)
       Enum.any?(indices, fn i -> i < 0 or i >= hand_size end) ->
         {:error, :invalid_card_index}
-      
+
       true ->
         cards = Enum.map(indices, fn i -> Enum.at(hand, i) end)
 
@@ -352,7 +353,7 @@ defmodule Rachel.Games.Game do
           # No cards to reshuffle, return what we have
           {cards, new_deck} = Deck.draw(deck, count)
           {cards, new_deck, discard_pile}
-        
+
         [_current_card | cards_to_reshuffle] ->
           # Only reshuffle the cards UNDER the current card
           # Keep the current card at the top of discard pile

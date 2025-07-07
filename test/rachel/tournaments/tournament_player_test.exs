@@ -414,6 +414,7 @@ defmodule Rachel.Tournaments.TournamentPlayerTest do
 
       {:ok, _} =
         TournamentPlayer.create_registration(small_tournament.id, "player1", "Player One")
+
       {:ok, _} =
         TournamentPlayer.create_registration(small_tournament.id, "player2", "Player Two")
 

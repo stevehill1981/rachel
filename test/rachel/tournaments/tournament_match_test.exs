@@ -520,8 +520,9 @@ defmodule Rachel.Tournaments.TournamentMatchTest do
         })
 
       # 1 hour from now, truncated to second precision
-      new_time = DateTime.add(DateTime.utc_now(), 60 * 60, :second)
-                 |> DateTime.truncate(:second)
+      new_time =
+        DateTime.add(DateTime.utc_now(), 60 * 60, :second)
+        |> DateTime.truncate(:second)
 
       assert {:ok, updated_match} = TournamentMatch.reschedule_match(match.id, new_time)
       assert DateTime.truncate(updated_match.scheduled_time, :second) == new_time

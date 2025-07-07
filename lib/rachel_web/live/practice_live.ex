@@ -110,8 +110,11 @@ defmodule RachelWeb.PracticeLive do
     if socket.assigns.player_name != "" and length(socket.assigns.selected_opponents) > 0 do
       # Check rate limit
       player_key = "game:player:#{socket.assigns.player_id}"
-      
-      case Rachel.RateLimiter.check_rate(player_key, max_requests: 10, window_ms: :timer.minutes(5)) do
+
+      case Rachel.RateLimiter.check_rate(player_key,
+             max_requests: 10,
+             window_ms: :timer.minutes(5)
+           ) do
         {:ok, _remaining} ->
           # Create game with AI players
           game_id = generate_game_id()
@@ -150,15 +153,21 @@ defmodule RachelWeb.PracticeLive do
                   {:noreply, push_navigate(socket, to: ~p"/game/#{game_id}")}
 
                 {:error, reason} ->
-                  {:noreply, put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
+                  {:noreply,
+                   put_flash(socket, :error, "Failed to start game: #{inspect(reason)}")}
               end
 
             {:error, reason} ->
               {:noreply, put_flash(socket, :error, "Failed to create game: #{inspect(reason)}")}
           end
-        
+
         {:error, :rate_limited} ->
-          {:noreply, put_flash(socket, :error, "You're creating games too quickly. Please wait a few minutes before trying again.")}
+          {:noreply,
+           put_flash(
+             socket,
+             :error,
+             "You're creating games too quickly. Please wait a few minutes before trying again."
+           )}
       end
     else
       {:noreply,

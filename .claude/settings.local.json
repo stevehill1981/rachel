@@ -58,7 +58,9 @@
       "Bash(mix format:*)",
       "Bash(gh api:*)",
       "Bash(mix deps.get:*)",
-      "Bash(iex:*)"
+      "Bash(iex:*)",
+      "Bash(sed:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

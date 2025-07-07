@@ -21,7 +21,7 @@ defmodule RachelWeb.Router do
     # Rate limit API endpoints: 300 requests per minute
     plug RachelWeb.Plugs.RateLimit, max_requests: 300, window_ms: 60_000
   end
-  
+
   pipeline :admin do
     plug :browser
     plug RachelWeb.Plugs.BasicAuth
@@ -45,15 +45,15 @@ defmodule RachelWeb.Router do
   # Health check endpoints (no authentication required)
   scope "/health", RachelWeb do
     pipe_through :api
-    
+
     get "/", HealthController, :check
     get "/detailed", HealthController, :detailed
   end
-  
+
   # Admin routes (protected by basic auth)
   scope "/admin", RachelWeb do
     pipe_through :admin
-    
+
     live "/", AdminDashboardLive
   end
 

@@ -1,6 +1,6 @@
 defmodule RachelWeb.Components.Game.PlayerHandTest do
   use RachelWeb.ConnCase, async: true
-  
+
   @moduletag :skip
   import Phoenix.LiveViewTest
   alias RachelWeb.Components.Game.PlayerHand

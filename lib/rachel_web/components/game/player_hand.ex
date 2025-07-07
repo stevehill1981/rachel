@@ -33,7 +33,10 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         <div class="bg-green-500/20 backdrop-blur rounded-2xl p-6 text-center">
           <%= if @player_id in @game.winners do %>
             <div class="text-green-200 text-xl font-bold mb-2">🎉 You Won! 🎉</div>
-            <div class="text-green-300">You finished in position #{Enum.find_index(@game.winners, &(&1 == @player_id)) + 1}</div>
+            <div class="text-green-300">
+              You finished in position #{(Enum.find_index(@game.winners, &(&1 == @player_id)) || 0) +
+                1}
+            </div>
           <% else %>
             <div class="text-red-200 text-xl font-bold mb-2">Game Over</div>
             <div class="text-red-300">You were the last player remaining</div>
@@ -62,7 +65,9 @@ defmodule RachelWeb.Components.Game.PlayerHand do
           <div class="bg-green-500/20 backdrop-blur rounded-2xl p-6 text-center">
             <div class="text-green-200 text-lg font-bold mb-2">🎉 You Won! 🎉</div>
             <div class="text-green-300">Waiting for other players to finish...</div>
-            <div class="text-sm text-green-400 mt-2">Position: #{Enum.find_index(@game.winners, &(&1 == @player_id)) + 1}</div>
+            <div class="text-sm text-green-400 mt-2">
+              Position: #{(Enum.find_index(@game.winners, &(&1 == @player_id)) || 0) + 1}
+            </div>
           </div>
         <% end %>
       <% end %>
@@ -84,7 +89,11 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         <%= if length(@selected_cards) > 1 do %>
           <div class="flex space-x-1">
             <%= for i <- 1..length(@selected_cards) do %>
-              <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={"animation-delay: #{(i-1) * 100}ms"}></div>
+              <div
+                class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
+                style={"animation-delay: #{(i-1) * 100}ms"}
+              >
+              </div>
             <% end %>
           </div>
           <div class="text-xs text-blue-300 font-medium">
@@ -92,18 +101,20 @@ defmodule RachelWeb.Components.Game.PlayerHand do
           </div>
         <% end %>
         
-        <!-- Main play button -->
+    <!-- Main play button -->
         <button
           phx-click="play_cards"
-          class={[
-            "px-8 py-3 text-white rounded-xl font-bold transition-all duration-200",
-            "shadow-lg active:scale-95 touch-manipulation",
-            # Large touch target
-            "min-h-[48px] min-w-[120px]",
-            # Different colors for single vs multi-card
-            length(@selected_cards) == 1 && "bg-green-500 hover:bg-green-600",
-            length(@selected_cards) > 1 && "bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/50"
-          ]}
+          class={
+            [
+              "px-8 py-3 text-white rounded-xl font-bold transition-all duration-200",
+              "shadow-lg active:scale-95 touch-manipulation",
+              # Large touch target
+              "min-h-[48px] min-w-[120px]",
+              # Different colors for single vs multi-card
+              length(@selected_cards) == 1 && "bg-green-500 hover:bg-green-600",
+              length(@selected_cards) > 1 && "bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/50"
+            ]
+          }
         >
           <%= if length(@selected_cards) == 1 do %>
             <span class="flex items-center space-x-2">
@@ -129,7 +140,10 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   defp game_messages(assigns) do
     ~H"""
     <%= if @current_player && @current_player.id == @player_id && @game.pending_pickups > 0 && !Game.has_valid_play?(@game, @current_player) && @game.status == :playing do %>
-      <div id="drawing-cards-message" class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse">
+      <div
+        id="drawing-cards-message"
+        class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse"
+      >
         <div class="text-center text-red-200 font-semibold">
           Drawing {@game.pending_pickups} cards...
         </div>
@@ -137,7 +151,10 @@ defmodule RachelWeb.Components.Game.PlayerHand do
     <% end %>
 
     <%= if @current_player && @current_player.id != @player_id && @game.status == :playing do %>
-      <div id="waiting-turn-message" class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30">
+      <div
+        id="waiting-turn-message"
+        class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30"
+      >
         <div class="text-center text-gray-200 font-semibold">
           Waiting for {@current_player.name}'s turn...
         </div>
@@ -153,25 +170,29 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   attr :current_player, :any, required: true
 
   defp hand_display(assigns) do
-    assigns = assign(assigns, :hand_size, if(assigns.player, do: length(assigns.player.hand), else: 0))
-    
+    assigns =
+      assign(assigns, :hand_size, if(assigns.player, do: length(assigns.player.hand), else: 0))
+
     ~H"""
     <%= if @player do %>
       <!-- Mobile: Horizontal scroll, Desktop: Grid -->
-      <div class={[
-        # Mobile: horizontal scrolling container
-        "flex overflow-x-auto gap-3 pb-4 snap-x snap-mandatory lg:hidden",
-        # Hide scrollbar on mobile
-        "scrollbar-hide",
-        # Padding for scroll snap
-        "px-2"
-      ]}>
+      <div class={
+        [
+          # Mobile: horizontal scrolling container
+          "flex overflow-x-auto gap-3 pb-4 snap-x snap-mandatory lg:hidden",
+          # Hide scrollbar on mobile
+          "scrollbar-hide",
+          # Padding for scroll snap
+          "px-2"
+        ]
+      }>
         <%= for {card, idx} <- Enum.with_index(@player.hand) do %>
           <div class="flex-shrink-0 snap-start">
             <.playing_card
               card={card}
               index={idx}
               player_id={@player_id}
+              context="mobile"
               selected={idx in @selected_cards}
               disabled={
                 @current_player == nil ||
@@ -190,7 +211,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         <% end %>
       </div>
       
-      <!-- Desktop: Grid layout -->
+    <!-- Desktop: Grid layout -->
       <div class="hidden lg:grid lg:grid-cols-8 gap-2">
         <%= for {card, idx} <- Enum.with_index(@player.hand) do %>
           <div class="flex justify-center">
@@ -198,6 +219,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
               card={card}
               index={idx}
               player_id={@player_id}
+              context="desktop"
               selected={idx in @selected_cards}
               disabled={
                 @current_player == nil ||
@@ -253,12 +275,13 @@ defmodule RachelWeb.Components.Game.PlayerHand do
           </div>
 
           <div class="grid grid-cols-8 lg:grid-cols-12 gap-1">
-            <%= for card <- player.hand do %>
+            <%= for {card, idx} <- Enum.with_index(player.hand) do %>
               <div class="flex justify-center">
                 <.playing_card
                   card={card}
-                  index={0}
+                  index={idx}
                   player_id={player.id}
+                  context="spectator-overview"
                   selected={false}
                   disabled={true}
                   class="transform scale-75"

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Pre-commit hook to catch bugs before they're committed
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Format code
+echo "📝 Formatting code..."
+mix format --check-formatted
+
+# 2. Run critical tests
+echo "🧪 Running tests..."
+mix test --warnings-as-errors
+
+# 3. Check for security issues
+echo "🔒 Security check..."
+mix sobelow --exit
+
+# 4. Check for duplicate LiveView IDs (critical for DOM patching)
+echo "🔄 Checking for LiveView issues..."
+if mix test 2>&1 | grep -q "Duplicate id found"; then
+    echo "❌ Duplicate LiveView IDs detected! This causes DOM patching bugs."
+    echo "Fix duplicate IDs before committing."
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

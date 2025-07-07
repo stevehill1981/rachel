@@ -219,7 +219,7 @@ defmodule Rachel.Tournaments.TournamentPlayer do
           player
           |> changeset(%{seed: seed})
           |> Repo.update()
-        
+
         updated
       end)
 
