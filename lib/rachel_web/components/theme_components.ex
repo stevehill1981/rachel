@@ -10,19 +10,31 @@ defmodule RachelWeb.ThemeComponents do
       id: "modern-minimalist",
       name: "Modern Minimalist",
       description: "Clean, Apple-inspired design",
-      preview_colors: ["#007aff", "#ffffff", "#f8f9fa"]
+      preview_colors: ["#007aff", "#ffffff", "#f8f9fa"],
+      card_bg: "linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)",
+      card_border: "#dee2e6",
+      primary: "#007aff",
+      table_bg: "linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)"
     },
     %{
       id: "premium-card-room", 
       name: "Premium Card Room",
       description: "Luxury casino aesthetic",
-      preview_colors: ["#d4af37", "#1a2332", "#1a4d3a"]
+      preview_colors: ["#d4af37", "#1a2332", "#1a4d3a"],
+      card_bg: "linear-gradient(135deg, #2a3f5f 0%, #1e2d45 100%)",
+      card_border: "#d4af37",
+      primary: "#d4af37",
+      table_bg: "radial-gradient(ellipse at center, #1a4d3a 0%, #0f2a1e 100%)"
     },
     %{
       id: "warm-social",
       name: "Warm & Social", 
       description: "Cozy pub atmosphere",
-      preview_colors: ["#d2691e", "#faf6f2", "#8b4513"]
+      preview_colors: ["#d2691e", "#faf6f2", "#8b4513"],
+      card_bg: "linear-gradient(135deg, #fffef7 0%, #faf6ee 100%)",
+      card_border: "#d2b48c",
+      primary: "#d2691e",
+      table_bg: "linear-gradient(135deg, #8b4513 0%, #654321 100%)"
     }
   ]
 
@@ -138,32 +150,61 @@ defmodule RachelWeb.ThemeComponents do
       phx-click="change_theme"
       phx-value-theme={@theme.id}
       class={[
-        "w-full p-3 rounded-xl border-2 transition-all duration-200 hover:bg-gray-50 text-left",
-        @is_current && "border-blue-500 bg-blue-50",
-        !@is_current && "border-gray-200 hover:border-gray-300"
+        "w-full p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] text-left group overflow-hidden",
+        @is_current && "border-blue-500 bg-blue-50 shadow-lg",
+        !@is_current && "border-gray-200 hover:border-gray-300 hover:shadow-md"
       ]}
     >
-      <div class="flex items-center gap-3">
-        <!-- Color preview -->
-        <div class="flex gap-1">
+      <!-- Mini scene preview -->
+      <div class="relative h-20 rounded-lg overflow-hidden mb-3" style={"background: #{@theme.table_bg};"}>
+        <!-- Mini cards -->
+        <div class="absolute top-2 left-2 flex gap-1">
+          <!-- Card 1 -->
+          <div 
+            class="w-6 h-8 rounded border shadow-sm flex items-center justify-center text-xs font-bold"
+            style={"background: #{@theme.card_bg}; border-color: #{@theme.card_border}; color: #{@theme.primary};"}
+          >
+            A♠
+          </div>
+          <!-- Card 2 -->
+          <div 
+            class="w-6 h-8 rounded border shadow-sm flex items-center justify-center text-xs font-bold"
+            style={"background: #{@theme.card_bg}; border-color: #{@theme.card_border}; color: #dc2626;"}
+          >
+            K♥
+          </div>
+        </div>
+        
+        <!-- Mini button -->
+        <div 
+          class="absolute bottom-2 right-2 px-2 py-1 rounded text-xs font-medium"
+          style={"background-color: #{@theme.primary}; color: white;"}
+        >
+          Play
+        </div>
+        
+        <!-- Color swatches -->
+        <div class="absolute bottom-2 left-2 flex gap-1">
           <%= for color <- @theme.preview_colors do %>
             <div 
-              class="w-4 h-4 rounded-full"
+              class="w-2 h-2 rounded-full border border-white/20"
               style={"background-color: #{color}"}
             >
             </div>
           <% end %>
         </div>
-        
-        <!-- Theme info -->
-        <div class="flex-1">
-          <div class="font-medium text-gray-900">{@theme.name}</div>
-          <div class="text-sm text-gray-600">{@theme.description}</div>
+      </div>
+      
+      <!-- Theme info -->
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-medium text-gray-900 text-sm">{@theme.name}</div>
+          <div class="text-xs text-gray-600">{@theme.description}</div>
         </div>
         
         <!-- Current indicator -->
         <%= if @is_current do %>
-          <div class="w-5 h-5 text-blue-500">
+          <div class="w-4 h-4 text-blue-500 flex-shrink-0">
             <svg fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
@@ -180,38 +221,78 @@ defmodule RachelWeb.ThemeComponents do
       phx-click="change_theme"
       phx-value-theme={@theme.id}
       class={[
-        "w-full p-6 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] text-left group",
+        "w-full p-6 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] text-left group overflow-hidden",
         @is_current && "border-blue-500 bg-blue-50 shadow-lg",
         !@is_current && "border-gray-200 hover:border-gray-300 hover:shadow-md"
       ]}
     >
-      <div class="flex items-start gap-4">
-        <!-- Large color preview -->
-        <div class="flex flex-col gap-2">
-          <%= for color <- @theme.preview_colors do %>
-            <div 
-              class="w-8 h-8 rounded-lg shadow-sm"
-              style={"background-color: #{color}"}
-            >
+      <div class="flex items-start gap-6">
+        <!-- Large scene preview -->
+        <div class="flex-shrink-0">
+          <div class="relative w-32 h-20 rounded-xl overflow-hidden" style={"background: #{@theme.table_bg};"}>
+            <!-- Mini game board -->
+            <div class="absolute top-2 left-2 flex gap-1">
+              <!-- Playing cards -->
+              <div 
+                class="w-8 h-11 rounded border shadow-sm flex items-center justify-center text-xs font-bold"
+                style={"background: #{@theme.card_bg}; border-color: #{@theme.card_border}; color: #{@theme.primary};"}
+              >
+                A♠
+              </div>
+              <div 
+                class="w-8 h-11 rounded border shadow-sm flex items-center justify-center text-xs font-bold"
+                style={"background: #{@theme.card_bg}; border-color: #{@theme.card_border}; color: #dc2626;"}
+              >
+                K♥
+              </div>
             </div>
-          <% end %>
+            
+            <!-- Mini UI elements -->
+            <div class="absolute bottom-2 left-2 right-2 flex justify-between items-end">
+              <div class="flex gap-1">
+                <%= for color <- @theme.preview_colors do %>
+                  <div 
+                    class="w-2 h-2 rounded-full border border-white/30"
+                    style={"background-color: #{color}"}
+                  >
+                  </div>
+                <% end %>
+              </div>
+              <div 
+                class="px-2 py-1 rounded text-xs font-medium shadow-sm"
+                style={"background-color: #{@theme.primary}; color: white;"}
+              >
+                Play
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Theme details -->
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
           <h3 class="text-xl font-bold text-gray-900 mb-2">{@theme.name}</h3>
-          <p class="text-gray-600 mb-3">{@theme.description}</p>
+          <p class="text-gray-600 mb-4">{@theme.description}</p>
           
-          <!-- Sample UI elements -->
-          <div class="flex items-center gap-2">
-            <div class="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">Sample Button</div>
-            <div class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg">Card</div>
+          <!-- Sample styled elements -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <div 
+              class="px-3 py-1 text-sm rounded-lg font-medium"
+              style={"background-color: #{@theme.primary}; color: white;"}
+            >
+              Primary Button
+            </div>
+            <div 
+              class="px-3 py-1 text-sm rounded-lg border"
+              style={"background: #{@theme.card_bg}; border-color: #{@theme.card_border}; color: #{@theme.primary};"}
+            >
+              Game Card
+            </div>
           </div>
         </div>
         
         <!-- Selection indicator -->
         <div class={[
-          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
+          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
           @is_current && "border-blue-500 bg-blue-500",
           !@is_current && "border-gray-300 group-hover:border-blue-300"
         ]}>

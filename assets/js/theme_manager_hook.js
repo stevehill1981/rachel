@@ -1,17 +1,22 @@
 // ThemeManager hook for handling theme switching
 export const ThemeManager = {
   mounted() {
-    // Load saved theme from localStorage
-    const savedTheme = localStorage.getItem('rachel-theme') || 'modern-minimalist'
+    // Load saved theme from localStorage (use same key as root layout)
+    const savedTheme = localStorage.getItem('phx:theme') || 'modern-minimalist'
     this.applyTheme(savedTheme)
     
     // Listen for theme change events from LiveView
-    this.handleEvent("change_theme", ({theme}) => {
+    this.handleEvent("theme:change", ({theme}) => {
       this.applyTheme(theme)
-      localStorage.setItem('rachel-theme', theme)
+      localStorage.setItem('phx:theme', theme)
       
       // Provide visual feedback
       this.showThemeChangeNotification(theme)
+      
+      // Also trigger window event for consistency with root layout
+      window.dispatchEvent(new CustomEvent("phx:set-theme", {
+        detail: { theme }
+      }))
     })
     
     // Send current theme to LiveView on mount

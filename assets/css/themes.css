@@ -24,6 +24,13 @@
   --theme-card-red: #dc2626;
   --theme-card-black: #000000;
   
+  /* Card design */
+  --theme-card-gradient: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+  --theme-card-pattern: none;
+  --theme-card-decoration: rgba(59, 130, 246, 0.1);
+  --theme-card-back-gradient: linear-gradient(45deg, #1e293b 25%, #334155 25%, #334155 50%, #1e293b 50%, #1e293b 75%, #334155 75%, #334155);
+  --theme-card-back-pattern-size: 20px 20px;
+  
   /* Text colors */
   --theme-text-primary: #1e293b;
   --theme-text-secondary: #64748b;
@@ -86,6 +93,13 @@
   --theme-card-red: #ff3b30;
   --theme-card-black: #1d1d1f;
   
+  /* Card design */
+  --theme-card-gradient: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  --theme-card-pattern: radial-gradient(circle at 20% 80%, rgba(0, 122, 255, 0.02) 0%, transparent 50%);
+  --theme-card-decoration: rgba(0, 122, 255, 0.05);
+  --theme-card-back-gradient: linear-gradient(45deg, #007aff 25%, #4da3ff 25%, #4da3ff 50%, #007aff 50%, #007aff 75%, #4da3ff 75%, #4da3ff);
+  --theme-card-back-pattern-size: 15px 15px;
+  
   --theme-text-primary: #1d1d1f;
   --theme-text-secondary: #6c757d;
   --theme-text-tertiary: #adb5bd;
@@ -130,6 +144,13 @@
   --theme-card-shadow: rgba(0, 0, 0, 0.5);
   --theme-card-red: #ff6b6b;
   --theme-card-black: #f8f9fa;
+  
+  /* Card design */
+  --theme-card-gradient: linear-gradient(135deg, #2a3f5f 0%, #1e2d45 100%);
+  --theme-card-pattern: radial-gradient(ellipse at top right, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+  --theme-card-decoration: rgba(212, 175, 55, 0.2);
+  --theme-card-back-gradient: radial-gradient(circle at center, #d4af37 0%, #b8941f 20%, #d4af37 40%, #b8941f 60%, #d4af37 80%, #b8941f 100%);
+  --theme-card-back-pattern-size: 30px 30px;
   
   --theme-text-primary: #ecf0f1;
   --theme-text-secondary: #d4af37;
@@ -180,6 +201,13 @@
   --theme-card-shadow: rgba(139, 69, 19, 0.15);
   --theme-card-red: #b22222;
   --theme-card-black: #2f4f4f;
+  
+  /* Card design */
+  --theme-card-gradient: linear-gradient(135deg, #fffef7 0%, #faf6ee 100%);
+  --theme-card-pattern: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d2691e' fill-opacity='0.03'%3E%3Cpath d='M0 0h20L10 10zm10 10L20 0v20z'/%3E%3C/g%3E%3C/svg%3E");
+  --theme-card-decoration: rgba(210, 105, 30, 0.1);
+  --theme-card-back-gradient: linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+  --theme-card-back-pattern-size: 25px 25px;
   
   --theme-text-primary: #3e2723;
   --theme-text-secondary: #5d4037;
@@ -290,4 +318,298 @@ textarea::placeholder {
 
 .theme-table-overlay {
   background-color: var(--theme-table-overlay) !important;
+}
+
+/* ===== THEME-SPECIFIC ANIMATIONS ===== */
+
+/* Modern Minimalist: Quick, precise animations */
+:root[data-theme="modern-minimalist"] {
+  --theme-animation-speed: 0.2s;
+  --theme-animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --theme-hover-scale: 1.02;
+  --theme-selected-scale: 1.05;
+}
+
+:root[data-theme="modern-minimalist"] .playing-card {
+  transition: all var(--theme-animation-speed) var(--theme-animation-easing);
+}
+
+:root[data-theme="modern-minimalist"] .playing-card:hover {
+  transform: translateY(-2px) scale(var(--theme-hover-scale));
+}
+
+:root[data-theme="modern-minimalist"] .playing-card.selected {
+  transform: translateY(-8px) scale(var(--theme-selected-scale));
+  animation: modernPulse 1s ease-in-out infinite;
+}
+
+@keyframes modernPulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(0, 122, 255, 0);
+  }
+}
+
+/* Premium Card Room: Elegant, slower transitions */
+:root[data-theme="premium-card-room"] {
+  --theme-animation-speed: 0.4s;
+  --theme-animation-easing: cubic-bezier(0.23, 1, 0.32, 1);
+  --theme-hover-scale: 1.08;
+  --theme-selected-scale: 1.12;
+}
+
+:root[data-theme="premium-card-room"] .playing-card {
+  transition: all var(--theme-animation-speed) var(--theme-animation-easing);
+}
+
+:root[data-theme="premium-card-room"] .playing-card:hover {
+  transform: translateY(-4px) scale(var(--theme-hover-scale)) rotateZ(-1deg);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+}
+
+:root[data-theme="premium-card-room"] .playing-card.selected {
+  transform: translateY(-12px) scale(var(--theme-selected-scale)) rotateZ(-2deg);
+  animation: luxuryGlow 2s ease-in-out infinite;
+}
+
+@keyframes luxuryGlow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6), 0 8px 25px rgba(0, 0, 0, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.8), 0 12px 35px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Warm & Social: Bouncy, playful animations */
+:root[data-theme="warm-social"] {
+  --theme-animation-speed: 0.3s;
+  --theme-animation-easing: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --theme-hover-scale: 1.06;
+  --theme-selected-scale: 1.1;
+}
+
+:root[data-theme="warm-social"] .playing-card {
+  transition: all var(--theme-animation-speed) var(--theme-animation-easing);
+}
+
+:root[data-theme="warm-social"] .playing-card:hover {
+  transform: translateY(-6px) scale(var(--theme-hover-scale)) rotateZ(1deg);
+  box-shadow: 0 6px 20px rgba(210, 105, 30, 0.3);
+}
+
+:root[data-theme="warm-social"] .playing-card.selected {
+  transform: translateY(-10px) scale(var(--theme-selected-scale)) rotateZ(2deg);
+  animation: warmBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes warmBounce {
+  0%, 100% { 
+    transform: translateY(-10px) scale(var(--theme-selected-scale)) rotateZ(2deg);
+  }
+  50% { 
+    transform: translateY(-14px) scale(1.12) rotateZ(3deg);
+  }
+}
+
+/* Theme-specific button animations */
+:root[data-theme="modern-minimalist"] button {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root[data-theme="premium-card-room"] button {
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+:root[data-theme="warm-social"] button {
+  transition: all 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Theme-specific loading animations */
+:root[data-theme="modern-minimalist"] .loading-spinner {
+  animation: modernSpin 1s linear infinite;
+}
+
+:root[data-theme="premium-card-room"] .loading-spinner {
+  animation: luxurySpin 1.5s ease-in-out infinite;
+}
+
+:root[data-theme="warm-social"] .loading-spinner {
+  animation: warmSpin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes modernSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes luxurySpin {
+  0% { transform: rotate(0deg) scale(1); opacity: 0.8; }
+  50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.8; }
+}
+
+@keyframes warmSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.05); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* ===== THEMED SCROLLBARS ===== */
+
+/* Modern Minimalist scrollbars */
+:root[data-theme="modern-minimalist"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:root[data-theme="modern-minimalist"] ::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+:root[data-theme="modern-minimalist"] ::-webkit-scrollbar-thumb {
+  background: #007aff;
+  border-radius: 4px;
+  border: 1px solid #f8f9fa;
+}
+
+:root[data-theme="modern-minimalist"] ::-webkit-scrollbar-thumb:hover {
+  background: #0056b3;
+}
+
+/* Premium Card Room scrollbars */
+:root[data-theme="premium-card-room"] ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+:root[data-theme="premium-card-room"] ::-webkit-scrollbar-track {
+  background: #1a2332;
+  border-radius: 6px;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+}
+
+:root[data-theme="premium-card-room"] ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+  border-radius: 6px;
+  border: 2px solid #1a2332;
+}
+
+:root[data-theme="premium-card-room"] ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #e6c757 0%, #d4af37 100%);
+}
+
+/* Warm & Social scrollbars */
+:root[data-theme="warm-social"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+:root[data-theme="warm-social"] ::-webkit-scrollbar-track {
+  background: #faf6f2;
+  border-radius: 5px;
+  border: 1px solid #ede0d3;
+}
+
+:root[data-theme="warm-social"] ::-webkit-scrollbar-thumb {
+  background: #d2691e;
+  border-radius: 5px;
+  border: 1px solid #faf6f2;
+}
+
+:root[data-theme="warm-social"] ::-webkit-scrollbar-thumb:hover {
+  background: #ff7f50;
+}
+
+/* ===== THEMED LOADING COMPONENTS ===== */
+
+/* Loading spinner component */
+.theme-loading-spinner {
+  border: 3px solid var(--theme-bg-tertiary);
+  border-top: 3px solid var(--theme-primary);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+}
+
+/* Theme-specific loading animations */
+:root[data-theme="modern-minimalist"] .theme-loading-spinner {
+  animation: modernSpin 1s linear infinite;
+  border-width: 2px;
+}
+
+:root[data-theme="premium-card-room"] .theme-loading-spinner {
+  animation: luxurySpin 1.5s ease-in-out infinite;
+  border-width: 4px;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+:root[data-theme="warm-social"] .theme-loading-spinner {
+  animation: warmSpin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+  border-width: 3px;
+}
+
+/* Loading overlay component */
+.theme-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--theme-bg-glass);
+  backdrop-filter: blur(4px);
+  border-radius: inherit;
+  z-index: 50;
+}
+
+/* Theme-specific focus rings */
+:root[data-theme="modern-minimalist"] *:focus {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
+:root[data-theme="premium-card-room"] *:focus {
+  outline: 2px solid #d4af37;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.2);
+}
+
+:root[data-theme="warm-social"] *:focus {
+  outline: 2px solid #d2691e;
+  outline-offset: 2px;
+  outline-style: dashed;
+}
+
+/* Theme transitions for smooth switching */
+.theme-transition {
+  transition: background-color 0.5s ease, 
+              border-color 0.5s ease, 
+              color 0.5s ease,
+              box-shadow 0.5s ease,
+              opacity 0.3s ease,
+              transform 0.3s ease;
+}
+
+/* Apply transition to common elements */
+body, 
+.playing-card,
+button,
+input,
+.theme-card,
+.game-board,
+.theme-bg-primary,
+.theme-bg-secondary,
+.theme-bg-tertiary {
+  transition: background-color 0.5s ease, 
+              border-color 0.5s ease, 
+              color 0.5s ease,
+              box-shadow 0.5s ease,
+              opacity 0.3s ease,
+              transform 0.3s ease;
 }

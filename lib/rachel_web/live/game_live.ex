@@ -102,7 +102,7 @@ defmodule RachelWeb.GameLive do
         AIManager.schedule_ai_move(game)
 
         # Check if player needs to auto-draw
-        auto_draw_updates = StateManager.check_auto_draw_updates(game, "human")
+        auto_draw_updates = StateManager.check_auto_draw_updates(game, socket.assigns.player_id)
         socket = apply_socket_updates(socket, auto_draw_updates)
 
         {:ok, socket}
@@ -242,6 +242,11 @@ defmodule RachelWeb.GameLive do
     {:noreply, push_navigate(socket, to: "/")}
   end
 
+  def handle_event("change_theme", %{"theme" => theme}, socket) do
+    # Use the same window event approach as the root layout
+    {:noreply, push_event(socket, "phx:set-theme", %{theme: theme})}
+  end
+
 
   @impl true
   @spec handle_info(any(), Socket.t()) :: {:noreply, Socket.t()}
@@ -351,7 +356,8 @@ defmodule RachelWeb.GameLive do
   def render(assigns) do
     ~H"""
     <div class="game-board min-h-screen">
-      
+      <!-- Theme Management -->
+      <div phx-hook="ThemeBridge" id="theme-bridge"></div>
       
     <!-- Main Game Area -->
       <main class="relative z-10 p-4 max-w-7xl mx-auto">

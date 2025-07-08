@@ -23,7 +23,7 @@ defmodule RachelWeb.HomeLive do
     ~H"""
     <div class="min-h-screen theme-bg-primary" phx-hook="PlayerName" id="home-page">
       <!-- Theme Management -->
-      <div phx-hook="ThemeManager" id="theme-manager"></div>
+      <div phx-hook="ThemeBridge" id="theme-bridge"></div>
       
       <!-- Theme Selector Button -->
       <.theme_selector_button current_theme={@current_theme} />
@@ -243,7 +243,7 @@ defmodule RachelWeb.HomeLive do
     socket =
       socket
       |> assign(:current_theme, theme_id)
-      |> push_event("change_theme", %{theme: theme_id})
+      |> push_event("phx:set-theme", %{theme: theme_id})
 
     {:noreply, socket}
   end

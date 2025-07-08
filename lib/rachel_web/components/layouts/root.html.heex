@@ -46,11 +46,14 @@
           setTheme(localStorage.getItem("phx:theme") || "system");
         }
         window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
-        window.addEventListener("phx:set-theme", ({ detail: { theme } }) => setTheme(theme));
+        window.addEventListener("phx:set-theme", ({ detail: { theme } }) => {
+          console.log("Root layout received phx:set-theme event:", theme);
+          setTheme(theme);
+        });
       })();
     </script>
   </head>
-  <body>
+  <body phx-hook="ThemeBridge" id="theme-root">
     {@inner_content}
   </body>
 </html>
