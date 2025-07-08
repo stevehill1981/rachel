@@ -89,11 +89,11 @@
 }
 
 .card-suit-red {
-  color: #dc2626;
+  color: var(--theme-card-red);
 }
 
 .card-suit-black {
-  color: #000000;
+  color: var(--theme-card-black);
 }
 
 /* Nominated suit indicator */
@@ -152,7 +152,7 @@
 /* Game board layout */
 .game-board {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: var(--theme-table-bg);
   position: relative;
   overflow: hidden;
 }
@@ -164,7 +164,7 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--theme-table-overlay) 0%, transparent 70%);
   animation: rotate 30s linear infinite;
 }
 

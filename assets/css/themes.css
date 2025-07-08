@@ -1,0 +1,284 @@
+/* Theme System for Rachel Card Game */
+
+/* Base theme variables that all themes will override */
+:root {
+  /* Core color palette */
+  --theme-primary: #3b82f6;
+  --theme-primary-dark: #1d4ed8;
+  --theme-primary-light: #60a5fa;
+  
+  /* Background colors */
+  --theme-bg-primary: #f8fafc;
+  --theme-bg-secondary: #f1f5f9;
+  --theme-bg-tertiary: #e2e8f0;
+  --theme-bg-glass: rgba(255, 255, 255, 0.1);
+  
+  /* Game table */
+  --theme-table-bg: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --theme-table-overlay: rgba(59, 130, 246, 0.1);
+  
+  /* Card colors */
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #e2e8f0;
+  --theme-card-shadow: rgba(0, 0, 0, 0.1);
+  --theme-card-red: #dc2626;
+  --theme-card-black: #000000;
+  
+  /* Text colors */
+  --theme-text-primary: #1e293b;
+  --theme-text-secondary: #64748b;
+  --theme-text-tertiary: #94a3b8;
+  --theme-text-inverse: #ffffff;
+  
+  /* Interactive elements */
+  --theme-button-primary: #3b82f6;
+  --theme-button-primary-hover: #2563eb;
+  --theme-button-secondary: #6b7280;
+  --theme-button-secondary-hover: #4b5563;
+  --theme-button-success: #10b981;
+  --theme-button-success-hover: #059669;
+  --theme-button-danger: #ef4444;
+  --theme-button-danger-hover: #dc2626;
+  
+  /* Status colors */
+  --theme-success: #10b981;
+  --theme-warning: #f59e0b;
+  --theme-error: #ef4444;
+  --theme-info: #3b82f6;
+  
+  /* Effects */
+  --theme-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --theme-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Border radius */
+  --theme-radius-sm: 0.375rem;
+  --theme-radius-md: 0.5rem;
+  --theme-radius-lg: 0.75rem;
+  --theme-radius-xl: 1rem;
+  --theme-radius-2xl: 1.5rem;
+  
+  /* Typography */
+  --theme-font-primary: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --theme-font-secondary: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --theme-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+}
+
+/* ===== MODERN MINIMALIST THEME ===== */
+:root[data-theme="modern-minimalist"] {
+  /* Clean, Apple-inspired design */
+  --theme-primary: #007aff;
+  --theme-primary-dark: #0056b3;
+  --theme-primary-light: #4da3ff;
+  
+  --theme-bg-primary: #ffffff;
+  --theme-bg-secondary: #f8f9fa;
+  --theme-bg-tertiary: #e9ecef;
+  --theme-bg-glass: rgba(255, 255, 255, 0.8);
+  
+  --theme-table-bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  --theme-table-overlay: rgba(0, 122, 255, 0.05);
+  
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #dee2e6;
+  --theme-card-shadow: rgba(0, 0, 0, 0.08);
+  --theme-card-red: #ff3b30;
+  --theme-card-black: #1d1d1f;
+  
+  --theme-text-primary: #1d1d1f;
+  --theme-text-secondary: #6c757d;
+  --theme-text-tertiary: #adb5bd;
+  --theme-text-inverse: #ffffff;
+  
+  --theme-button-primary: #007aff;
+  --theme-button-primary-hover: #0056b3;
+  --theme-button-success: #34c759;
+  --theme-button-success-hover: #30b050;
+  --theme-button-danger: #ff3b30;
+  --theme-button-danger-hover: #d70015;
+  
+  --theme-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --theme-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --theme-shadow-lg: 0 8px 25px rgba(0, 0, 0, 0.1);
+  --theme-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12);
+  
+  --theme-radius-sm: 0.5rem;
+  --theme-radius-md: 0.75rem;
+  --theme-radius-lg: 1rem;
+  --theme-radius-xl: 1.25rem;
+  --theme-radius-2xl: 1.75rem;
+}
+
+/* ===== PREMIUM CARD ROOM THEME ===== */
+:root[data-theme="premium-card-room"] {
+  /* Luxury casino/card room aesthetic */
+  --theme-primary: #d4af37;
+  --theme-primary-dark: #b8941f;
+  --theme-primary-light: #e6c757;
+  
+  --theme-bg-primary: #1a2332;
+  --theme-bg-secondary: #243447;
+  --theme-bg-tertiary: #2e455c;
+  --theme-bg-glass: rgba(212, 175, 55, 0.1);
+  
+  --theme-table-bg: radial-gradient(ellipse at center, #1a4d3a 0%, #0f2a1e 100%);
+  --theme-table-overlay: rgba(212, 175, 55, 0.08);
+  
+  --theme-card-bg: #f8f6f0;
+  --theme-card-border: #d4af37;
+  --theme-card-shadow: rgba(0, 0, 0, 0.3);
+  --theme-card-red: #c41e3a;
+  --theme-card-black: #2c2c2c;
+  
+  --theme-text-primary: #f8f6f0;
+  --theme-text-secondary: #d4af37;
+  --theme-text-tertiary: #8b9dc3;
+  --theme-text-inverse: #1a2332;
+  
+  --theme-button-primary: #d4af37;
+  --theme-button-primary-hover: #e6c757;
+  --theme-button-success: #2d7d32;
+  --theme-button-success-hover: #388e3c;
+  --theme-button-danger: #c62828;
+  --theme-button-danger-hover: #d32f2f;
+  
+  --theme-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --theme-shadow-md: 0 6px 15px rgba(0, 0, 0, 0.25);
+  --theme-shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.3);
+  --theme-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.35);
+  
+  --theme-radius-sm: 0.25rem;
+  --theme-radius-md: 0.375rem;
+  --theme-radius-lg: 0.5rem;
+  --theme-radius-xl: 0.75rem;
+  --theme-radius-2xl: 1rem;
+  
+  --theme-font-primary: "Crimson Text", Georgia, serif;
+  --theme-font-secondary: "Crimson Text", Georgia, serif;
+}
+
+/* ===== WARM & SOCIAL THEME ===== */
+:root[data-theme="warm-social"] {
+  /* Cozy pub/living room feel */
+  --theme-primary: #d2691e;
+  --theme-primary-dark: #a0522d;
+  --theme-primary-light: #f4a460;
+  
+  --theme-bg-primary: #faf6f2;
+  --theme-bg-secondary: #f5ede4;
+  --theme-bg-tertiary: #ede0d3;
+  --theme-bg-glass: rgba(210, 105, 30, 0.1);
+  
+  --theme-table-bg: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+  --theme-table-overlay: rgba(255, 218, 185, 0.1);
+  
+  --theme-card-bg: #fffef7;
+  --theme-card-border: #d2b48c;
+  --theme-card-shadow: rgba(139, 69, 19, 0.15);
+  --theme-card-red: #b22222;
+  --theme-card-black: #2f4f4f;
+  
+  --theme-text-primary: #3e2723;
+  --theme-text-secondary: #5d4037;
+  --theme-text-tertiary: #8d6e63;
+  --theme-text-inverse: #faf6f2;
+  
+  --theme-button-primary: #d2691e;
+  --theme-button-primary-hover: #ff7f50;
+  --theme-button-success: #228b22;
+  --theme-button-success-hover: #32cd32;
+  --theme-button-danger: #cd5c5c;
+  --theme-button-danger-hover: #dc143c;
+  
+  --theme-shadow-sm: 0 1px 3px rgba(139, 69, 19, 0.1);
+  --theme-shadow-md: 0 4px 8px rgba(139, 69, 19, 0.15);
+  --theme-shadow-lg: 0 8px 20px rgba(139, 69, 19, 0.2);
+  --theme-shadow-xl: 0 16px 35px rgba(139, 69, 19, 0.25);
+  
+  --theme-radius-sm: 0.5rem;
+  --theme-radius-md: 0.75rem;
+  --theme-radius-lg: 1rem;
+  --theme-radius-xl: 1.5rem;
+  --theme-radius-2xl: 2rem;
+  
+  --theme-font-primary: "Merriweather", Georgia, serif;
+  --theme-font-secondary: "Merriweather", Georgia, serif;
+}
+
+/* ===== THEME UTILITIES ===== */
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, 
+              border-color 0.3s ease, 
+              color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+/* Theme-aware component classes */
+.theme-bg-primary { 
+  background-color: var(--theme-bg-primary) !important; 
+}
+.theme-bg-secondary { 
+  background-color: var(--theme-bg-secondary) !important; 
+}
+.theme-bg-tertiary { 
+  background-color: var(--theme-bg-tertiary) !important; 
+}
+.theme-bg-glass { 
+  background-color: var(--theme-bg-glass) !important; 
+}
+
+.theme-text-primary { 
+  color: var(--theme-text-primary) !important; 
+}
+.theme-text-secondary { 
+  color: var(--theme-text-secondary) !important; 
+}
+.theme-text-tertiary { 
+  color: var(--theme-text-tertiary) !important; 
+}
+.theme-text-inverse { 
+  color: var(--theme-text-inverse) !important; 
+}
+
+.theme-border { 
+  border-color: var(--theme-card-border) !important; 
+}
+.theme-shadow-sm { 
+  box-shadow: var(--theme-shadow-sm) !important; 
+}
+.theme-shadow-md { 
+  box-shadow: var(--theme-shadow-md) !important; 
+}
+.theme-shadow-lg { 
+  box-shadow: var(--theme-shadow-lg) !important; 
+}
+.theme-shadow-xl { 
+  box-shadow: var(--theme-shadow-xl) !important; 
+}
+
+.theme-card {
+  background-color: var(--theme-card-bg) !important;
+  border-color: var(--theme-card-border) !important;
+  box-shadow: var(--theme-shadow-md) !important;
+  border-radius: var(--theme-radius-lg) !important;
+}
+
+.theme-button-primary {
+  background-color: var(--theme-button-primary) !important;
+  color: var(--theme-text-inverse) !important;
+}
+
+.theme-button-primary:hover {
+  background-color: var(--theme-button-primary-hover) !important;
+}
+
+.theme-table-bg {
+  background: var(--theme-table-bg) !important;
+}
+
+.theme-table-overlay {
+  background-color: var(--theme-table-overlay) !important;
+}

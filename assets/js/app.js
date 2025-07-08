@@ -28,6 +28,7 @@ import topbar from "../vendor/topbar"
 import { TouchCard } from "./touch_card_hook"
 import { SuitSelector } from "./suit_selector_hook"
 import { SpectatorDashboard } from "./spectator_dashboard_hook"
+import { ThemeManager } from "./theme_manager_hook"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 
@@ -36,6 +37,7 @@ const Hooks = {
   TouchCard,
   SuitSelector,
   SpectatorDashboard,
+  ThemeManager,
   
   PlayerName: {
     mounted() {

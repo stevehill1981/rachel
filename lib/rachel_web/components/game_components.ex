@@ -23,7 +23,7 @@ defmodule RachelWeb.GameComponents do
       type="button"
       class={
         [
-          "playing-card relative rounded-lg bg-white border-2 border-gray-300 shadow-lg",
+          "playing-card relative rounded-lg border-2 shadow-lg theme-card",
           "transition-all duration-300 transform flex items-center justify-center",
           # Smaller on mobile, larger on desktop
           "min-h-[100px] min-w-[70px] sm:min-h-[120px] sm:min-w-[85px]",

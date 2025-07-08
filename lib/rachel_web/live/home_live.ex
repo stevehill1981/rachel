@@ -2,6 +2,7 @@ defmodule RachelWeb.HomeLive do
   use RachelWeb, :live_view
   alias Rachel.Games.GameManager
   alias RachelWeb.GameLive.SessionManager
+  import RachelWeb.ThemeComponents
 
   @impl true
   def mount(_params, _session, socket) do
@@ -12,6 +13,7 @@ defmodule RachelWeb.HomeLive do
       |> assign(:game_code, "")
       |> assign(:creating_game, false)
       |> assign(:joining_game, false)
+      |> assign(:current_theme, "modern-minimalist")
 
     {:ok, socket}
   end
@@ -19,14 +21,19 @@ defmodule RachelWeb.HomeLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100" phx-hook="PlayerName" id="home-page">
+    <div class="min-h-screen theme-bg-primary" phx-hook="PlayerName" id="home-page">
+      <!-- Theme Management -->
+      <div phx-hook="ThemeManager" id="theme-manager"></div>
+      
+      <!-- Theme Selector Button -->
+      <.theme_selector_button current_theme={@current_theme} />
       <div class="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <!-- Hero Section -->
         <div class="text-center mb-12">
-          <h1 class="text-5xl font-bold text-gray-900 mb-4">
+          <h1 class="text-5xl font-bold theme-text-primary mb-4">
             🃏 Rachel
           </h1>
-          <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p class="text-xl theme-text-secondary max-w-2xl mx-auto">
             The strategic card game that's been bringing friends and families together for over 30 years
           </p>
         </div>
@@ -34,8 +41,8 @@ defmodule RachelWeb.HomeLive do
         <!-- Game Options -->
         <div class="space-y-8">
           <!-- Instant AI Play -->
-          <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Quick Play</h2>
+          <div class="theme-card p-8 text-center">
+            <h2 class="text-2xl font-bold theme-text-primary mb-4">Quick Play</h2>
             <a
               href="/play"
               class="inline-flex items-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-green-500 to-blue-500 rounded-xl hover:from-green-600 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
@@ -226,5 +233,18 @@ defmodule RachelWeb.HomeLive do
         
         {:noreply, socket}
     end
+  end
+
+  def handle_event("change_theme", %{"theme" => theme_id}, socket) do
+    socket =
+      socket
+      |> assign(:current_theme, theme_id)
+      |> push_event("change_theme", %{theme: theme_id})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("theme_loaded", %{"theme" => theme_id}, socket) do
+    {:noreply, assign(socket, :current_theme, theme_id)}
   end
 end
