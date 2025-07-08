@@ -128,7 +128,7 @@ defmodule RachelWeb.GameComponents do
         {card_display(@card)}
       </span>
       <%= if @selected do %>
-        <span class="absolute -top-2 -right-2 w-7 h-7 sm:w-6 sm:h-6 bg-blue-500 text-white rounded-full text-sm flex items-center justify-center animate-bounce-in">
+        <span class="absolute top-1 right-1 w-6 h-6 sm:w-5 sm:h-5 bg-blue-500 text-white rounded-full text-xs font-bold flex items-center justify-center animate-bounce-in shadow-lg">
           ✓
         </span>
       <% end %>

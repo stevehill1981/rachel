@@ -99,7 +99,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
   defp play_button(assigns) do
     ~H"""
     <%= if length(@selected_cards) > 0 do %>
-      <div class="flex flex-col items-center mb-4 space-y-2">
+      <div class="flex flex-col items-center mb-4 space-y-2 relative z-50">
         <!-- Multi-card selection indicator -->
         <%= if length(@selected_cards) > 1 do %>
           <div class="flex space-x-1">
