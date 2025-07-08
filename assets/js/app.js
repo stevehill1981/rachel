@@ -36,6 +36,23 @@ const Hooks = {
   TouchCard,
   SuitSelector,
   SpectatorDashboard,
+  
+  PlayerName: {
+    mounted() {
+      // Load saved player name from localStorage
+      const savedName = localStorage.getItem('rachel-player-name')
+      if (savedName) {
+        this.pushEvent("load_saved_name", {name: savedName})
+      }
+      
+      // Save player name to localStorage when it changes
+      this.handleEvent("save_player_name", ({name}) => {
+        if (name && name.trim()) {
+          localStorage.setItem('rachel-player-name', name.trim())
+        }
+      })
+    }
+  },
   AutoHideFlash: {
     mounted() {
       // Auto-hide flash messages after 5 seconds

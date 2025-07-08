@@ -18,12 +18,12 @@ defmodule RachelWeb.Router do
   scope "/", RachelWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-
     live_session :default,
       on_mount: [{RachelWeb.PlayerSessionHook, :default}] do
+      live "/", HomeLive
       live "/play", GameLive, :create_with_ai
       live "/game/new", GameLive, :create_multiplayer
+      live "/game/:game_id/lobby", GameLobbyLive
       live "/game/:game_id", GameLive
     end
   end

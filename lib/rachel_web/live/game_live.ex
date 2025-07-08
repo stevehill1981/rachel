@@ -36,6 +36,7 @@ defmodule RachelWeb.GameLive do
       |> assign(:winner_acknowledged, false)
       |> assign(:game, nil)
       |> assign(:selected_cards, [])
+      |> assign(:submitting_name, false)
 
     {:ok, socket}
   end
@@ -52,6 +53,7 @@ defmodule RachelWeb.GameLive do
           |> assign(:show_name_input, true)
           |> assign(:game_type, :multiplayer)
           |> assign(:name_input, socket.assigns.player_name || "")
+          |> assign(:submitting_name, false)
           |> assign(:show_winner_banner, false)
           |> assign(:winner_acknowledged, false)
           |> assign(:game, nil)
@@ -59,17 +61,16 @@ defmodule RachelWeb.GameLive do
         {:ok, socket}
 
       :create_with_ai ->
-        # Show name input first, then create AI game
-        socket =
-          socket
-          |> assign(:show_name_input, true)
-          |> assign(:game_type, :ai)
-          |> assign(:name_input, socket.assigns.player_name || "")
-          |> assign(:show_winner_banner, false)
-          |> assign(:winner_acknowledged, false)
-          |> assign(:game, nil)
-
-        {:ok, socket}
+        # Create AI game instantly with generated name
+        player_name = socket.assigns.player_name || generate_random_name()
+        
+        case create_ai_game(socket.assigns.player_id, player_name) do
+          {:ok, game_id} ->
+            {:ok, push_navigate(socket, to: "/game/#{game_id}")}
+          
+          {:error, _reason} ->
+            {:ok, push_navigate(socket, to: "/")}
+        end
 
       _ ->
         # Single-player practice mode
@@ -234,8 +235,13 @@ defmodule RachelWeb.GameLive do
   end
 
   def handle_event("confirm_name", _, socket) do
-    name = String.trim(socket.assigns.name_input)
-    final_name = if name == "", do: socket.assigns.player_name, else: name
+    # Prevent double-submission
+    if socket.assigns[:submitting_name] do
+      {:noreply, socket}
+    else
+      socket = assign(socket, :submitting_name, true)
+      name = String.trim(socket.assigns.name_input)
+      final_name = if name == "", do: socket.assigns.player_name, else: name
 
     case socket.assigns.game_type do
       :ai ->
@@ -289,6 +295,7 @@ defmodule RachelWeb.GameLive do
           {:error, _reason} ->
             {:noreply, push_navigate(socket, to: "/")}
         end
+    end
     end
   end
 
@@ -427,14 +434,33 @@ defmodule RachelWeb.GameLive do
               <div class="flex gap-3">
                 <button
                   type="submit"
-                  class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  disabled={Map.get(assigns, :submitting_name, false)}
+                  class={[
+                    "flex-1 font-medium py-2 px-4 rounded-lg transition-colors",
+                    if(Map.get(assigns, :submitting_name, false),
+                      do: "bg-gray-400 cursor-not-allowed",
+                      else: "bg-blue-500 hover:bg-blue-600"
+                    ),
+                    "text-white"
+                  ]}
                 >
-                  Start Game
+                  <%= if Map.get(assigns, :submitting_name, false) do %>
+                    Starting...
+                  <% else %>
+                    Start Game
+                  <% end %>
                 </button>
                 <button
                   type="button"
                   phx-click="cancel_name"
-                  class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  disabled={Map.get(assigns, :submitting_name, false)}
+                  class={[
+                    "flex-1 font-medium py-2 px-4 rounded-lg transition-colors text-white",
+                    if(Map.get(assigns, :submitting_name, false),
+                      do: "bg-gray-400 cursor-not-allowed",
+                      else: "bg-gray-500 hover:bg-gray-600"
+                    )
+                  ]}
                 >
                   Cancel
                 </button>
@@ -579,5 +605,12 @@ defmodule RachelWeb.GameLive do
       {:error, reason} ->
         {:error, reason}
     end
+  end
+
+  defp generate_random_name do
+    adjectives = ["Quick", "Clever", "Lucky", "Swift", "Bold", "Bright", "Sharp", "Wise"]
+    nouns = ["Player", "Gamer", "Card", "Star", "Hero", "Ace", "King", "Queen"]
+    
+    "#{Enum.random(adjectives)} #{Enum.random(nouns)}"
   end
 end
