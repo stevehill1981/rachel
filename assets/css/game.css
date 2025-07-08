@@ -765,7 +765,7 @@
   font-weight: bold;
   padding: 2px 6px;
   border-radius: 9999px;
-  animation: bounce 1s infinite;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Special effect for Black Jacks - more ominous */
@@ -776,8 +776,7 @@
   border: 1px solid #dc2626;
   font-size: 0.875rem;
   padding: 3px 8px;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Smooth transitions */
