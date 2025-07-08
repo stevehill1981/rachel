@@ -43,8 +43,8 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         <% end %>
         <button
           phx-click="return_to_lobby"
-          class="mt-4 px-6 py-2 rounded-lg transition-colors font-medium"
-          style="background-color: var(--theme-button-primary); color: var(--theme-success-text);"
+          class="mt-4 px-6 py-2 rounded-lg transition-colors font-medium relative z-50 cursor-pointer"
+          style="background-color: var(--theme-button-primary); color: var(--theme-success-text); pointer-events: auto;"
         >
           Return Home
         </button>

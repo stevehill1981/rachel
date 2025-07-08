@@ -241,6 +241,8 @@ defmodule RachelWeb.GameLive do
   end
 
   def handle_event("return_to_lobby", _, socket) do
+    require Logger
+    Logger.info("return_to_lobby event received, navigating to home")
     {:noreply, push_navigate(socket, to: "/")}
   end
 
