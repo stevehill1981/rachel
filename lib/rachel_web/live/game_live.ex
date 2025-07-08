@@ -25,20 +25,37 @@ defmodule RachelWeb.GameLive do
   @impl true
   @spec mount(map(), map(), Socket.t()) :: {:ok, Socket.t()}
   def mount(%{"game_id" => game_id}, _session, socket) do
-    # Show name input first for players joining via invite code
-    socket =
-      socket
-      |> assign(:show_name_input, true)
-      |> assign(:game_type, :join_existing)
-      |> assign(:game_id_to_join, game_id)
-      |> assign(:name_input, socket.assigns.player_name || "")
-      |> assign(:show_winner_banner, false)
-      |> assign(:winner_acknowledged, false)
-      |> assign(:game, nil)
-      |> assign(:selected_cards, [])
-      |> assign(:submitting_name, false)
+    # Handle direct game join via URL
+    player_id = socket.assigns.player_id
+    player_name = socket.assigns.player_name || generate_random_name()
 
-    {:ok, socket}
+    case SessionManager.handle_game_join(game_id, player_id, player_name) do
+      {:ok, game} ->
+        # Subscribe to game updates
+        PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
+
+        # Notify GameServer that we're connected
+        try do
+          GameServer.player_connected(game_id, player_id, self())
+        catch
+          :exit, _ -> :ok
+        end
+
+        socket =
+          socket
+          |> assign(:game, StateManager.normalize_game_data(game))
+          |> assign(:game_id, game_id)
+          |> assign(:player_id, player_id)
+          |> assign(:player_name, player_name)
+          |> assign(:selected_cards, [])
+          |> assign(:show_winner_banner, false)
+          |> assign(:winner_acknowledged, false)
+
+        {:ok, socket}
+
+      {:error, _reason} ->
+        {:ok, push_navigate(socket, to: "/")}
+    end
   end
 
   # Fallback for single-player mode or creating new multiplayer game
@@ -47,22 +64,17 @@ defmodule RachelWeb.GameLive do
     # Check if we're creating a new game
     case socket.assigns.live_action do
       :create_multiplayer ->
-        # Show name input first, then create multiplayer game
-        socket =
-          socket
-          |> assign(:show_name_input, true)
-          |> assign(:game_type, :multiplayer)
-          |> assign(:name_input, socket.assigns.player_name || "")
-          |> assign(:submitting_name, false)
-          |> assign(:show_winner_banner, false)
-          |> assign(:winner_acknowledged, false)
-          |> assign(:game, nil)
-
-        {:ok, socket}
+        # Redirect to home page - multiplayer creation happens there now
+        {:ok, push_navigate(socket, to: "/")}
 
       :create_with_ai ->
         # Create AI game instantly with generated name
-        player_name = socket.assigns.player_name || generate_random_name()
+        player_name = 
+          if socket.assigns.player_name && String.trim(socket.assigns.player_name) != "" do
+            socket.assigns.player_name
+          else
+            generate_random_name()
+          end
         
         case create_ai_game(socket.assigns.player_id, player_name) do
           {:ok, game_id} ->
@@ -230,78 +242,6 @@ defmodule RachelWeb.GameLive do
     {:noreply, push_navigate(socket, to: "/")}
   end
 
-  def handle_event("update_name", %{"name" => name}, socket) do
-    {:noreply, assign(socket, :name_input, name)}
-  end
-
-  def handle_event("confirm_name", _, socket) do
-    # Prevent double-submission
-    if socket.assigns[:submitting_name] do
-      {:noreply, socket}
-    else
-      socket = assign(socket, :submitting_name, true)
-      name = String.trim(socket.assigns.name_input)
-      final_name = if name == "", do: socket.assigns.player_name, else: name
-
-    case socket.assigns.game_type do
-      :ai ->
-        case create_ai_game(socket.assigns.player_id, final_name) do
-          {:ok, game_id} ->
-            {:noreply, push_navigate(socket, to: "/game/#{game_id}")}
-
-          {:error, _reason} ->
-            {:noreply, push_navigate(socket, to: "/")}
-        end
-
-      :multiplayer ->
-        case GameManager.create_and_join_game(socket.assigns.player_id, final_name) do
-          {:ok, game_id} ->
-            {:noreply, push_navigate(socket, to: "/game/#{game_id}")}
-
-          {:error, _reason} ->
-            {:noreply, push_navigate(socket, to: "/")}
-        end
-
-      :join_existing ->
-        game_id = socket.assigns.game_id_to_join
-        player_id = socket.assigns.player_id
-
-        case SessionManager.handle_game_join(game_id, player_id, final_name) do
-          {:ok, game} ->
-            # Subscribe to game updates
-            PubSub.subscribe(Rachel.PubSub, "game:#{game_id}")
-
-            # Notify GameServer that we're connected
-            try do
-              GameServer.player_connected(game_id, player_id, self())
-            catch
-              # Continue even if GameServer notification fails
-              :exit, _ -> :ok
-            end
-
-            socket =
-              socket
-              |> assign(:game, StateManager.normalize_game_data(game))
-              |> assign(:game_id, game_id)
-              |> assign(:player_id, player_id)
-              |> assign(:player_name, final_name)
-              |> assign(:show_name_input, false)
-              |> assign(:selected_cards, [])
-              |> assign(:show_winner_banner, false)
-              |> assign(:winner_acknowledged, false)
-
-            {:noreply, socket}
-
-          {:error, _reason} ->
-            {:noreply, push_navigate(socket, to: "/")}
-        end
-    end
-    end
-  end
-
-  def handle_event("cancel_name", _, socket) do
-    {:noreply, push_navigate(socket, to: "/")}
-  end
 
   @impl true
   @spec handle_info(any(), Socket.t()) :: {:noreply, Socket.t()}
@@ -412,72 +352,10 @@ defmodule RachelWeb.GameLive do
     ~H"""
     <div class="game-board min-h-screen">
       
-    <!-- Name Input Modal -->
-      <%= if Map.get(assigns, :show_name_input, false) do %>
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Enter Your Name</h2>
-            <p class="text-gray-600 mb-6">Choose a name to play with (or keep the generated one)</p>
-
-            <form phx-submit="confirm_name" class="space-y-4">
-              <input
-                type="text"
-                name="name"
-                value={@name_input}
-                phx-change="update_name"
-                placeholder="Your name"
-                maxlength="20"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                autofocus
-              />
-
-              <div class="flex gap-3">
-                <button
-                  type="submit"
-                  disabled={Map.get(assigns, :submitting_name, false)}
-                  class={[
-                    "flex-1 font-medium py-2 px-4 rounded-lg transition-colors",
-                    if(Map.get(assigns, :submitting_name, false),
-                      do: "bg-gray-400 cursor-not-allowed",
-                      else: "bg-blue-500 hover:bg-blue-600"
-                    ),
-                    "text-white"
-                  ]}
-                >
-                  <%= if Map.get(assigns, :submitting_name, false) do %>
-                    Starting...
-                  <% else %>
-                    Start Game
-                  <% end %>
-                </button>
-                <button
-                  type="button"
-                  phx-click="cancel_name"
-                  disabled={Map.get(assigns, :submitting_name, false)}
-                  class={[
-                    "flex-1 font-medium py-2 px-4 rounded-lg transition-colors text-white",
-                    if(Map.get(assigns, :submitting_name, false),
-                      do: "bg-gray-400 cursor-not-allowed",
-                      else: "bg-gray-500 hover:bg-gray-600"
-                    )
-                  ]}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      <% end %>
       
     <!-- Main Game Area -->
       <main class="relative z-10 p-4 max-w-7xl mx-auto">
         <%= cond do %>
-          <% Map.get(assigns, :show_name_input, false) -> %>
-            <div class="text-center text-white">
-              <h1 class="text-4xl font-bold mb-4">Rachel</h1>
-              <p>Setting up your game...</p>
-            </div>
           <% !@game -> %>
             <div class="text-center text-white">
               <h1 class="text-4xl font-bold mb-4">Rachel</h1>
