@@ -768,16 +768,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Special effect for Black Jacks - more ominous */
-.playing-card[data-rank="J"][data-suit="clubs"]::after,
-.playing-card[data-rank="J"][data-suit="spades"]::after {
-  background: linear-gradient(135deg, #1f2937, #111827);
-  color: #ef4444;
-  border: 1px solid #dc2626;
-  font-size: 0.875rem;
-  padding: 3px 8px;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
-}
 
 /* Reset deck draw button appearance */
 button[id^="deck-draw-button"] {

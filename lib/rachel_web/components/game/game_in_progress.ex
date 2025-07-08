@@ -87,7 +87,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
         </div>
         
     <!-- Player Hand - Fixed bottom position for easy thumb access -->
-        <div class="lg:col-span-3 lg:row-start-3 lg:self-end fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:bg-transparent p-0 z-40">
+        <div class="fixed bottom-0 left-0 right-0 lg:col-span-3 lg:row-start-3 lg:self-end lg:relative lg:bottom-auto p-0 z-40">
           <.player_hand
             game={@game}
             player_id={@player_id}

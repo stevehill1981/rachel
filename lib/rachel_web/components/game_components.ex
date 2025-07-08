@@ -133,7 +133,7 @@ defmodule RachelWeb.GameComponents do
         </span>
       <% end %>
       <%= if special_card?(@card) && !@selected do %>
-        <span class="absolute top-1 left-1 text-sm sm:text-xs opacity-80 font-bold">
+        <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl opacity-20 font-bold pointer-events-none">
           {special_icon(@card)}
         </span>
       <% end %>
