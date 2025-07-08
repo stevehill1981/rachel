@@ -175,6 +175,12 @@ const Hooks = {
   
   WinnerCelebration: {
     mounted() {
+      // Prevent duplicate celebrations - only run once per winner
+      if (this.el.dataset.celebrated) {
+        return
+      }
+      this.el.dataset.celebrated = 'true'
+      
       // Get current theme from document
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'modern-minimalist'
       
@@ -290,6 +296,13 @@ const Hooks = {
           messageEl.parentNode.removeChild(messageEl)
         }
       }, 2000)
+    },
+    
+    beforeDestroy() {
+      // Reset celebration flag for potential reuse
+      if (this.el.dataset.celebrated) {
+        delete this.el.dataset.celebrated
+      }
     }
   },
   
