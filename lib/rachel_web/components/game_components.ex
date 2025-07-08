@@ -299,46 +299,50 @@ defmodule RachelWeb.GameComponents do
   """
   attr :player, :map, required: true
   attr :is_current, :boolean, default: false
+  attr :is_you, :boolean, default: false
   attr :card_count, :integer, required: true
 
   def player_card_horizontal(assigns) do
     ~H"""
     <div class={
       [
-        "flex items-center gap-2 md:gap-3 px-2 md:px-4 py-2 md:py-3 rounded-lg transition-all duration-300 min-w-max relative",
-        @is_current &&
-          "current-player bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg ring-2 ring-white/30",
-        !@is_current && "bg-white/10 hover:bg-white/20",
+        "flex items-center gap-1 md:gap-2 px-1.5 md:px-3 py-1.5 md:py-2 rounded-lg transition-all duration-300 relative text-xs md:text-sm",
+        # Current player styling (whose turn it is)
+        @is_current && @is_you && "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ring-2 ring-white/30",
+        @is_current && !@is_you && "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg ring-2 ring-white/30",
+        # You styling (when it's not your turn)
+        !@is_current && @is_you && "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md ring-1 ring-white/20",
+        # Other players
+        !@is_current && !@is_you && "bg-white/10 hover:bg-white/20 text-white",
         # Add disconnected styling
         Map.get(@player, :connected, true) == false && "opacity-60"
       ]
     }>
       <div class={[
-        "w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm",
-        @is_current && "bg-white text-blue-600",
-        !@is_current && "bg-gray-300 text-gray-700"
+        "w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm flex-shrink-0",
+        (@is_current || @is_you) && "bg-white/90 text-gray-800",
+        !@is_current && !@is_you && "bg-gray-300 text-gray-700"
       ]}>
         {String.first(@player.name)}
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 min-w-0">
         <div class={[
-          "font-semibold text-sm hidden md:block",
-          @is_current && "text-white",
-          !@is_current && "text-white"
+          "font-semibold text-xs md:text-sm hidden sm:block truncate",
+          "text-white"
         ]}>
           {@player.name}
         </div>
         <%= if @player.is_ai do %>
-          <div class="text-xs opacity-80" title="AI Player">🖥️</div>
+          <div class="text-xs opacity-80 flex-shrink-0" title="AI Player">🖥️</div>
         <% end %>
         <%= if Map.get(@player, :connected, true) == false && !@player.is_ai do %>
-          <div class="text-xs opacity-80" title="Disconnected">🔴</div>
+          <div class="text-xs opacity-80 flex-shrink-0" title="Disconnected">🔴</div>
         <% end %>
       </div>
       <div class={[
-        "px-2 py-1 rounded-full text-xs font-bold",
-        @is_current && "bg-white/20 text-white",
-        !@is_current && "bg-white/10 text-white"
+        "px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs font-bold flex-shrink-0",
+        (@is_current || @is_you) && "bg-white/20 text-white",
+        !@is_current && !@is_you && "bg-white/10 text-white"
       ]}>
         {format_card_count(@card_count)}
       </div>

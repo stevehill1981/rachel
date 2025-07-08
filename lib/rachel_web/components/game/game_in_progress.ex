@@ -25,7 +25,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
     <div class="game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-32 lg:pb-0">
       <!-- Top Players - Compact on mobile for more game space -->
       <div class="lg:col-span-3 lg:row-start-1 flex-shrink-0">
-        <.players_display game={@game} />
+        <.players_display game={@game} player_id={@player_id} />
       </div>
       
     <!-- Mobile: Compact middle section with game area and status side by side -->
