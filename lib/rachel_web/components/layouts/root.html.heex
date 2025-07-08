@@ -33,6 +33,10 @@
     </script>
     <script>
       (() => {
+        // Prevent flash of unstyled content by applying theme immediately
+        const savedTheme = localStorage.getItem("phx:theme") || "modern-minimalist";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+        
         const setTheme = (theme) => {
           if (theme === "system") {
             localStorage.removeItem("phx:theme");
@@ -42,15 +46,34 @@
             document.documentElement.setAttribute("data-theme", theme);
           }
         };
-        if (!document.documentElement.hasAttribute("data-theme")) {
-          setTheme(localStorage.getItem("phx:theme") || "system");
+        
+        // Cross-tab synchronization
+        window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "modern-minimalist"));
+        
+        // LiveView theme changes
+        window.addEventListener("phx:set-theme", ({ detail: { theme } }) => {
+          console.log("Root layout received phx:set-theme event:", theme);
+          setTheme(theme);
+        });
+        
+        // Preload theme CSS to prevent flickers
+        const preloadThemeCSS = () => {
+          // Themes are already in the main CSS bundle, but we can ensure
+          // CSS custom properties are calculated early
+          requestAnimationFrame(() => {
+            document.documentElement.style.getPropertyValue('--theme-primary');
+          });
+        };
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', preloadThemeCSS);
+        } else {
+          preloadThemeCSS();
         }
-        window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
-        window.addEventListener("phx:set-theme", ({ detail: { theme } }) => setTheme(theme));
       })();
     </script>
   </head>
-  <body>
+  <body phx-hook="ThemeBridge" id="theme-root">
     {@inner_content}
   </body>
 </html>

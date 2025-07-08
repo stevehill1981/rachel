@@ -103,3 +103,6 @@
 
 /* Import game-specific styles */
 @import "./game.css";
+
+/* Import theme system */
+@import "./themes.css";

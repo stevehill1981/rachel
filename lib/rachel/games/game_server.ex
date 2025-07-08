@@ -412,18 +412,18 @@ defmodule Rachel.Games.GameServer do
     if state.game.status == :waiting do
       # Find the player and remove them
       new_players = Enum.reject(state.game.players, &(&1.id == player_id))
-      
+
       if length(new_players) != length(state.game.players) do
         # Player was found and removed
         new_game = %{state.game | players: new_players}
-        
+
         new_state = %{
           state
           | game: new_game,
             connected_players: Map.delete(state.connected_players, player_id),
             updated_at: DateTime.utc_now()
         }
-        
+
         broadcast_game_update(new_state)
         {:reply, {:ok, new_state.game}, new_state}
       else
@@ -466,15 +466,15 @@ defmodule Rachel.Games.GameServer do
 
     broadcast_player_disconnected(new_state, player_id)
 
-    # Convert to AI if it's their turn and they disconnected
+    # Only schedule AI turns for actual AI players
     current_player = Enum.at(state.game.players, state.game.current_player_index)
 
     final_state =
-      if current_player && current_player.id == player_id && state.game.status == :playing do
-        # Give them 5 seconds to reconnect
-        # Cancel any existing AI timer first
+      if current_player && current_player.id == player_id && current_player.is_ai &&
+           state.game.status == :playing do
+        # For AI players, schedule AI turn immediately since they don't need to "reconnect"
         state_with_cancelled_timer = cancel_ai_timer(new_state)
-        ai_ref = Process.send_after(self(), :ai_turn, 5000)
+        ai_ref = Process.send_after(self(), :ai_turn, 1000)
         %{state_with_cancelled_timer | ai_timer_ref: ai_ref}
       else
         new_state
@@ -500,19 +500,25 @@ defmodule Rachel.Games.GameServer do
 
         broadcast_player_disconnected(new_state, player_id)
 
-        # Give them time to reconnect before converting to AI
+        # Only give human players time to reconnect, AI players get immediate processing
         current_player = Enum.at(state.game.players, state.game.current_player_index)
 
         final_state =
           if current_player && current_player.id == player_id && state.game.status == :playing do
-            # 10 second grace period
-            # Cancel any existing timer for this player
-            state_with_cancelled = cancel_disconnect_timer(new_state, player_id)
+            if current_player.is_ai do
+              # AI players don't need reconnection time, schedule AI turn immediately
+              state_with_cancelled = cancel_ai_timer(new_state)
+              ai_ref = Process.send_after(self(), :ai_turn, 1000)
+              %{state_with_cancelled | ai_timer_ref: ai_ref}
+            else
+              # Human players get 10 second grace period to reconnect
+              state_with_cancelled = cancel_disconnect_timer(new_state, player_id)
 
-            timer_ref =
-              Process.send_after(self(), {:check_disconnected_player, player_id}, 10_000)
+              timer_ref =
+                Process.send_after(self(), {:check_disconnected_player, player_id}, 10_000)
 
-            put_in(state_with_cancelled.disconnect_check_timers[player_id], timer_ref)
+              put_in(state_with_cancelled.disconnect_check_timers[player_id], timer_ref)
+            end
           else
             new_state
           end
@@ -584,21 +590,13 @@ defmodule Rachel.Games.GameServer do
 
   defp should_process_ai_turn?(state) do
     state.game.status == :playing &&
-      current_player_is_ai?(state) &&
-      current_player_connected?(state)
+      current_player_is_ai?(state)
   end
 
   defp current_player_is_ai?(state) do
     case Enum.at(state.game.players, state.game.current_player_index) do
       nil -> false
       player -> player.is_ai
-    end
-  end
-
-  defp current_player_connected?(state) do
-    case Enum.at(state.game.players, state.game.current_player_index) do
-      nil -> false
-      player -> Map.get(state.connected_players, player.id, false) || player.is_ai
     end
   end
 

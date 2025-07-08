@@ -66,14 +66,15 @@ defmodule RachelWeb.GameLive.StateManager do
   """
   def check_and_show_winner_banner_updates(nil, _player_id), do: []
 
-  def check_and_show_winner_banner_updates(game, player_id) do
+  def check_and_show_winner_banner_updates(game, player_id, celebration_shown \\ false) do
     winners = Map.get(game, :winners, [])
 
-    # Check if the current player just won
-    if player_id in winners do
+    # Check if the current player just won AND haven't shown celebration yet
+    if player_id in winners && !celebration_shown do
       [
         {:assign, :show_winner_banner, true},
         {:assign, :winner_acknowledged, true},
+        {:assign, :celebration_shown, true},
         {:send_after_self, :auto_hide_winner_banner, 5000}
       ]
     else

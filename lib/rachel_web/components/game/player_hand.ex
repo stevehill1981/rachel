@@ -20,27 +20,42 @@ defmodule RachelWeb.Components.Game.PlayerHand do
 
     ~H"""
     <%= if @game.status == :finished do %>
-      <div class="bg-green-500/20 backdrop-blur rounded-2xl p-6 text-center">
+      <div
+        id={"player-hand-finished-#{@player_id}"}
+        class="theme-shadow-lg p-6 text-center rounded-2xl border-2"
+        style="background-color: var(--theme-success) !important; border-color: var(--theme-success); opacity: 0.95;"
+      >
         <%= if @player_id in @game.winners do %>
-          <div class="text-green-200 text-xl font-bold mb-2">🎉 You Won! 🎉</div>
-          <div class="text-green-300">
+          <div class="text-xl font-bold mb-2" style="color: var(--theme-success-text);">
+            🎉 You Won! 🎉
+          </div>
+          <div style="color: var(--theme-success-text); opacity: 0.9;">
             You finished in position #{(Enum.find_index(@game.winners, &(&1 == @player_id)) || 0) +
               1}
           </div>
         <% else %>
-          <div class="text-red-200 text-xl font-bold mb-2">Game Over</div>
-          <div class="text-red-300">You were the last player remaining</div>
+          <div class="text-xl font-bold mb-2" style="color: var(--theme-success-text);">
+            Game Over
+          </div>
+          <div style="color: var(--theme-success-text); opacity: 0.9;">
+            You were the last player remaining
+          </div>
         <% end %>
         <button
           phx-click="return_to_lobby"
-          class="mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          class="mt-4 px-6 py-2 rounded-lg transition-colors font-medium"
+          style="background-color: var(--theme-button-primary); color: var(--theme-success-text);"
         >
           Return Home
         </button>
       </div>
     <% else %>
       <%= if @player && @player_id not in @game.winners do %>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-6">
+        <div
+          id={"player-hand-active-#{@player_id}"}
+          class="theme-card backdrop-blur rounded-2xl p-6"
+          style="background-color: var(--theme-bg-glass);"
+        >
           <.play_button selected_cards={@selected_cards} />
           <.game_messages game={@game} current_player={@current_player} player_id={@player_id} />
           <.hand_display
@@ -52,10 +67,18 @@ defmodule RachelWeb.Components.Game.PlayerHand do
           />
         </div>
       <% else %>
-        <div class="bg-green-500/20 backdrop-blur rounded-2xl p-6 text-center">
-          <div class="text-green-200 text-lg font-bold mb-2">🎉 You Won! 🎉</div>
-          <div class="text-green-300">Waiting for other players to finish...</div>
-          <div class="text-sm text-green-400 mt-2">
+        <div
+          id={"player-hand-waiting-#{@player_id}"}
+          class="backdrop-blur rounded-2xl p-6 text-center border-2"
+          style="background-color: var(--theme-success) !important; border-color: var(--theme-success); opacity: 0.95;"
+        >
+          <div class="text-lg font-bold mb-2" style="color: var(--theme-success-text);">
+            🎉 You Won! 🎉
+          </div>
+          <div style="color: var(--theme-success-text); opacity: 0.9;">
+            Waiting for other players to finish...
+          </div>
+          <div class="text-sm mt-2" style="color: var(--theme-success-text); opacity: 0.8;">
             Position: #{(Enum.find_index(@game.winners, &(&1 == @player_id)) || 0) + 1}
           </div>
         </div>
@@ -93,16 +116,13 @@ defmodule RachelWeb.Components.Game.PlayerHand do
     <!-- Main play button -->
         <button
           phx-click="play_cards"
-          class={
-            [
-              "px-8 py-3 text-white rounded-xl font-bold transition-all duration-200",
-              "shadow-lg active:scale-95 touch-manipulation",
-              # Large touch target
-              "min-h-[48px] min-w-[120px]",
-              # Different colors for single vs multi-card
-              length(@selected_cards) == 1 && "bg-green-500 hover:bg-green-600",
-              length(@selected_cards) > 1 && "bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/50"
-            ]
+          class="px-8 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg active:scale-95 touch-manipulation min-h-[48px] min-w-[120px]"
+          style={
+            if length(@selected_cards) == 1 do
+              "background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
+            else
+              "background-color: var(--theme-button-primary); color: var(--theme-text-inverse); box-shadow: 0 0 0 2px var(--theme-primary-light);"
+            end
           }
         >
           <%= if length(@selected_cards) == 1 do %>
@@ -131,9 +151,10 @@ defmodule RachelWeb.Components.Game.PlayerHand do
     <%= if @current_player && @current_player.id == @player_id && @game.pending_pickups > 0 && !Game.has_valid_play?(@game, @current_player) && @game.status == :playing do %>
       <div
         id="drawing-cards-message"
-        class="mb-4 p-3 bg-red-500/20 rounded-lg border border-red-400/30 animate-pulse"
+        class="mb-4 p-3 rounded-lg animate-pulse"
+        style="background-color: var(--theme-error); opacity: 0.2; border: 1px solid var(--theme-error);"
       >
-        <div class="text-center text-red-200 font-semibold">
+        <div class="text-center font-semibold theme-text-primary">
           Drawing {@game.pending_pickups} cards...
         </div>
       </div>
@@ -142,9 +163,10 @@ defmodule RachelWeb.Components.Game.PlayerHand do
     <%= if @current_player && @current_player.id != @player_id && @game.status == :playing do %>
       <div
         id="waiting-turn-message"
-        class="mb-4 p-3 bg-gray-500/20 rounded-lg border border-gray-400/30"
+        class="mb-4 p-3 rounded-lg"
+        style="background-color: var(--theme-bg-tertiary); border: 1px solid var(--theme-card-border);"
       >
-        <div class="text-center text-gray-200 font-semibold">
+        <div class="text-center font-semibold theme-text-secondary">
           Waiting for {@current_player.name}'s turn...
         </div>
       </div>

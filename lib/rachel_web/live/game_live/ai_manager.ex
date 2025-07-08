@@ -74,8 +74,9 @@ defmodule RachelWeb.GameLive.AIManager do
           {:schedule_ai_move, new_game}
         ]
 
-        # Add auto-draw check updates
-        auto_draw_updates = StateManager.check_auto_draw_updates(new_game, "human_player_id")
+        # Add auto-draw check updates for human player
+        human_player_id = find_human_player_id(new_game)
+        auto_draw_updates = StateManager.check_auto_draw_updates(new_game, human_player_id)
         {:ok, updates ++ auto_draw_updates}
 
       _ ->
@@ -97,8 +98,9 @@ defmodule RachelWeb.GameLive.AIManager do
           {:schedule_ai_move, new_game}
         ]
 
-        # Add auto-draw check updates
-        auto_draw_updates = StateManager.check_auto_draw_updates(new_game, "human_player_id")
+        # Add auto-draw check updates for human player
+        human_player_id = find_human_player_id(new_game)
+        auto_draw_updates = StateManager.check_auto_draw_updates(new_game, human_player_id)
         {:ok, updates ++ auto_draw_updates}
 
       _ ->
@@ -136,5 +138,10 @@ defmodule RachelWeb.GameLive.AIManager do
 
   defp should_process_ai_move?(game, current) do
     current && current.is_ai && game.status == :playing
+  end
+
+  defp find_human_player_id(game) do
+    human_player = Enum.find(game.players, fn player -> !player.is_ai end)
+    if human_player, do: human_player.id, else: "human"
   end
 end

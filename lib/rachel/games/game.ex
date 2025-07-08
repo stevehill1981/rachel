@@ -4,6 +4,7 @@ defmodule Rachel.Games.Game do
   Manages game state, rules, and player actions.
   """
 
+  require Logger
   alias Rachel.Games.{Card, Deck}
 
   @type player_id :: String.t()
@@ -336,34 +337,93 @@ defmodule Rachel.Games.Game do
 
   defp draw_cards_with_reshuffle(deck, discard_pile, count) do
     deck_size = Deck.size(deck)
+    discard_size = length(discard_pile)
 
-    if deck_size >= count do
-      # Enough cards in deck
-      {cards, new_deck} = Deck.draw(deck, count)
-      {cards, new_deck, discard_pile}
+    # Log the state for debugging
+    if deck_size == 0 do
+      Logger.warning(
+        "Deck is empty! Deck: #{deck_size}, Discard: #{discard_size}, Need: #{count}"
+      )
+    end
+
+    cond do
+      # Enough cards in deck - just draw normally
+      deck_size >= count ->
+        {cards, new_deck} = Deck.draw(deck, count)
+        {cards, new_deck, discard_pile}
+
+      # Deck has some cards but not enough - draw what we can first
+      deck_size > 0 ->
+        {initial_cards, empty_deck} = Deck.draw(deck, deck_size)
+        remaining_count = count - deck_size
+
+        # Now reshuffle and draw the rest
+        {reshuffled_deck, new_discard} = reshuffle_discard_into_deck(empty_deck, discard_pile)
+
+        if Deck.size(reshuffled_deck) >= remaining_count do
+          {more_cards, final_deck} = Deck.draw(reshuffled_deck, remaining_count)
+          {initial_cards ++ more_cards, final_deck, new_discard}
+        else
+          # Even after reshuffling, not enough cards - just return what we have
+          {available, final_deck} = Deck.draw(reshuffled_deck, Deck.size(reshuffled_deck))
+          {initial_cards ++ available, final_deck, new_discard}
+        end
+
+      # Deck is empty - must reshuffle
+      true ->
+        {reshuffled_deck, new_discard} = reshuffle_discard_into_deck(deck, discard_pile)
+
+        available_count = min(count, Deck.size(reshuffled_deck))
+
+        if available_count < count do
+          Logger.warning(
+            "Not enough cards even after reshuffle! Have: #{available_count}, Need: #{count}"
+          )
+        end
+
+        {cards, final_deck} = Deck.draw(reshuffled_deck, available_count)
+        {cards, final_deck, new_discard}
+    end
+  end
+
+  defp reshuffle_discard_into_deck(deck, discard_pile) do
+    case discard_pile do
+      [] ->
+        # No cards to reshuffle - game is in an impossible state
+        # This should never happen in a normal game
+        {deck, []}
+
+      [current_card] ->
+        # Only the current card in discard pile - can't reshuffle it
+        # Return empty deck and keep current card
+        Logger.warning("Cannot reshuffle - only current card in discard pile!")
+        {deck, [current_card]}
+
+      [current_card | cards_to_reshuffle] ->
+        # Reshuffle all cards except the current card
+        all_cards = deck.cards ++ cards_to_reshuffle
+        reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
+
+        Logger.info("Reshuffled #{length(cards_to_reshuffle)} cards from discard pile into deck")
+
+        # Keep only the current card in discard pile
+        {reshuffled_deck, [current_card]}
+    end
+  end
+
+  # Check if deck is running low and proactively reshuffle
+  defp check_and_reshuffle_if_needed(game) do
+    deck_size = Deck.size(game.deck)
+    discard_size = length(game.discard_pile)
+
+    # If deck has fewer than 10 cards and discard pile has more than 5 cards, reshuffle
+    if deck_size < 10 && discard_size > 5 do
+      Logger.info("Proactive reshuffle: Deck has #{deck_size} cards, reshuffling discard pile")
+
+      {new_deck, new_discard} = reshuffle_discard_into_deck(game.deck, game.discard_pile)
+      %{game | deck: new_deck, discard_pile: new_discard}
     else
-      # Need to reshuffle discard pile into deck
-      # CRITICAL FIX: Don't reshuffle the current card (top of discard pile)
-      # The current card should stay as the current card
-      case discard_pile do
-        [] ->
-          # No cards to reshuffle, return what we have
-          {cards, new_deck} = Deck.draw(deck, count)
-          {cards, new_deck, discard_pile}
-
-        [_current_card | cards_to_reshuffle] ->
-          # Only reshuffle the cards UNDER the current card
-          # Keep the current card at the top of discard pile
-          all_cards = deck.cards ++ cards_to_reshuffle
-          reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
-
-          # Keep only the current card in discard pile
-          new_discard_pile = [List.first(discard_pile)]
-
-          # Now draw the required cards
-          {cards, final_deck} = Deck.draw(reshuffled_deck, count)
-          {cards, final_deck, new_discard_pile}
-      end
+      game
     end
   end
 
@@ -462,6 +522,7 @@ defmodule Rachel.Games.Game do
     |> Map.put(:last_action, nil)
     |> increment_turn()
     |> apply_pending_skips()
+    |> check_and_reshuffle_if_needed()
   end
 
   defp apply_pending_skips(%__MODULE__{pending_skips: 0} = game), do: game
