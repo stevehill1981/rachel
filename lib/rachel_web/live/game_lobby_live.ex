@@ -55,8 +55,8 @@ defmodule RachelWeb.GameLobbyLive do
         <div class="text-center mb-8">
           <h1 class="text-4xl font-bold theme-text-primary mb-2">Game Lobby</h1>
           <div class="theme-card theme-shadow-md px-6 py-3 inline-block">
-            <p class="text-sm theme-text-secondary">Game Code</p>
-            <p class="text-2xl font-mono font-bold" style="color: var(--theme-primary);">{@game_id}</p>
+            <p class="text-sm theme-text-tertiary">Join code</p>
+            <p class="text-2xl font-mono font-bold theme-text-primary">{@game_id}</p>
           </div>
         </div>
 
