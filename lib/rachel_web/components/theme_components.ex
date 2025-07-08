@@ -33,6 +33,8 @@ defmodule RachelWeb.ThemeComponents do
   attr :position, :string, default: "top-4 right-4", doc: "CSS positioning classes"
 
   def theme_selector_button(assigns) do
+    assigns = assign(assigns, :themes, @themes)
+    
     ~H"""
     <div class={"fixed #{@position} z-50"}>
       <button

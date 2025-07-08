@@ -45,24 +45,25 @@ defmodule RachelWeb.HomeLive do
             <h2 class="text-2xl font-bold theme-text-primary mb-4">Quick Play</h2>
             <a
               href="/play"
-              class="inline-flex items-center px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-green-500 to-blue-500 rounded-xl hover:from-green-600 hover:to-blue-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              class="inline-flex items-center px-8 py-4 text-lg font-bold theme-button-primary hover:theme-button-primary-hover rounded-xl focus:outline-none focus:ring-4 focus:ring-opacity-50 transition-all duration-200 theme-shadow-lg hover:theme-shadow-xl transform hover:-translate-y-1"
+              style="background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
             >
               <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
               Play vs AI
             </a>
-            <p class="text-sm text-gray-500 mt-3">Start instantly with a randomly generated name</p>
+            <p class="text-sm theme-text-tertiary mt-3">Start instantly with a randomly generated name</p>
           </div>
 
           <!-- Multiplayer Options -->
-          <div class="bg-white rounded-2xl shadow-lg p-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Multiplayer</h2>
+          <div class="theme-card p-8">
+            <h2 class="text-2xl font-bold theme-text-primary mb-6 text-center">Multiplayer</h2>
             
             <div class="grid md:grid-cols-2 gap-8">
               <!-- Create Game -->
               <div class="space-y-4">
-                <h3 class="text-lg font-semibold text-gray-900">Create Game</h3>
+                <h3 class="text-lg font-semibold theme-text-primary">Create Game</h3>
                 <form phx-submit="create_game" class="space-y-3">
                   <input
                     type="text"
@@ -72,18 +73,19 @@ defmodule RachelWeb.HomeLive do
                     placeholder={if @player_name == "", do: "Your name", else: ""}
                     maxlength="20"
                     required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-4 py-3 rounded-lg focus:ring-2 transition-colors theme-text-primary"
+                    style="border: 2px solid var(--theme-card-border); background-color: var(--theme-card-bg);"
                   />
                   <button
                     type="submit"
                     disabled={@creating_game || String.trim(@player_name) == ""}
-                    class={[
-                      "w-full py-3 px-4 rounded-lg font-medium transition-colors",
+                    class="w-full py-3 px-4 rounded-lg font-medium transition-colors"
+                    style={
                       if(@creating_game || String.trim(@player_name) == "",
-                        do: "bg-gray-300 cursor-not-allowed text-gray-500",
-                        else: "bg-blue-500 hover:bg-blue-600 text-white"
+                        do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
+                        else: "background-color: var(--theme-button-primary); color: var(--theme-text-inverse);"
                       )
-                    ]}
+                    }
                   >
                     <%= if @creating_game, do: "Creating...", else: "Create Game" %>
                   </button>
@@ -92,7 +94,7 @@ defmodule RachelWeb.HomeLive do
 
               <!-- Join Game -->
               <div class="space-y-4">
-                <h3 class="text-lg font-semibold text-gray-900">Join Game</h3>
+                <h3 class="text-lg font-semibold theme-text-primary">Join Game</h3>
                 <form phx-submit="join_game" class="space-y-3">
                   <input
                     type="text"
@@ -112,18 +114,19 @@ defmodule RachelWeb.HomeLive do
                     placeholder={if @player_name == "", do: "Your name", else: ""}
                     maxlength="20"
                     required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-4 py-3 rounded-lg focus:ring-2 transition-colors theme-text-primary"
+                    style="border: 2px solid var(--theme-card-border); background-color: var(--theme-card-bg);"
                   />
                   <button
                     type="submit"
                     disabled={@joining_game || String.trim(@player_name) == "" || String.trim(@game_code) == ""}
-                    class={[
-                      "w-full py-3 px-4 rounded-lg font-medium transition-colors",
+                    class="w-full py-3 px-4 rounded-lg font-medium transition-colors"
+                    style={
                       if(@joining_game || String.trim(@player_name) == "" || String.trim(@game_code) == "",
-                        do: "bg-gray-300 cursor-not-allowed text-gray-500",
-                        else: "bg-green-500 hover:bg-green-600 text-white"
+                        do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
+                        else: "background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
                       )
-                    ]}
+                    }
                   >
                     <%= if @joining_game, do: "Joining...", else: "Join Game" %>
                   </button>
@@ -133,12 +136,12 @@ defmodule RachelWeb.HomeLive do
           </div>
 
           <!-- How to Play Summary -->
-          <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white">
+          <div class="rounded-2xl theme-shadow-lg p-8" style="background: var(--theme-primary); color: var(--theme-text-inverse);">
             <h3 class="text-xl font-bold mb-4">Quick Rules</h3>
             <div class="grid md:grid-cols-2 gap-6 text-sm">
               <div>
                 <p class="font-semibold mb-2">Basic Play:</p>
-                <ul class="space-y-1 text-white/90">
+                <ul class="space-y-1 opacity-90">
                   <li>• Match suit or rank</li>
                   <li>• Draw if you can't play</li>
                   <li>• First to empty hand wins</li>
@@ -146,7 +149,7 @@ defmodule RachelWeb.HomeLive do
               </div>
               <div>
                 <p class="font-semibold mb-2">Special Cards:</p>
-                <ul class="space-y-1 text-white/90">
+                <ul class="space-y-1 opacity-90">
                   <li>• 2s = Pick up 2</li>
                   <li>• 7s = Skip turn</li>
                   <li>• Queens = Reverse</li>

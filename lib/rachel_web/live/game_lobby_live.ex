@@ -2,6 +2,7 @@ defmodule RachelWeb.GameLobbyLive do
   use RachelWeb, :live_view
   alias Rachel.Games.GameServer
   alias Phoenix.PubSub
+  import RachelWeb.ThemeComponents
 
   @impl true
   def mount(%{"game_id" => game_id}, _session, socket) do
@@ -29,6 +30,7 @@ defmodule RachelWeb.GameLobbyLive do
             |> assign(:game, game)
             |> assign(:is_host, is_host)
             |> assign(:adding_ai, false)
+            |> assign(:current_theme, "modern-minimalist")
           
           {:ok, socket}
         else
@@ -41,26 +43,32 @@ defmodule RachelWeb.GameLobbyLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="min-h-screen theme-bg-primary">
+      <!-- Theme Management -->
+      <div phx-hook="ThemeManager" id="theme-manager"></div>
+      
+      <!-- Theme Selector Button -->
+      <.theme_selector_button current_theme={@current_theme} />
+      
       <div class="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="text-center mb-8">
-          <h1 class="text-4xl font-bold text-gray-900 mb-2">Game Lobby</h1>
-          <div class="bg-white rounded-lg shadow-md px-6 py-3 inline-block">
-            <p class="text-sm text-gray-600">Game Code</p>
-            <p class="text-2xl font-mono font-bold text-indigo-600">{@game_id}</p>
+          <h1 class="text-4xl font-bold theme-text-primary mb-2">Game Lobby</h1>
+          <div class="theme-card theme-shadow-md px-6 py-3 inline-block">
+            <p class="text-sm theme-text-secondary">Game Code</p>
+            <p class="text-2xl font-mono font-bold" style="color: var(--theme-primary);">{@game_id}</p>
           </div>
         </div>
 
         <!-- Players List -->
-        <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">
+        <div class="theme-card theme-shadow-lg p-8 mb-6">
+          <h2 class="text-xl font-semibold theme-text-primary mb-4">
             Players ({length(@game.players)}/8)
           </h2>
           
           <div class="space-y-3">
             <%= for player <- @game.players do %>
-              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--theme-bg-secondary);">
                 <div class="flex items-center gap-3">
                   <div class={[
                     "w-10 h-10 rounded-full flex items-center justify-center font-bold",
@@ -76,8 +84,8 @@ defmodule RachelWeb.GameLobbyLive do
                     <% end %>
                   </div>
                   <div>
-                    <p class="font-medium text-gray-900">{player.name}</p>
-                    <p class="text-sm text-gray-500">
+                    <p class="font-medium theme-text-primary">{player.name}</p>
+                    <p class="text-sm theme-text-secondary">
                       <%= if player.id == @game.host_id do %>
                         Host
                       <% else %>
@@ -104,8 +112,8 @@ defmodule RachelWeb.GameLobbyLive do
             <!-- Empty slots -->
             <%= if length(@game.players) < 8 do %>
               <%= for _i <- (length(@game.players) + 1)..8 do %>
-                <div class="flex items-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-400">
-                  <div class="w-10 h-10 rounded-full bg-gray-100 mr-3"></div>
+                <div class="flex items-center p-3 border-2 border-dashed rounded-lg" style="border-color: var(--theme-card-border); color: var(--theme-text-tertiary);">
+                  <div class="w-10 h-10 rounded-full mr-3" style="background-color: var(--theme-bg-tertiary);"></div>
                   <p>Empty slot</p>
                 </div>
               <% end %>
@@ -115,20 +123,20 @@ defmodule RachelWeb.GameLobbyLive do
 
         <!-- Host Controls -->
         <%= if @is_host do %>
-          <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Host Controls</h3>
+          <div class="theme-card theme-shadow-lg p-8 mb-6">
+            <h3 class="text-lg font-semibold theme-text-primary mb-4">Host Controls</h3>
             
             <div class="flex flex-wrap gap-3">
               <button
                 phx-click="add_ai"
                 disabled={@adding_ai || length(@game.players) >= 8}
-                class={[
-                  "px-4 py-2 rounded-lg font-medium transition-colors",
+                class="px-4 py-2 rounded-lg font-medium transition-colors"
+                style={
                   if(@adding_ai || length(@game.players) >= 8,
-                    do: "bg-gray-300 cursor-not-allowed text-gray-500",
-                    else: "bg-purple-500 hover:bg-purple-600 text-white"
+                    do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
+                    else: "background-color: var(--theme-button-secondary); color: var(--theme-text-inverse);"
                   )
-                ]}
+                }
               >
                 <span class="flex items-center gap-2">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,13 +149,13 @@ defmodule RachelWeb.GameLobbyLive do
               <button
                 phx-click="start_game"
                 disabled={length(@game.players) < 2}
-                class={[
-                  "px-6 py-2 rounded-lg font-medium transition-colors",
+                class="px-6 py-2 rounded-lg font-medium transition-colors"
+                style={
                   if(length(@game.players) < 2,
-                    do: "bg-gray-300 cursor-not-allowed text-gray-500",
-                    else: "bg-green-500 hover:bg-green-600 text-white"
+                    do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
+                    else: "background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
                   )
-                ]}
+                }
               >
                 <span class="flex items-center gap-2">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,29 +168,31 @@ defmodule RachelWeb.GameLobbyLive do
             </div>
             
             <%= if length(@game.players) < 2 do %>
-              <p class="text-sm text-gray-500 mt-3">Need at least 2 players to start</p>
+              <p class="text-sm theme-text-tertiary mt-3">Need at least 2 players to start</p>
             <% end %>
           </div>
         <% else %>
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-            <p class="text-yellow-800">Waiting for host to start the game...</p>
+          <div class="rounded-lg p-4 text-center" style="background-color: var(--theme-warning); border: 1px solid var(--theme-warning); opacity: 0.9;">
+            <p style="color: var(--theme-text-inverse);">Waiting for host to start the game...</p>
           </div>
         <% end %>
 
         <!-- Share Link -->
-        <div id="copy-section" class="bg-white rounded-2xl shadow-lg p-6 text-center" phx-hook="CopyToClipboard">
-          <h3 class="text-lg font-semibold text-gray-900 mb-3">Invite Friends</h3>
+        <div id="copy-section" class="theme-card theme-shadow-lg p-6 text-center" phx-hook="CopyToClipboard">
+          <h3 class="text-lg font-semibold theme-text-primary mb-3">Invite Friends</h3>
           <div class="flex items-center gap-3 max-w-md mx-auto">
             <input
               id="game-url-input"
               type="text"
               value={url(~p"/game/#{@game_id}")}
               readonly
-              class="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg font-mono text-sm"
+              class="flex-1 px-4 py-2 rounded-lg font-mono text-sm theme-text-primary"
+              style="background-color: var(--theme-bg-secondary); border: 1px solid var(--theme-card-border);"
             />
             <button
               phx-click="copy_game_url"
-              class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+              class="px-4 py-2 rounded-lg font-medium transition-colors"
+              style="background-color: var(--theme-button-primary); color: var(--theme-text-inverse);"
             >
               Copy
             </button>
@@ -260,6 +270,19 @@ defmodule RachelWeb.GameLobbyLive do
       |> put_flash(:info, "Game URL copied to clipboard!")
     
     {:noreply, socket}
+  end
+
+  def handle_event("change_theme", %{"theme" => theme_id}, socket) do
+    socket =
+      socket
+      |> assign(:current_theme, theme_id)
+      |> push_event("change_theme", %{theme: theme_id})
+
+    {:noreply, socket}
+  end
+
+  def handle_event("theme_loaded", %{"theme" => theme_id}, socket) do
+    {:noreply, assign(socket, :current_theme, theme_id)}
   end
 
   @impl true
