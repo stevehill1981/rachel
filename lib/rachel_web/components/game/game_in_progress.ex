@@ -46,7 +46,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
       </div>
       
     <!-- Game Layout -->
-      <div class="relative game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-32 lg:pb-0">
+      <div class="relative game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-0">
         <!-- Top Players - Compact on mobile for more game space -->
         <div class="lg:col-span-3 lg:row-start-1 flex-shrink-0">
           <.players_display game={@game} player_id={@player_id} />
@@ -87,7 +87,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
         </div>
         
     <!-- Player Hand - Fixed bottom position for easy thumb access -->
-        <div class="lg:col-span-3 lg:row-start-3 lg:self-end fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:bg-transparent p-2 lg:p-0 z-40">
+        <div class="lg:col-span-3 lg:row-start-3 lg:self-end fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:bg-transparent p-0 z-40">
           <.player_hand
             game={@game}
             player_id={@player_id}

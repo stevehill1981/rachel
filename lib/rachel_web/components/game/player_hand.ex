@@ -56,7 +56,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
       <%= if @player && @player_id not in @game.winners do %>
         <div
           id={"player-hand-active-#{@player_id}"}
-          class="theme-card backdrop-blur rounded-2xl p-6"
+          class="theme-card backdrop-blur rounded-t-2xl p-4 pb-2"
           style="background-color: var(--theme-bg-glass);"
         >
           <.play_button selected_cards={@selected_cards} />
