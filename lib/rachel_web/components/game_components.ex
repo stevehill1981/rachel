@@ -25,12 +25,12 @@ defmodule RachelWeb.GameComponents do
         [
           "playing-card relative rounded-lg bg-white border-2 border-gray-300 shadow-lg",
           "transition-all duration-300 transform flex items-center justify-center",
-          # Larger minimum touch targets
-          "min-h-[120px] min-w-[85px]",
-          # Responsive sizing - larger on mobile
-          "sm:w-20 sm:h-28 w-24 h-32",
+          # Smaller on mobile, larger on desktop
+          "min-h-[100px] min-w-[70px] sm:min-h-[120px] sm:min-w-[85px]",
+          # Responsive sizing - smaller on mobile
+          "w-16 h-24 sm:w-20 sm:h-28",
           # Responsive text sizing
-          "text-xl sm:text-2xl font-bold",
+          "text-lg sm:text-2xl font-bold",
           # Optimize for touch
           "touch-manipulation",
           @selected && "selected ring-4 ring-blue-500 -translate-y-2 sm:-translate-y-4 scale-105",
@@ -249,7 +249,7 @@ defmodule RachelWeb.GameComponents do
     ~H"""
     <div
       class={[
-        "relative p-4 rounded-lg transition-all duration-300",
+        "relative p-2 md:p-4 rounded-lg transition-all duration-300",
         @is_current &&
           "current-player bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105",
         !@is_current && "bg-gray-100 hover:bg-gray-200"
@@ -257,28 +257,31 @@ defmodule RachelWeb.GameComponents do
       role="status"
       aria-label={player_status_label(@player, @is_current, @card_count)}
     >
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 md:gap-3">
           <div
             class={[
-              "w-10 h-10 rounded-full flex items-center justify-center font-bold",
+              "w-10 h-10 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm",
               @is_current && "bg-white text-blue-600",
               !@is_current && "bg-gray-300 text-gray-700"
             ]}
             aria-hidden="true"
           >
-            {String.first(@player.name)}
+            {get_initials(@player.name)}
           </div>
-          <div class="flex items-center gap-2">
+          <div class="hidden md:flex items-center gap-2">
             <div class="font-semibold">{@player.name}</div>
             <%= if @player.is_ai do %>
               <div class="text-xs opacity-80" aria-label="Computer player">🖥️</div>
             <% end %>
           </div>
+          <%= if @player.is_ai do %>
+            <div class="text-xs opacity-80 md:hidden" aria-label="Computer player">🖥️</div>
+          <% end %>
         </div>
         <div
           class={[
-            "px-3 py-1 rounded-full text-sm font-bold",
+            "px-2 md:px-3 py-1 rounded-full text-sm font-bold",
             @is_current && "bg-white/20",
             !@is_current && "bg-gray-200"
           ]}
@@ -502,6 +505,16 @@ defmodule RachelWeb.GameComponents do
 
   defp pluralize_skips(1), do: "1 skip"
   defp pluralize_skips(n), do: "#{n} skips"
+
+  defp get_initials(name) do
+    name
+    |> String.trim()
+    |> String.split(" ")
+    |> Enum.take(2)
+    |> Enum.map(&String.first/1)
+    |> Enum.join("")
+    |> String.upcase()
+  end
 
   @doc """
   Renders an AI thinking indicator with animated dots.
