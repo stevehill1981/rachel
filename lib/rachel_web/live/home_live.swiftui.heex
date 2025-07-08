@@ -1,0 +1,123 @@
+<VStack>
+  <Spacer />
+  
+  <!-- Hero Section -->
+  <VStack spacing="16">
+    <Text style="font(.largeTitle); fontWeight(.bold)">
+      🃏 Rachel
+    </Text>
+    <Text style="font(.title3); foregroundColor(.secondary); multilineTextAlignment(.center)">
+      The strategic card game that's been bringing friends and families together for over 30 years
+    </Text>
+  </VStack>
+  
+  <Spacer />
+  
+  <!-- Game Options -->
+  <VStack spacing="20">
+    <!-- Quick Play -->
+    <VStack spacing="12">
+      <Text style="font(.title2); fontWeight(.semibold)">
+        Quick Play
+      </Text>
+      
+      <Button phx-click="play_with_ai">
+        <HStack>
+          <Image systemName="desktopcomputer" />
+          <Text>Play vs AI</Text>
+        </HStack>
+      </Button>
+      .buttonStyle(.borderedProminent)
+      .controlSize(.large)
+      
+      <Text style="font(.caption); foregroundColor(.secondary)">
+        Start instantly with a randomly generated name
+      </Text>
+    </VStack>
+    
+    <!-- Multiplayer Options -->
+    <VStack spacing="16">
+      <Text style="font(.title2); fontWeight(.semibold)">
+        Multiplayer
+      </Text>
+      
+      <HStack spacing="20">
+        <!-- Create Game -->
+        <VStack alignment="leading" spacing="12">
+          <Text style="font(.headline)">Create Game</Text>
+          
+          <Form phx-submit="create_game">
+            <TextField 
+              name="player_name"
+              text={@player_name}
+              phx-change="update_player_name"
+              prompt="Your name"
+            />
+            
+            <Button type="submit" disabled={@creating_game || String.trim(@player_name) == ""}>
+              <Text>{if @creating_game, do: "Creating...", else: "Create Game"}</Text>
+            </Button>
+            .buttonStyle(.borderedProminent)
+          </Form>
+        </VStack>
+        
+        <!-- Join Game -->
+        <VStack alignment="leading" spacing="12">
+          <Text style="font(.headline)">Join Game</Text>
+          
+          <Form phx-submit="join_game">
+            <TextField 
+              name="game_code"
+              text={@game_code}
+              phx-change="update_game_code"
+              prompt="Join code"
+            />
+            
+            <TextField 
+              name="player_name"
+              text={@player_name}
+              phx-change="update_player_name"
+              prompt="Your name"
+            />
+            
+            <Button 
+              type="submit" 
+              disabled={@joining_game || String.trim(@player_name) == "" || String.trim(@game_code) == ""}
+            >
+              <Text>{if @joining_game, do: "Joining...", else: "Join Game"}</Text>
+            </Button>
+            .buttonStyle(.bordered)
+          </Form>
+        </VStack>
+      </HStack>
+    </VStack>
+    
+    <!-- Quick Rules -->
+    <VStack alignment="leading" spacing="12">
+      <Text style="font(.title3); fontWeight(.semibold)">
+        Quick Rules
+      </Text>
+      
+      <HStack alignment="top" spacing="20">
+        <VStack alignment="leading" spacing="8">
+          <Text style="font(.headline)">Basic Play:</Text>
+          <Text style="font(.subheadline)">• Match suit or rank</Text>
+          <Text style="font(.subheadline)">• Draw if you can't play</Text>
+          <Text style="font(.subheadline)">• First to empty hand wins</Text>
+        </VStack>
+        
+        <VStack alignment="leading" spacing="8">
+          <Text style="font(.headline)">Special Cards:</Text>
+          <Text style="font(.subheadline)">• 2s = Pick up 2</Text>
+          <Text style="font(.subheadline)">• 7s = Skip turn</Text>
+          <Text style="font(.subheadline)">• Queens = Reverse</Text>
+          <Text style="font(.subheadline)">• Aces = Wild card</Text>
+        </VStack>
+      </HStack>
+    </VStack>
+  </VStack>
+  
+  <Spacer />
+</VStack>
+.padding()
+.navigationTitle("Rachel")

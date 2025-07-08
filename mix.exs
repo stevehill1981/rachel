@@ -45,10 +45,16 @@ defmodule Rachel.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.8.0-rc.3", override: true},
+      {:phoenix, "~> 1.7"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.0.9"},
+      {:phoenix_live_view, "~> 1.0"},
+      
+      # LiveView Native dependencies
+      {:live_view_native, "~> 0.4.0-rc.1"},
+      {:live_view_native_stylesheet, "~> 0.4.0-rc.1"},
+      {:live_view_native_swiftui, "~> 0.4.0-rc.1"},
+      {:live_view_native_live_form, "~> 0.4.0-rc.1"},
       {:floki, ">= 0.30.0", only: :test},
       {:excoveralls, "~> 0.18", only: :test},
       {:meck, "~> 1.0", only: :test},

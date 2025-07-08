@@ -1,0 +1,69 @@
+<% # Playing card component for SwiftUI %>
+<%= if assigns[:card] do %>
+  <RoundedRectangle cornerRadius="12">
+    <ZStack>
+      <!-- Card background -->
+      <Rectangle style="fill(.white)" />
+      
+      <!-- Card content -->
+      <VStack spacing="8">
+        <Text style="font(.largeTitle); fontWeight(.bold)">
+          <%= rank_to_string(@card.rank) %>
+        </Text>
+        
+        <Image systemName={suit_to_system_image(@card.suit)}>
+          .imageScale(.large)
+          .foregroundColor({suit_color(@card.suit)})
+        </Image>
+      </VStack>
+      
+      <!-- Special card indicator -->
+      <%= if special_card?(@card) do %>
+        <Text style="font(.title); opacity(0.2)">
+          <%= special_icon(@card) %>
+        </Text>
+      <% end %>
+      
+      <!-- Selection indicator -->
+      <%= if @selected do %>
+        <Image systemName="checkmark.circle.fill">
+          .font(.title)
+          .foregroundColor(.blue)
+          .offset(x: 30, y: -40)
+        </Image>
+      <% end %>
+    </ZStack>
+  </RoundedRectangle>
+  .frame(width: 80, height: 120)
+  .shadow(radius: @selected && 8 || 4)
+  .scaleEffect(@selected && 1.1 || 1.0)
+  .animation(.spring(response: 0.3))
+  .onTapGesture(
+    @disabled || nil,
+    fn -> nil end,
+    fn -> 
+      %{ "phx-click" => "select_card", "phx-value-index" => @index }
+    end
+  )
+<% end %>
+
+<% # Helper function definitions for SwiftUI %>
+<%= defp suit_to_system_image(suit) do
+  case suit do
+    :hearts -> "heart.fill"
+    :diamonds -> "diamond.fill"
+    :clubs -> "suit.club.fill"
+    :spades -> "suit.spade.fill"
+    _ -> "questionmark"
+  end
+end %>
+
+<%= defp suit_color(suit) do
+  case suit do
+    :hearts -> Color.red
+    :diamonds -> Color.red
+    :clubs -> Color.black
+    :spades -> Color.black
+    _ -> Color.gray
+  end
+end %>
