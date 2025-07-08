@@ -323,7 +323,7 @@ defmodule RachelWeb.GameComponents do
         (@is_current || @is_you) && "bg-white/90 text-gray-800",
         !@is_current && !@is_you && "bg-gray-300 text-gray-700"
       ]}>
-        {String.first(@player.name)}
+        {get_initials(@player.name)}
       </div>
       <div class="flex items-center gap-1 min-w-0">
         <div class={[
@@ -333,7 +333,7 @@ defmodule RachelWeb.GameComponents do
           {@player.name}
         </div>
         <%= if @player.is_ai do %>
-          <div class="text-xs opacity-80 flex-shrink-0" title="AI Player">🖥️</div>
+          <div class="text-xs opacity-80 flex-shrink-0 hidden sm:block" title="AI Player">🖥️</div>
         <% end %>
         <%= if Map.get(@player, :connected, true) == false && !@player.is_ai do %>
           <div class="text-xs opacity-80 flex-shrink-0" title="Disconnected">🔴</div>

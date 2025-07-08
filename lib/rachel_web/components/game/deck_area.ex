@@ -52,17 +52,17 @@ defmodule RachelWeb.Components.Game.DeckArea do
         </div>
       <% end %>
 
-      <div class="flex items-center justify-center gap-8 mb-8">
+      <div class="flex items-center justify-center gap-4 md:gap-8">
         <!-- Deck -->
         <div class="flex flex-col items-center">
-          <div class="w-32 h-44">
+          <div class="w-24 h-32 md:w-32 md:h-44">
             <.deck_display deck_size={@deck_size} can_draw={@can_draw} />
           </div>
         </div>
         
     <!-- Current Card -->
         <div class="flex flex-col items-center">
-          <div class="w-32 h-44">
+          <div class="w-24 h-32 md:w-32 md:h-44">
             <.current_card_display
               card={@current_card}
               discard_pile_size={@discard_pile_size}
