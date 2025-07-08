@@ -257,7 +257,7 @@ defmodule RachelWeb.GameLobbyLive do
   end
 
   @impl true
-  def handle_info({:game_update, game}, socket) do
+  def handle_info({:game_updated, game}, socket) do
     # Game was updated (player joined, left, etc.)
     {:noreply, assign(socket, :game, game)}
   end
