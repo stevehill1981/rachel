@@ -779,6 +779,23 @@
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* Reset deck draw button appearance */
+button[id^="deck-draw-button"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+button[id^="deck-draw-button"]:focus,
+button[id^="deck-draw-button"]:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Smooth transitions */
 * {
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, 
