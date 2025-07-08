@@ -330,6 +330,8 @@ defmodule RachelWeb.GameComponents do
         <button
           id={"deck-draw-button-#{@layout}-#{@player_id || "default"}"}
           phx-click="draw_card"
+          phx-hook="ClickDebounce"
+          data-debounce="500"
           class={
             [
               "absolute inset-0 z-20 rounded-2xl transition-all duration-300 cursor-pointer group touch-manipulation",
@@ -341,8 +343,6 @@ defmodule RachelWeb.GameComponents do
           }
           title="Draw cards from deck"
           aria-label={"Draw cards from deck, #{@deck_size} cards remaining"}
-          phx-hook="SoundEffect"
-          data-sound="card-draw"
         >
           <!-- Background overlay - more visible on mobile -->
           <div
@@ -595,6 +595,8 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="hearts"
+            phx-hook="ClickDebounce"
+            data-debounce="500"
             class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
             style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
             onmouseover="this.style.borderColor='var(--theme-card-red)'"
@@ -617,6 +619,8 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="diamonds"
+            phx-hook="ClickDebounce"
+            data-debounce="500"
             class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
             style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
             onmouseover="this.style.borderColor='var(--theme-card-red)'"
@@ -639,6 +643,8 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="clubs"
+            phx-hook="ClickDebounce"
+            data-debounce="500"
             class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
             style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
             onmouseover="this.style.borderColor='var(--theme-card-black)'"
@@ -661,6 +667,8 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="spades"
+            phx-hook="ClickDebounce"
+            data-debounce="500"
             class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
             style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
             onmouseover="this.style.borderColor='var(--theme-card-black)'"

@@ -35,6 +35,16 @@ defmodule RachelWeb.Components.Game.GameInProgress do
     <!-- Theme Selector Button - Top Right -->
       <.theme_selector_button position="absolute top-4 right-4" />
       
+      <!-- Connection Status Indicator - Top Left -->
+      <div 
+        id="connection-status" 
+        phx-hook="ConnectionStatus"
+        class="absolute top-4 left-4 text-lg font-bold z-50"
+        title="Connection Status"
+      >
+        ●
+      </div>
+      
     <!-- Game Layout -->
       <div class="relative game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-32 lg:pb-0">
         <!-- Top Players - Compact on mobile for more game space -->

@@ -103,6 +103,8 @@ defmodule RachelWeb.GameLobbyLive do
                   <button
                     phx-click="remove_ai"
                     phx-value-player-id={player.id}
+                    phx-hook="ClickDebounce"
+                    data-debounce="500"
                     class="text-red-500 hover:text-red-700 transition-colors"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,6 +148,8 @@ defmodule RachelWeb.GameLobbyLive do
               <button
                 phx-click="add_ai"
                 disabled={@adding_ai || length(@game.players) >= 8}
+                phx-hook="ClickDebounce"
+                data-debounce="1000"
                 class="px-4 py-2 rounded-lg font-medium transition-colors"
                 style={
                   if(@adding_ai || length(@game.players) >= 8,
@@ -172,6 +176,8 @@ defmodule RachelWeb.GameLobbyLive do
               <button
                 phx-click="start_game"
                 disabled={length(@game.players) < 2}
+                phx-hook="ClickDebounce"
+                data-debounce="1000"
                 class="px-6 py-2 rounded-lg font-medium transition-colors"
                 style={
                   if(length(@game.players) < 2,
@@ -233,6 +239,8 @@ defmodule RachelWeb.GameLobbyLive do
             />
             <button
               phx-click="copy_game_url"
+              phx-hook="ClickDebounce"
+              data-debounce="1000"
               class="px-4 py-2 rounded-lg font-medium transition-colors"
               style="background-color: var(--theme-button-primary); color: var(--theme-text-inverse);"
             >

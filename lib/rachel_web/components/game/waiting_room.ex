@@ -35,6 +35,8 @@ defmodule RachelWeb.Components.Game.WaitingRoom do
             </span>
             <button
               phx-click="copy_game_code"
+              phx-hook="ClickDebounce"
+              data-debounce="1000"
               class="theme-text-tertiary hover:theme-text-primary transition-colors text-2xl"
               title="Copy game code"
             >
@@ -117,6 +119,8 @@ defmodule RachelWeb.Components.Game.WaitingRoom do
         <%= if @player_count >= 2 do %>
           <button
             phx-click="start_game"
+            phx-hook="ClickDebounce"
+            data-debounce="1000"
             class="px-8 py-3 text-lg font-semibold rounded-lg transition-colors shadow-lg"
             style="background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
             onmouseover="this.style.filter='brightness(1.1)'"

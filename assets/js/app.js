@@ -39,6 +39,67 @@ const Hooks = {
   SpectatorDashboard,
   ThemeManager,
   
+  // Button debouncing to prevent double-clicks and improve reliability
+  ClickDebounce: {
+    mounted() {
+      this.lastClick = 0
+      this.debounceMs = parseInt(this.el.dataset.debounce) || 500
+      
+      this.el.addEventListener('click', (e) => {
+        const now = Date.now()
+        if (now - this.lastClick < this.debounceMs) {
+          e.preventDefault()
+          e.stopImmediatePropagation()
+          console.log('Click debounced')
+          return false
+        }
+        this.lastClick = now
+        
+        // Add visual feedback
+        this.el.style.opacity = '0.7'
+        setTimeout(() => {
+          if (this.el) this.el.style.opacity = '1'
+        }, 200)
+      }, true) // Use capture to ensure we get the event first
+    }
+  },
+  
+  // Connection status indicator to help debug reliability issues
+  ConnectionStatus: {
+    mounted() {
+      this.updateStatus('connecting')
+      
+      // Listen for LiveSocket connection events
+      window.addEventListener('phx:live_socket_connected', () => {
+        this.updateStatus('connected')
+      })
+      
+      window.addEventListener('phx:live_socket_disconnected', () => {
+        this.updateStatus('disconnected')
+      })
+      
+      window.addEventListener('phx:live_socket_error', () => {
+        this.updateStatus('error')
+      })
+    },
+    
+    updateStatus(status) {
+      this.el.className = `connection-status connection-status-${status}`
+      this.el.title = `Connection: ${status}`
+      
+      const indicators = {
+        connecting: { text: '●', color: '#f59e0b' }, // yellow
+        connected: { text: '●', color: '#10b981' },   // green  
+        disconnected: { text: '●', color: '#ef4444' }, // red
+        error: { text: '●', color: '#dc2626' }        // dark red
+      }
+      
+      const indicator = indicators[status] || indicators.disconnected
+      this.el.textContent = indicator.text
+      this.el.style.color = indicator.color
+    }
+  },
+  
   // Simple bridge to convert LiveView events to window events
   ThemeBridge: {
     mounted() {
@@ -394,7 +455,27 @@ const Hooks = {
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: Hooks
+  hooks: Hooks,
+  // Improve reliability with better reconnection settings
+  reconnectAfterMs: (tries) => {
+    // Exponential backoff with jitter: 1s, 2s, 4s, 8s, max 30s
+    return Math.min(1000 * Math.pow(2, tries - 1) + Math.random() * 1000, 30000)
+  },
+  // Increase timeout for slow connections
+  timeout: 10000,
+  // Better error handling
+  onError: (error) => {
+    console.error("LiveSocket error:", error)
+    window.dispatchEvent(new CustomEvent('phx:live_socket_error'))
+  },
+  onOpen: () => {
+    console.log("LiveSocket connected")
+    window.dispatchEvent(new CustomEvent('phx:live_socket_connected'))
+  },
+  onClose: () => {
+    console.log("LiveSocket disconnected")
+    window.dispatchEvent(new CustomEvent('phx:live_socket_disconnected'))
+  }
 })
 
 // Show progress bar on live navigation and form submits

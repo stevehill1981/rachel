@@ -61,7 +61,11 @@
       "Bash(iex:*)",
       "Bash(sed:*)",
       "Bash(ls:*)",
-      "Bash(./check.sh:*)"
+      "Bash(./check.sh:*)",
+      "Bash(fly logs:*)",
+      "WebFetch(domain:rachel.stevehill.xyz)",
+      "Bash(fly machine restart:*)",
+      "Bash(fly deploy:*)"
     ],
     "deny": []
   }
