@@ -160,9 +160,16 @@ defmodule RachelWeb.ThemeComponents do
       phx-value-theme={@theme.id}
       class={[
         "w-full p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] text-left group overflow-hidden",
-        @is_current && "border-blue-500 bg-blue-50 shadow-lg",
+        @is_current && "shadow-lg",
         !@is_current && "border-gray-200 hover:border-gray-300 hover:shadow-md"
       ]}
+      style={
+        if @is_current do
+          "border-color: #{@theme.primary}; background-color: #{@theme.primary}1A;"
+        else
+          ""
+        end
+      }
     >
       <!-- Mini scene preview -->
       <div
@@ -216,7 +223,7 @@ defmodule RachelWeb.ThemeComponents do
         
     <!-- Current indicator -->
         <%= if @is_current do %>
-          <div class="w-4 h-4 text-blue-500 flex-shrink-0">
+          <div class="w-4 h-4 flex-shrink-0" style={"color: #{@theme.primary};"}>
             <svg fill="currentColor" viewBox="0 0 20 20">
               <path
                 fill-rule="evenodd"
@@ -238,9 +245,16 @@ defmodule RachelWeb.ThemeComponents do
       phx-value-theme={@theme.id}
       class={[
         "w-full p-6 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.02] text-left group overflow-hidden",
-        @is_current && "border-blue-500 bg-blue-50 shadow-lg",
+        @is_current && "shadow-lg",
         !@is_current && "border-gray-200 hover:border-gray-300 hover:shadow-md"
       ]}
+      style={
+        if @is_current do
+          "border-color: #{@theme.primary}; background-color: #{@theme.primary}1A;"
+        else
+          ""
+        end
+      }
     >
       <div class="flex items-start gap-6">
         <!-- Large scene preview -->
@@ -312,9 +326,15 @@ defmodule RachelWeb.ThemeComponents do
     <!-- Selection indicator -->
         <div class={[
           "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors flex-shrink-0",
-          @is_current && "border-blue-500 bg-blue-500",
-          !@is_current && "border-gray-300 group-hover:border-blue-300"
-        ]}>
+          !@is_current && "border-gray-300 group-hover:border-gray-400"
+        ]}
+        style={
+          if @is_current do
+            "border-color: #{@theme.primary}; background-color: #{@theme.primary};"
+          else
+            ""
+          end
+        }>
           <%= if @is_current do %>
             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path
