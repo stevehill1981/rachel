@@ -104,7 +104,7 @@ defmodule RachelWeb.HomeLive do
                     placeholder="Join code"
                     maxlength="10"
                     required
-                    class="w-full px-4 py-3 rounded-lg focus:ring-2 transition-colors theme-text-primary uppercase"
+                    class="w-full px-4 py-3 rounded-lg focus:ring-2 transition-colors theme-text-primary"
                     style="border: 2px solid var(--theme-card-border); background-color: var(--theme-card-bg);"
                   />
                   <input
