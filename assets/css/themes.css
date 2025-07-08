@@ -618,11 +618,25 @@ textarea::placeholder {
   outline-style: dashed;
 }
 
-/* Disable global focus outlines for theme selector buttons */
-#theme-menu button:focus,
-#theme-menu button:focus-visible {
+/* Reset button styling for theme selector buttons */
+#theme-menu button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background: none !important;
+  border: none !important;
   outline: none !important;
   box-shadow: none !important;
+}
+
+#theme-menu button:focus,
+#theme-menu button:focus-visible,
+#theme-menu button:hover,
+#theme-menu button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  border: none !important;
 }
 
 /* Prevent flash of unstyled content during theme loading */
