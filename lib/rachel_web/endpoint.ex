@@ -24,7 +24,12 @@ defmodule RachelWeb.Endpoint do
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [
       connect_info: [session: @session_options],
-      check_origin: false
+      check_origin: [
+        "https://rachel.stevehill.xyz",
+        "https://rachel-game.fly.dev",
+        "http://localhost:4000",
+        "https://localhost:4000"
+      ]
     ],
     longpoll: [connect_info: [session: @session_options]]
 
