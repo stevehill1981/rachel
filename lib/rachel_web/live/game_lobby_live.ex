@@ -102,11 +102,13 @@ defmodule RachelWeb.GameLobbyLive do
             <% end %>
             
             <!-- Empty slots -->
-            <%= for _i <- (length(@game.players) + 1)..8 do %>
-              <div class="flex items-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-400">
-                <div class="w-10 h-10 rounded-full bg-gray-100 mr-3"></div>
-                <p>Empty slot</p>
-              </div>
+            <%= if length(@game.players) < 8 do %>
+              <%= for _i <- (length(@game.players) + 1)..8 do %>
+                <div class="flex items-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-400">
+                  <div class="w-10 h-10 rounded-full bg-gray-100 mr-3"></div>
+                  <p>Empty slot</p>
+                </div>
+              <% end %>
             <% end %>
           </div>
         </div>
@@ -195,7 +197,11 @@ defmodule RachelWeb.GameLobbyLive do
   def handle_event("add_ai", _, socket) do
     socket = assign(socket, :adding_ai, true)
     
-    case GameServer.add_ai_player(socket.assigns.game_id, generate_ai_name()) do
+    # Generate a unique AI name
+    existing_names = Enum.map(socket.assigns.game.players, & &1.name)
+    ai_name = generate_unique_ai_name(existing_names)
+    
+    case GameServer.add_ai_player(socket.assigns.game_id, ai_name) do
       {:ok, _game} ->
         socket =
           socket
@@ -271,10 +277,28 @@ defmodule RachelWeb.GameLobbyLive do
     {:noreply, socket}
   end
 
-  defp generate_ai_name do
-    first_names = ["Clever", "Swift", "Wise", "Bold", "Lucky", "Sneaky", "Brave", "Crafty"]
-    last_names = ["Clara", "Max", "Sam", "Alex", "Pat", "Casey", "Jordan", "Drew"]
+  defp generate_unique_ai_name(existing_names, attempt \\ 0) do
+    # Increase the pool of names for better uniqueness
+    first_names = ["Clever", "Swift", "Wise", "Bold", "Lucky", "Sneaky", "Brave", "Crafty", 
+                   "Sharp", "Quick", "Smart", "Cool", "Fast", "Sly", "Keen", "Bright"]
+    last_names = ["Clara", "Max", "Sam", "Alex", "Pat", "Casey", "Jordan", "Drew",
+                  "Quinn", "Blake", "River", "Sky", "Nova", "Sage", "Phoenix", "Storm"]
     
-    "#{Enum.random(first_names)} #{Enum.random(last_names)}"
+    base_name = "#{Enum.random(first_names)} #{Enum.random(last_names)}"
+    
+    # Add a number suffix if we've tried too many times or name exists
+    name = if attempt > 0 or base_name in existing_names do
+      suffix = if attempt == 0, do: 2, else: attempt + 2
+      "#{base_name} #{suffix}"
+    else
+      base_name
+    end
+    
+    # If this name still exists, try again (with safety limit)
+    if name in existing_names and attempt < 50 do
+      generate_unique_ai_name(existing_names, attempt + 1)
+    else
+      name
+    end
   end
 end
