@@ -101,10 +101,11 @@ defmodule RachelWeb.HomeLive do
                     name="game_code"
                     value={@game_code}
                     phx-change="update_game_code"
-                    placeholder="Game code"
+                    placeholder="Join code"
                     maxlength="10"
                     required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
+                    class="w-full px-4 py-3 rounded-lg focus:ring-2 transition-colors theme-text-primary uppercase"
+                    style="border: 2px solid var(--theme-card-border); background-color: var(--theme-card-bg);"
                   />
                   <input
                     type="text"

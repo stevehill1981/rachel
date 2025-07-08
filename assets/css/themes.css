@@ -218,6 +218,13 @@
               box-shadow 0.3s ease;
 }
 
+/* Placeholder text styling for inputs */
+input::placeholder,
+textarea::placeholder {
+  color: var(--theme-text-tertiary);
+  opacity: 0.7;
+}
+
 /* Theme-aware component classes */
 .theme-bg-primary { 
   background-color: var(--theme-bg-primary) !important; 
