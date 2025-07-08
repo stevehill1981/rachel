@@ -412,18 +412,18 @@ defmodule Rachel.Games.GameServer do
     if state.game.status == :waiting do
       # Find the player and remove them
       new_players = Enum.reject(state.game.players, &(&1.id == player_id))
-      
+
       if length(new_players) != length(state.game.players) do
         # Player was found and removed
         new_game = %{state.game | players: new_players}
-        
+
         new_state = %{
           state
           | game: new_game,
             connected_players: Map.delete(state.connected_players, player_id),
             updated_at: DateTime.utc_now()
         }
-        
+
         broadcast_game_update(new_state)
         {:reply, {:ok, new_state.game}, new_state}
       else
@@ -470,7 +470,8 @@ defmodule Rachel.Games.GameServer do
     current_player = Enum.at(state.game.players, state.game.current_player_index)
 
     final_state =
-      if current_player && current_player.id == player_id && current_player.is_ai && state.game.status == :playing do
+      if current_player && current_player.id == player_id && current_player.is_ai &&
+           state.game.status == :playing do
         # For AI players, schedule AI turn immediately since they don't need to "reconnect"
         state_with_cancelled_timer = cancel_ai_timer(new_state)
         ai_ref = Process.send_after(self(), :ai_turn, 1000)
@@ -512,7 +513,10 @@ defmodule Rachel.Games.GameServer do
             else
               # Human players get 10 second grace period to reconnect
               state_with_cancelled = cancel_disconnect_timer(new_state, player_id)
-              timer_ref = Process.send_after(self(), {:check_disconnected_player, player_id}, 10_000)
+
+              timer_ref =
+                Process.send_after(self(), {:check_disconnected_player, player_id}, 10_000)
+
               put_in(state_with_cancelled.disconnect_check_timers[player_id], timer_ref)
             end
           else
@@ -595,7 +599,6 @@ defmodule Rachel.Games.GameServer do
       player -> player.is_ai
     end
   end
-
 
   defp process_ai_turn(state) do
     current_player = Enum.at(state.game.players, state.game.current_player_index)

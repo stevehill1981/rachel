@@ -10,6 +10,7 @@ defmodule RachelWeb.Components.Game.DeckArea do
   attr :player_id, :string, required: true
   attr :show_ai_thinking, :boolean, default: false
   attr :current_player, :any, required: true
+  attr :layout, :string, default: "default"
 
   def deck_area(assigns) do
     # With normalized game data, we can access fields directly
@@ -55,13 +56,20 @@ defmodule RachelWeb.Components.Game.DeckArea do
       <div class="flex items-center justify-center gap-4 md:gap-8">
         <!-- Deck -->
         <div class="flex flex-col items-center">
+          <div class="text-xs font-medium theme-text-tertiary mb-2 opacity-70">Deck</div>
           <div class="w-24 h-32 md:w-32 md:h-44">
-            <.deck_display deck_size={@deck_size} can_draw={@can_draw} />
+            <.deck_display
+              deck_size={@deck_size}
+              can_draw={@can_draw}
+              player_id={@player_id}
+              layout={@layout}
+            />
           </div>
         </div>
         
     <!-- Current Card -->
         <div class="flex flex-col items-center">
+          <div class="text-xs font-medium theme-text-tertiary mb-2 opacity-70">Current Card</div>
           <div class="w-24 h-32 md:w-32 md:h-44">
             <.current_card_display
               card={@current_card}

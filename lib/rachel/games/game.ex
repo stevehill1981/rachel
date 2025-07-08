@@ -341,7 +341,9 @@ defmodule Rachel.Games.Game do
 
     # Log the state for debugging
     if deck_size == 0 do
-      Logger.warning("Deck is empty! Deck: #{deck_size}, Discard: #{discard_size}, Need: #{count}")
+      Logger.warning(
+        "Deck is empty! Deck: #{deck_size}, Discard: #{discard_size}, Need: #{count}"
+      )
     end
 
     cond do
@@ -354,10 +356,10 @@ defmodule Rachel.Games.Game do
       deck_size > 0 ->
         {initial_cards, empty_deck} = Deck.draw(deck, deck_size)
         remaining_count = count - deck_size
-        
+
         # Now reshuffle and draw the rest
         {reshuffled_deck, new_discard} = reshuffle_discard_into_deck(empty_deck, discard_pile)
-        
+
         if Deck.size(reshuffled_deck) >= remaining_count do
           {more_cards, final_deck} = Deck.draw(reshuffled_deck, remaining_count)
           {initial_cards ++ more_cards, final_deck, new_discard}
@@ -370,12 +372,15 @@ defmodule Rachel.Games.Game do
       # Deck is empty - must reshuffle
       true ->
         {reshuffled_deck, new_discard} = reshuffle_discard_into_deck(deck, discard_pile)
-        
+
         available_count = min(count, Deck.size(reshuffled_deck))
+
         if available_count < count do
-          Logger.warning("Not enough cards even after reshuffle! Have: #{available_count}, Need: #{count}")
+          Logger.warning(
+            "Not enough cards even after reshuffle! Have: #{available_count}, Need: #{count}"
+          )
         end
-        
+
         {cards, final_deck} = Deck.draw(reshuffled_deck, available_count)
         {cards, final_deck, new_discard}
     end
@@ -398,9 +403,9 @@ defmodule Rachel.Games.Game do
         # Reshuffle all cards except the current card
         all_cards = deck.cards ++ cards_to_reshuffle
         reshuffled_deck = %{deck | cards: Enum.shuffle(all_cards)}
-        
+
         Logger.info("Reshuffled #{length(cards_to_reshuffle)} cards from discard pile into deck")
-        
+
         # Keep only the current card in discard pile
         {reshuffled_deck, [current_card]}
     end
@@ -410,11 +415,11 @@ defmodule Rachel.Games.Game do
   defp check_and_reshuffle_if_needed(game) do
     deck_size = Deck.size(game.deck)
     discard_size = length(game.discard_pile)
-    
+
     # If deck has fewer than 10 cards and discard pile has more than 5 cards, reshuffle
     if deck_size < 10 && discard_size > 5 do
       Logger.info("Proactive reshuffle: Deck has #{deck_size} cards, reshuffling discard pile")
-      
+
       {new_deck, new_discard} = reshuffle_discard_into_deck(game.deck, game.discard_pile)
       %{game | deck: new_deck, discard_pile: new_discard}
     else

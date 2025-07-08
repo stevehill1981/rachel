@@ -50,6 +50,7 @@ defmodule RachelWeb.GameLive do
           |> assign(:selected_cards, [])
           |> assign(:show_winner_banner, false)
           |> assign(:winner_acknowledged, false)
+          |> assign(:celebration_shown, false)
 
         {:ok, socket}
 
@@ -69,17 +70,17 @@ defmodule RachelWeb.GameLive do
 
       :create_with_ai ->
         # Create AI game instantly with generated name
-        player_name = 
+        player_name =
           if socket.assigns.player_name && String.trim(socket.assigns.player_name) != "" do
             socket.assigns.player_name
           else
             generate_random_name()
           end
-        
+
         case create_ai_game(socket.assigns.player_id, player_name) do
           {:ok, game_id} ->
             {:ok, push_navigate(socket, to: "/game/#{game_id}")}
-          
+
           {:error, _reason} ->
             {:ok, push_navigate(socket, to: "/")}
         end
@@ -97,6 +98,7 @@ defmodule RachelWeb.GameLive do
           |> assign(:selected_cards, [])
           |> assign(:show_winner_banner, false)
           |> assign(:winner_acknowledged, false)
+          |> assign(:celebration_shown, false)
 
         # Check if AI should start
         AIManager.schedule_ai_move(game)
@@ -246,7 +248,6 @@ defmodule RachelWeb.GameLive do
     # Use the same window event approach as the root layout
     {:noreply, push_event(socket, "phx:set-theme", %{theme: theme})}
   end
-
 
   @impl true
   @spec handle_info(any(), Socket.t()) :: {:noreply, Socket.t()}
@@ -401,7 +402,11 @@ defmodule RachelWeb.GameLive do
     case Actions.play_cards_action(socket, selected_cards) do
       {:ok, new_game} ->
         winner_updates =
-          StateManager.check_and_show_winner_banner_updates(new_game, socket.assigns.player_id)
+          StateManager.check_and_show_winner_banner_updates(
+            new_game,
+            socket.assigns.player_id,
+            socket.assigns.celebration_shown
+          )
 
         auto_draw_updates =
           StateManager.check_auto_draw_updates(new_game, socket.assigns.player_id)
@@ -494,7 +499,7 @@ defmodule RachelWeb.GameLive do
   defp generate_random_name do
     adjectives = ["Quick", "Clever", "Lucky", "Swift", "Bold", "Bright", "Sharp", "Wise"]
     nouns = ["Player", "Gamer", "Card", "Star", "Hero", "Ace", "King", "Queen"]
-    
+
     "#{Enum.random(adjectives)} #{Enum.random(nouns)}"
   end
 end

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rachel Theme System Browser Test</title>
+    <style>
+        /* Copy key theme variables for testing */
+        :root {
+            --theme-primary: #3b82f6;
+            --theme-bg-primary: #f8fafc;
+            --theme-text-primary: #1e293b;
+            --theme-card-gradient: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+            --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        :root[data-theme="modern-minimalist"] {
+            --theme-primary: #007aff;
+            --theme-bg-primary: #ffffff;
+            --theme-text-primary: #1d1d1f;
+            --theme-card-gradient: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+        }
+
+        :root[data-theme="premium-card-room"] {
+            --theme-primary: #d4af37;
+            --theme-bg-primary: #1a2332;
+            --theme-text-primary: #ecf0f1;
+            --theme-card-gradient: linear-gradient(135deg, #2a3f5f 0%, #1e2d45 100%);
+        }
+
+        :root[data-theme="warm-social"] {
+            --theme-primary: #d2691e;
+            --theme-bg-primary: #faf6f2;
+            --theme-text-primary: #3e2723;
+            --theme-card-gradient: linear-gradient(135deg, #fffef7 0%, #faf6ee 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--theme-bg-primary);
+            color: var(--theme-text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--theme-card-gradient);
+            box-shadow: var(--theme-shadow-md);
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .theme-button {
+            padding: 10px 20px;
+            border: 2px solid var(--theme-primary);
+            background: var(--theme-primary);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-button:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+
+        .compatibility-check {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .check-item {
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--theme-primary);
+        }
+
+        .check-status {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .pass { color: #10b981; }
+        .fail { color: #ef4444; }
+        .warn { color: #f59e0b; }
+
+        /* Animation tests */
+        .animation-test {
+            width: 100px;
+            height: 100px;
+            background: var(--theme-primary);
+            border-radius: 8px;
+            margin: 10px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animation-test:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Responsive test */
+        @media (max-width: 768px) {
+            .test-container {
+                padding: 10px;
+            }
+            
+            .theme-selector {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Rachel Theme System Browser Compatibility Test</h1>
+        
+        <div class="theme-selector">
+            <button class="theme-button" onclick="setTheme('modern-minimalist')">Modern Minimalist</button>
+            <button class="theme-button" onclick="setTheme('premium-card-room')">Premium Card Room</button>
+            <button class="theme-button" onclick="setTheme('warm-social')">Warm & Social</button>
+        </div>
+
+        <div class="test-section">
+            <h2>Browser Compatibility Checks</h2>
+            <div class="compatibility-check" id="compatibility-results">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Visual Tests</h2>
+            <p>These elements should change appearance when switching themes:</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                <div class="animation-test" title="Hover me for animation test"></div>
+                <div style="padding: 20px; background: var(--theme-card-gradient); border-radius: 8px;">
+                    Card gradient background
+                </div>
+                <div style="color: var(--theme-primary); font-weight: bold; font-size: 18px;">
+                    Primary color text
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Performance Test</h2>
+            <button onclick="performanceTest()" class="theme-button">Test Theme Switch Speed</button>
+            <div id="performance-results" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Theme switching functionality
+        function setTheme(themeName) {
+            const start = performance.now();
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem('phx:theme', themeName);
+            
+            // Measure time for CSS to apply
+            requestAnimationFrame(() => {
+                const end = performance.now();
+                console.log(`Theme switch took ${end - start}ms`);
+            });
+        }
+
+        // Load saved theme on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('phx:theme') || 'modern-minimalist';
+            setTheme(savedTheme);
+            runCompatibilityChecks();
+        });
+
+        // Compatibility checks
+        function runCompatibilityChecks() {
+            const results = document.getElementById('compatibility-results');
+            const checks = [
+                {
+                    name: 'CSS Custom Properties',
+                    test: () => CSS.supports('color', 'var(--test)')
+                },
+                {
+                    name: 'CSS Grid',
+                    test: () => CSS.supports('display', 'grid')
+                },
+                {
+                    name: 'CSS Flexbox',
+                    test: () => CSS.supports('display', 'flex')
+                },
+                {
+                    name: 'CSS Transitions',
+                    test: () => CSS.supports('transition', 'all 0.3s ease')
+                },
+                {
+                    name: 'CSS Transforms',
+                    test: () => CSS.supports('transform', 'scale(1.1)')
+                },
+                {
+                    name: 'Local Storage',
+                    test: () => typeof Storage !== 'undefined'
+                },
+                {
+                    name: 'requestAnimationFrame',
+                    test: () => typeof requestAnimationFrame !== 'undefined'
+                },
+                {
+                    name: 'CSS calc()',
+                    test: () => CSS.supports('width', 'calc(100% - 20px)')
+                },
+                {
+                    name: 'CSS backdrop-filter',
+                    test: () => CSS.supports('backdrop-filter', 'blur(10px)') || CSS.supports('-webkit-backdrop-filter', 'blur(10px)')
+                },
+                {
+                    name: 'CSS object-fit',
+                    test: () => CSS.supports('object-fit', 'cover')
+                }
+            ];
+
+            results.innerHTML = checks.map(check => {
+                const passed = check.test();
+                const statusClass = passed ? 'pass' : 'fail';
+                const statusText = passed ? '✓ PASS' : '✗ FAIL';
+                
+                return `
+                    <div class="check-item">
+                        <strong>${check.name}</strong>
+                        <div class="check-status ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Performance test
+        function performanceTest() {
+            const themes = ['modern-minimalist', 'premium-card-room', 'warm-social'];
+            const results = document.getElementById('performance-results');
+            const measurements = [];
+
+            let currentIndex = 0;
+            const testNext = () => {
+                if (currentIndex >= themes.length) {
+                    const avg = measurements.reduce((a, b) => a + b, 0) / measurements.length;
+                    results.innerHTML = `
+                        <strong>Performance Results:</strong><br>
+                        Individual switches: ${measurements.map(m => m.toFixed(2) + 'ms').join(', ')}<br>
+                        Average: ${avg.toFixed(2)}ms
+                        ${avg < 16 ? ' <span class="pass">✓ Excellent (60fps)</span>' : 
+                          avg < 33 ? ' <span class="warn">⚠ Good (30fps)</span>' : 
+                          ' <span class="fail">✗ Slow (needs optimization)</span>'}
+                    `;
+                    return;
+                }
+
+                const start = performance.now();
+                setTheme(themes[currentIndex]);
+                
+                requestAnimationFrame(() => {
+                    const end = performance.now();
+                    measurements.push(end - start);
+                    currentIndex++;
+                    setTimeout(testNext, 100); // Small delay between tests
+                });
+            };
+
+            results.innerHTML = 'Testing theme switch performance...';
+            testNext();
+        }
+
+        // Browser info
+        console.log('Browser Info:', {
+            userAgent: navigator.userAgent,
+            vendor: navigator.vendor,
+            cssSupport: {
+                customProperties: CSS.supports('color', 'var(--test)'),
+                grid: CSS.supports('display', 'grid'),
+                flexbox: CSS.supports('display', 'flex')
+            }
+        });
+    </script>
+</body>
+</html>

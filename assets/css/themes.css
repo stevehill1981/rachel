@@ -1,5 +1,32 @@
 /* Theme System for Rachel Card Game */
 
+/* Fallbacks for browsers without CSS custom property support */
+html {
+  /* Fallback colors for IE 11 and older browsers */
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+body {
+  /* Fallback styling */
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+.playing-card {
+  /* Fallback card styling */
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  color: #1e293b;
+}
+
+button {
+  /* Fallback button styling */
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
 /* Base theme variables that all themes will override */
 :root {
   /* Core color palette */
@@ -49,6 +76,7 @@
   
   /* Status colors */
   --theme-success: #10b981;
+  --theme-success-text: #ffffff;
   --theme-warning: #f59e0b;
   --theme-error: #ef4444;
   --theme-info: #3b82f6;
@@ -156,6 +184,8 @@
   --theme-text-secondary: #d4af37;
   --theme-text-tertiary: #95a5a6;
   --theme-text-inverse: #2c3e50;
+  --theme-success: #27ae60;
+  --theme-success-text: #ffffff;
   
   --theme-button-primary: #d4af37;
   --theme-button-primary-hover: #e6c757;
@@ -212,7 +242,9 @@
   --theme-text-primary: #3e2723;
   --theme-text-secondary: #5d4037;
   --theme-text-tertiary: #8d6e63;
-  --theme-text-inverse: #faf6f2;
+  --theme-text-inverse: #3e2723;
+  --theme-success: #2e7d32;
+  --theme-success-text: #ffffff;
   
   --theme-button-primary: #d2691e;
   --theme-button-primary-hover: #ff7f50;
@@ -586,6 +618,23 @@ textarea::placeholder {
   outline-style: dashed;
 }
 
+/* Prevent flash of unstyled content during theme loading */
+:root {
+  /* Default theme variables are loaded first to prevent flickers */
+  color-scheme: light dark;
+}
+
+/* Optimize initial render by preventing layout shifts */
+html {
+  /* Ensure smooth theme switching without content jumps */
+  scroll-behavior: smooth;
+}
+
+body {
+  /* Prevent brief moments of unstyled content */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* Theme transitions for smooth switching */
 .theme-transition {
   transition: background-color 0.5s ease, 
@@ -594,6 +643,11 @@ textarea::placeholder {
               box-shadow 0.5s ease,
               opacity 0.3s ease,
               transform 0.3s ease;
+}
+
+/* Enhanced transition for theme switching */
+.theme-switching {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* Apply transition to common elements */
@@ -612,4 +666,97 @@ input,
               box-shadow 0.5s ease,
               opacity 0.3s ease,
               transform 0.3s ease;
+}
+
+/* ===== RESPONSIVE DESIGN TESTING ===== */
+
+/* Mobile-specific theme optimizations */
+@media (max-width: 768px) {
+  /* Ensure text remains readable at small sizes */
+  :root[data-theme="modern-minimalist"] {
+    --theme-text-primary: #1d1d1f;
+    --theme-text-secondary: #4a5568;
+  }
+  
+  :root[data-theme="premium-card-room"] {
+    --theme-text-primary: #f7fafc;
+    --theme-text-secondary: #d4af37;
+  }
+  
+  :root[data-theme="warm-social"] {
+    --theme-text-primary: #2d3748;
+    --theme-text-secondary: #4a5568;
+  }
+
+  /* Optimize button sizes for touch */
+  button {
+    min-height: 44px; /* iOS touch target minimum */
+    min-width: 44px;
+  }
+  
+  /* Ensure adequate spacing for readability */
+  .player-card-horizontal {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+}
+
+/* High contrast media query support */
+@media (prefers-contrast: high) {
+  :root {
+    --theme-text-primary: #000000;
+    --theme-bg-primary: #ffffff;
+    --theme-card-border: #000000;
+  }
+  
+  :root[data-theme="premium-card-room"] {
+    --theme-text-primary: #ffffff;
+    --theme-bg-primary: #000000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* Disable theme-specific animations */
+  .playing-card {
+    animation: none !important;
+  }
+  
+  .playing-card:hover {
+    transform: none !important;
+  }
+}
+
+/* Dark mode support for system themes */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Default to premium-card-room colors in dark mode */
+    --theme-primary: #d4af37;
+    --theme-bg-primary: #1a2332;
+    --theme-text-primary: #ecf0f1;
+  }
+}
+
+/* Print styles - remove animations and optimize for printing */
+@media print {
+  * {
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+  
+  .playing-card {
+    border: 1px solid #000 !important;
+    background: white !important;
+    color: black !important;
+  }
 }

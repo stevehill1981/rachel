@@ -26,19 +26,23 @@ defmodule RachelWeb.Components.Game.GameInProgress do
     <!-- Game Board with themed background -->
     <div class="game-board min-h-screen relative" style="background: var(--theme-table-bg);">
       <!-- Table overlay effect -->
-      <div class="absolute inset-0 pointer-events-none" style="background-color: var(--theme-table-overlay);"></div>
+      <div
+        class="absolute inset-0 pointer-events-none"
+        style="background-color: var(--theme-table-overlay);"
+      >
+      </div>
       
-      <!-- Theme Selector Button - Top Right -->
+    <!-- Theme Selector Button - Top Right -->
       <.theme_selector_button position="absolute top-4 right-4" />
       
-      <!-- Game Layout -->
+    <!-- Game Layout -->
       <div class="relative game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-32 lg:pb-0">
         <!-- Top Players - Compact on mobile for more game space -->
         <div class="lg:col-span-3 lg:row-start-1 flex-shrink-0">
           <.players_display game={@game} player_id={@player_id} />
         </div>
         
-      <!-- Mobile: Compact middle section with game area and status side by side -->
+    <!-- Mobile: Compact middle section with game area and status side by side -->
         <div class="flex lg:hidden gap-2 flex-shrink-0 px-2">
           <!-- Main Game Area -->
           <div class="flex-1 flex items-center justify-center min-h-[200px]">
@@ -47,22 +51,24 @@ defmodule RachelWeb.Components.Game.GameInProgress do
               player_id={@player_id}
               show_ai_thinking={@show_ai_thinking}
               current_player={@current_player}
+              layout="mobile"
             />
           </div>
           
-      <!-- Side Game Info - Compact vertical -->
+    <!-- Side Game Info - Compact vertical -->
           <div class="w-20 flex flex-col items-center justify-center">
             <.game_status game={@game} />
           </div>
         </div>
         
-      <!-- Desktop: Original grid layout -->
+    <!-- Desktop: Original grid layout -->
         <div class="hidden lg:flex lg:col-start-2 lg:row-start-2 items-center justify-center">
           <.deck_area
             game={@game}
             player_id={@player_id}
             show_ai_thinking={@show_ai_thinking}
             current_player={@current_player}
+            layout="desktop"
           />
         </div>
 
@@ -70,8 +76,8 @@ defmodule RachelWeb.Components.Game.GameInProgress do
           <.game_status game={@game} />
         </div>
         
-      <!-- Player Hand - Fixed bottom position for easy thumb access -->
-        <div class="lg:col-span-3 lg:row-start-3 mt-auto fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto theme-bg-secondary backdrop-blur lg:bg-transparent p-2 lg:p-0 z-50">
+    <!-- Player Hand - Fixed bottom position for easy thumb access -->
+        <div class="lg:col-span-3 lg:row-start-3 lg:self-end fixed bottom-0 left-0 right-0 lg:relative lg:bottom-auto lg:bg-transparent p-2 lg:p-0 z-40">
           <.player_hand
             game={@game}
             player_id={@player_id}
@@ -84,7 +90,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
           />
         </div>
         
-      <!-- Suit Nomination Modal -->
+    <!-- Suit Nomination Modal -->
         <%= if !@is_spectator && Map.get(@game, :nominated_suit) == :pending && @current_player && @current_player.id == @player_id do %>
           <.suit_selector />
         <% end %>

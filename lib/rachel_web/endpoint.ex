@@ -60,8 +60,37 @@ defmodule RachelWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
 
+  # Security headers
+  plug :put_security_headers
+
   # Sentry error boundary to capture all errors
   plug Sentry.PlugContext
 
   plug RachelWeb.Router
+
+  # Security headers function
+  defp put_security_headers(conn, _opts) do
+    conn
+    |> Plug.Conn.put_resp_header("content-security-policy", csp_header())
+    |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
+    |> Plug.Conn.put_resp_header("x-frame-options", "DENY")
+    |> Plug.Conn.put_resp_header("x-xss-protection", "1; mode=block")
+    |> Plug.Conn.put_resp_header("referrer-policy", "strict-origin-when-cross-origin")
+  end
+
+  defp csp_header do
+    # Content Security Policy for Phoenix LiveView applications
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", # Needed for LiveView and theme switching
+      "style-src 'self' 'unsafe-inline'", # Needed for dynamic theme CSS custom properties
+      "img-src 'self' data:",
+      "font-src 'self'",
+      "connect-src 'self' ws: wss:", # WebSocket connections for LiveView
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ]
+    |> Enum.join("; ")
+  end
 end

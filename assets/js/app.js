@@ -44,9 +44,43 @@ const Hooks = {
     mounted() {
       this.handleEvent("phx:set-theme", ({theme}) => {
         console.log("ThemeBridge converting LiveView event to window event:", theme);
+        
+        // Performance monitoring for theme switches
+        const start = performance.now();
+        
         window.dispatchEvent(new CustomEvent("phx:set-theme", {
           detail: { theme }
         }));
+        
+        // Measure theme switch performance
+        requestAnimationFrame(() => {
+          const end = performance.now();
+          const duration = end - start;
+          
+          // Log performance data
+          console.log(`Theme switch to ${theme}: ${duration.toFixed(2)}ms`);
+          
+          // Warning if theme switch is slow
+          if (duration > 50) {
+            console.warn(`Slow theme switch detected: ${duration.toFixed(2)}ms (target: <16ms for 60fps)`);
+          }
+          
+          // Store performance data for debugging
+          if (!window.rachelPerformanceData) {
+            window.rachelPerformanceData = [];
+          }
+          window.rachelPerformanceData.push({
+            type: 'theme-switch',
+            theme: theme,
+            duration: duration,
+            timestamp: Date.now()
+          });
+          
+          // Keep only last 20 performance measurements
+          if (window.rachelPerformanceData.length > 20) {
+            window.rachelPerformanceData = window.rachelPerformanceData.slice(-20);
+          }
+        });
       });
     }
   },

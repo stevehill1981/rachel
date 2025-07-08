@@ -23,7 +23,7 @@ defmodule RachelWeb.GameComponents do
       type="button"
       class={
         [
-          "playing-card relative rounded-lg border-2 shadow-lg theme-card",
+          "playing-card relative rounded-lg border-2 theme-shadow-lg overflow-hidden",
           "transition-all duration-300 transform flex items-center justify-center",
           # Smaller on mobile, larger on desktop
           "min-h-[100px] min-w-[70px] sm:min-h-[120px] sm:min-w-[85px]",
@@ -33,7 +33,7 @@ defmodule RachelWeb.GameComponents do
           "text-lg sm:text-2xl font-bold",
           # Optimize for touch
           "touch-manipulation",
-          @selected && "selected ring-4 ring-blue-500 -translate-y-2 sm:-translate-y-4 scale-105",
+          @selected && "selected -translate-y-2 sm:-translate-y-4 scale-105",
           @disabled && "opacity-50 cursor-not-allowed",
           # Touch feedback
           !@disabled && "active:scale-95 cursor-pointer touch-card",
@@ -43,8 +43,18 @@ defmodule RachelWeb.GameComponents do
           pickup_card?(@card) && "pickup-card-indicator"
         ]
       }
+      style={
+        "background: var(--theme-card-gradient); border-color: var(--theme-card-border);" <>
+        if @selected do
+          " box-shadow: 0 0 0 4px var(--theme-primary), var(--theme-shadow-lg);"
+        else
+          " box-shadow: var(--theme-shadow-md);"
+        end
+      }
       disabled={@disabled}
       data-effect={card_effect_text(@card)}
+      data-rank={rank_to_string(@card.rank)}
+      data-suit={Atom.to_string(@card.suit)}
       aria-label={card_aria_label(@card, @selected)}
       aria-pressed={(@selected && "true") || "false"}
       id={
@@ -68,7 +78,50 @@ defmodule RachelWeb.GameComponents do
       data-card-index={@index}
       {@rest}
     >
+      <!-- Card pattern overlay -->
+      <div
+        class="absolute inset-0 pointer-events-none opacity-30"
+        style="background-image: var(--theme-card-pattern); background-size: cover;"
+      >
+      </div>
+      
+    <!-- Card corner decorations -->
+      <div
+        class="absolute top-1 left-1 text-xs font-bold opacity-70"
+        style={
+          (card_red?(@card) && "color: var(--theme-card-red);") || "color: var(--theme-card-black);"
+        }
+      >
+        {rank_to_string(@card.rank)}
+      </div>
+      <div
+        class="absolute top-1 right-1 text-xs opacity-70"
+        style={
+          (card_red?(@card) && "color: var(--theme-card-red);") || "color: var(--theme-card-black);"
+        }
+      >
+        {suit_to_symbol(@card.suit)}
+      </div>
+      <div
+        class="absolute bottom-1 left-1 text-xs opacity-70 rotate-180"
+        style={
+          (card_red?(@card) && "color: var(--theme-card-red);") || "color: var(--theme-card-black);"
+        }
+      >
+        {suit_to_symbol(@card.suit)}
+      </div>
+      <div
+        class="absolute bottom-1 right-1 text-xs font-bold opacity-70 rotate-180"
+        style={
+          (card_red?(@card) && "color: var(--theme-card-red);") || "color: var(--theme-card-black);"
+        }
+      >
+        {rank_to_string(@card.rank)}
+      </div>
+      
+    <!-- Main card content -->
       <span class={[
+        "relative z-10",
         card_red?(@card) && "card-suit-red",
         !card_red?(@card) && "card-suit-black"
       ]}>
@@ -106,10 +159,10 @@ defmodule RachelWeb.GameComponents do
       <%= if @discard_pile_size > 0 do %>
         <%= for i <- 1..min(@discard_pile_size, 4) do %>
           <div
-            class="absolute w-full h-full bg-gray-200 rounded-2xl shadow-lg border border-gray-300"
-            style={"top: #{(i-1) * 2}px; left: #{(i-1) * 2}px; transform: rotate(#{(i - 2) * 1}deg); z-index: #{5-i};"}
+            class="absolute w-full h-full rounded-2xl theme-shadow-lg"
+            style={"background-color: var(--theme-bg-tertiary); border: 1px solid var(--theme-card-border); top: #{(i-1) * 2}px; left: #{(i-1) * 2}px; transform: rotate(#{(i - 2) * 1}deg); z-index: #{5-i};"}
           >
-            <div class="w-full h-full flex items-center justify-center text-gray-400 text-3xl font-bold">
+            <div class="w-full h-full flex items-center justify-center text-3xl font-bold theme-text-tertiary">
               ♠
             </div>
           </div>
@@ -117,9 +170,57 @@ defmodule RachelWeb.GameComponents do
       <% end %>
       
     <!-- Main current card -->
-      <div class="relative w-full h-full bg-white rounded-2xl shadow-2xl transform hover:rotate-3 transition-transform z-10 border border-gray-200">
+      <div
+        class="relative w-full h-full rounded-2xl theme-shadow-xl transform hover:rotate-3 transition-transform z-10 overflow-hidden"
+        style="background: var(--theme-card-gradient); border: 2px solid var(--theme-card-border);"
+      >
         <%= if @card do %>
-          <div class="w-full h-full flex flex-col items-center justify-center p-2">
+          <!-- Card pattern overlay -->
+          <div
+            class="absolute inset-0 pointer-events-none opacity-30"
+            style="background-image: var(--theme-card-pattern); background-size: cover;"
+          >
+          </div>
+          
+    <!-- Card corner decorations -->
+          <div
+            class="absolute top-2 left-2 text-sm font-bold opacity-70"
+            style={
+              (card_red?(@card) && "color: var(--theme-card-red);") ||
+                "color: var(--theme-card-black);"
+            }
+          >
+            {rank_to_string(@card.rank)}
+          </div>
+          <div
+            class="absolute top-2 right-2 text-sm opacity-70"
+            style={
+              (card_red?(@card) && "color: var(--theme-card-red);") ||
+                "color: var(--theme-card-black);"
+            }
+          >
+            {suit_to_symbol(@card.suit)}
+          </div>
+          <div
+            class="absolute bottom-2 left-2 text-sm opacity-70 rotate-180"
+            style={
+              (card_red?(@card) && "color: var(--theme-card-red);") ||
+                "color: var(--theme-card-black);"
+            }
+          >
+            {suit_to_symbol(@card.suit)}
+          </div>
+          <div
+            class="absolute bottom-2 right-2 text-sm font-bold opacity-70 rotate-180"
+            style={
+              (card_red?(@card) && "color: var(--theme-card-red);") ||
+                "color: var(--theme-card-black);"
+            }
+          >
+            {rank_to_string(@card.rank)}
+          </div>
+
+          <div class="w-full h-full flex flex-col items-center justify-center p-2 relative z-10">
             <div class={[
               "text-4xl font-bold text-center",
               card_red?(@card) && "card-suit-red",
@@ -129,7 +230,7 @@ defmodule RachelWeb.GameComponents do
             </div>
           </div>
         <% else %>
-          <div class="w-full h-full flex items-center justify-center text-gray-300 text-2xl">
+          <div class="w-full h-full flex items-center justify-center text-2xl theme-text-tertiary">
             ?
           </div>
         <% end %>
@@ -156,6 +257,8 @@ defmodule RachelWeb.GameComponents do
   """
   attr :deck_size, :integer, required: true
   attr :can_draw, :boolean, default: false
+  attr :player_id, :string, default: nil
+  attr :layout, :string, default: "default"
 
   def deck_display(assigns) do
     ~H"""
@@ -167,26 +270,65 @@ defmodule RachelWeb.GameComponents do
       <%= if @deck_size > 0 do %>
         <%= for i <- 1..min(@deck_size, 4) do %>
           <div
-            class={"absolute w-full h-full bg-gray-800 rounded-2xl shadow-lg border border-gray-600 #{if i == 1, do: "z-10", else: "z-#{10-i}"}"}
-            style={"top: #{(i-1) * 2}px; left: #{(i-1) * 2}px; transform: rotate(#{(i - 2) * 1}deg);"}
+            class={"absolute w-full h-full rounded-2xl theme-shadow-lg #{if i == 1, do: "z-10", else: "z-#{10-i}"}"}
+            style={"background-color: var(--theme-bg-secondary); border: 2px solid var(--theme-card-border); top: #{(i-1) * 2}px; left: #{(i-1) * 2}px; transform: rotate(#{(i - 2) * 1}deg);"}
           >
             <!-- Card back pattern -->
-            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900 rounded-2xl card-back">
-              <div class="text-gray-400 text-6xl opacity-20">♠</div>
+            <div
+              class="w-full h-full flex items-center justify-center rounded-2xl card-back relative overflow-hidden"
+              style="background: var(--theme-card-back-gradient); background-size: var(--theme-card-back-pattern-size);"
+            >
+              <!-- Decorative center -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div
+                  class="w-16 h-16 rounded-full flex items-center justify-center"
+                  style="background-color: var(--theme-card-decoration); border: 2px solid var(--theme-primary);"
+                >
+                  <div class="text-3xl font-bold" style="color: var(--theme-primary);">R</div>
+                </div>
+              </div>
+              <!-- Corner decorations -->
+              <div
+                class="absolute top-2 left-2 text-xl opacity-40"
+                style="color: var(--theme-text-inverse);"
+              >
+                ♠
+              </div>
+              <div
+                class="absolute top-2 right-2 text-xl opacity-40"
+                style="color: var(--theme-text-inverse);"
+              >
+                ♥
+              </div>
+              <div
+                class="absolute bottom-2 left-2 text-xl opacity-40"
+                style="color: var(--theme-text-inverse);"
+              >
+                ♦
+              </div>
+              <div
+                class="absolute bottom-2 right-2 text-xl opacity-40"
+                style="color: var(--theme-text-inverse);"
+              >
+                ♣
+              </div>
             </div>
           </div>
         <% end %>
       <% else %>
         <!-- Empty deck placeholder -->
-        <div class="w-full h-full border-2 border-dashed border-gray-500 rounded-2xl flex items-center justify-center">
-          <div class="text-gray-500 text-sm font-bold">Empty</div>
+        <div
+          class="w-full h-full border-2 border-dashed rounded-2xl flex items-center justify-center"
+          style="border-color: var(--theme-text-tertiary);"
+        >
+          <div class="text-sm font-bold theme-text-tertiary">Empty</div>
         </div>
       <% end %>
       
     <!-- Clickable overlay when can draw -->
       <%= if @can_draw && @deck_size > 0 do %>
         <button
-          id="deck-draw-button"
+          id={"deck-draw-button-#{@layout}-#{@player_id || "default"}"}
           phx-click="draw_card"
           class={
             [
@@ -194,9 +336,7 @@ defmodule RachelWeb.GameComponents do
               # Enhanced mobile touch feedback
               "active:scale-95",
               # Better ring visibility on mobile
-              "hover:ring-4 hover:ring-green-400 focus:ring-4 focus:ring-green-400",
-              # Always show ring on mobile for clear interaction
-              "ring-2 ring-green-400/50 lg:ring-0"
+              "hover:ring-4 hover:ring-green-400 focus:ring-4 focus:ring-green-400"
             ]
           }
           title="Draw cards from deck"
@@ -205,13 +345,10 @@ defmodule RachelWeb.GameComponents do
           data-sound="card-draw"
         >
           <!-- Background overlay - more visible on mobile -->
-          <div class={
-            [
-              "absolute inset-0 bg-green-400/20 rounded-2xl transition-opacity duration-300",
-              # More visible on mobile, hover-based on desktop
-              "opacity-30 lg:opacity-0 group-hover:opacity-100 group-focus:opacity-100"
-            ]
-          }>
+          <div
+            class="absolute inset-0 rounded-2xl transition-opacity duration-300 opacity-30 lg:opacity-0 group-hover:opacity-100 group-focus:opacity-100"
+            style="background-color: var(--theme-success); opacity: 0.2;"
+          >
           </div>
           
     <!-- Draw text/icon - always visible on mobile -->
@@ -230,7 +367,10 @@ defmodule RachelWeb.GameComponents do
       
     <!-- Deck count indicator -->
       <%= if @deck_size > 0 do %>
-        <div class="absolute -bottom-2 -right-2 bg-gray-700 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-30">
+        <div
+          class="absolute -bottom-2 -right-2 rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-30"
+          style="background-color: var(--theme-primary); color: var(--theme-text-inverse);"
+        >
           {@deck_size}
         </div>
       <% end %>
@@ -304,32 +444,59 @@ defmodule RachelWeb.GameComponents do
 
   def player_card_horizontal(assigns) do
     ~H"""
-    <div class={
-      [
-        "flex items-center gap-1 md:gap-2 px-1.5 md:px-3 py-1.5 md:py-2 rounded-lg transition-all duration-300 relative text-xs md:text-sm",
-        # Current player styling (whose turn it is)
-        @is_current && @is_you && "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ring-2 ring-white/30",
-        @is_current && !@is_you && "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg ring-2 ring-white/30",
-        # You styling (when it's not your turn)
-        !@is_current && @is_you && "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md ring-1 ring-white/20",
-        # Other players
-        !@is_current && !@is_you && "bg-white/10 hover:bg-white/20 text-white",
-        # Add disconnected styling
-        Map.get(@player, :connected, true) == false && "opacity-60"
-      ]
-    }>
-      <div class={[
-        "w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm flex-shrink-0",
-        (@is_current || @is_you) && "bg-white/90 text-gray-800",
-        !@is_current && !@is_you && "bg-gray-300 text-gray-700"
-      ]}>
+    <div
+      class={
+        [
+          "flex items-center gap-1 md:gap-2 px-1.5 md:px-3 py-1.5 md:py-2 rounded-lg transition-all duration-300 relative text-xs md:text-sm",
+          # Current player styling (whose turn it is)
+          @is_current && @is_you &&
+            "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg ring-2 ring-white/30",
+          @is_current && !@is_you &&
+            "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg ring-2 ring-white/30",
+          # You styling (when it's not your turn)
+          !@is_current && @is_you &&
+            "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md ring-1 ring-white/20",
+          # Add disconnected styling
+          Map.get(@player, :connected, true) == false && "opacity-60"
+        ]
+      }
+      style={
+        if !@is_current && !@is_you do
+          "background-color: var(--theme-bg-secondary); color: var(--theme-text-primary);"
+        else
+          ""
+        end
+      }
+    >
+      <div
+        class={[
+          "w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm flex-shrink-0",
+          (@is_current || @is_you) && "bg-white/90 text-gray-800"
+        ]}
+        style={
+          if !@is_current && !@is_you do
+            "background-color: var(--theme-bg-primary); color: var(--theme-text-primary);"
+          else
+            ""
+          end
+        }
+      >
         {get_initials(@player.name)}
       </div>
       <div class="flex items-center gap-1 min-w-0">
-        <div class={[
-          "font-semibold text-xs md:text-sm hidden sm:block truncate",
-          "text-white"
-        ]}>
+        <div
+          class={[
+            "font-semibold text-xs md:text-sm hidden sm:block truncate",
+            (@is_current || @is_you) && "text-white"
+          ]}
+          style={
+            if !@is_current && !@is_you do
+              "color: var(--theme-text-primary);"
+            else
+              ""
+            end
+          }
+        >
           {@player.name}
         </div>
         <%= if @player.is_ai do %>
@@ -339,11 +506,19 @@ defmodule RachelWeb.GameComponents do
           <div class="text-xs opacity-80 flex-shrink-0" title="Disconnected">🔴</div>
         <% end %>
       </div>
-      <div class={[
-        "px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs font-bold flex-shrink-0",
-        (@is_current || @is_you) && "bg-white/20 text-white",
-        !@is_current && !@is_you && "bg-white/10 text-white"
-      ]}>
+      <div
+        class={[
+          "px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-xs font-bold flex-shrink-0",
+          (@is_current || @is_you) && "bg-white/20 text-white"
+        ]}
+        style={
+          if !@is_current && !@is_you do
+            "background-color: var(--theme-bg-tertiary); color: var(--theme-text-primary);"
+          else
+            ""
+          end
+        }
+      >
         {format_card_count(@card_count)}
       </div>
     </div>
@@ -406,24 +581,35 @@ defmodule RachelWeb.GameComponents do
     >
       <div
         id="suit-selector-modal"
-        class="bg-white rounded-2xl p-8 shadow-2xl transform scale-100 animate-bounce-in max-w-md w-full mx-4"
+        class="rounded-2xl p-8 theme-shadow-2xl transform scale-100 animate-bounce-in max-w-md w-full mx-4"
+        style="background-color: var(--theme-card-bg);"
         phx-hook="SuitSelector"
       >
-        <h2 id="suit-selector-title" class="text-2xl font-bold text-center mb-6">Choose a Suit</h2>
-        <p id="suit-selector-description" class="text-gray-600 text-center mb-8">
+        <h2 id="suit-selector-title" class="text-2xl font-bold text-center mb-6 theme-text-primary">
+          Choose a Suit
+        </h2>
+        <p id="suit-selector-description" class="text-center mb-8 theme-text-secondary">
           Select the suit that the next player must play. Use arrow keys to navigate and Enter to select.
         </p>
         <div class="grid grid-cols-2 gap-4" role="radiogroup" aria-labelledby="suit-selector-title">
           <button
             phx-click="nominate_suit"
             phx-value-suit="hearts"
-            class="p-6 rounded-xl bg-red-50 hover:bg-red-100 focus:bg-red-100 focus:ring-4 focus:ring-red-300 transition-colors group touch-manipulation"
+            class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
+            style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
+            onmouseover="this.style.borderColor='var(--theme-card-red)'"
+            onmouseout="this.style.borderColor='transparent'"
+            onfocus="this.style.borderColor='var(--theme-card-red)'"
+            onblur="this.style.borderColor='transparent'"
             aria-label="Hearts suit"
             role="radio"
             tabindex="0"
             data-suit="hearts"
           >
-            <div class="text-6xl text-red-500 group-hover:scale-110 group-focus:scale-110 transition-transform">
+            <div
+              class="text-6xl group-hover:scale-110 group-focus:scale-110 transition-transform"
+              style="color: var(--theme-card-red);"
+            >
               ♥
             </div>
             <div class="mt-2 font-semibold">Hearts</div>
@@ -431,13 +617,21 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="diamonds"
-            class="p-6 rounded-xl bg-red-50 hover:bg-red-100 focus:bg-red-100 focus:ring-4 focus:ring-red-300 transition-colors group touch-manipulation"
+            class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
+            style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
+            onmouseover="this.style.borderColor='var(--theme-card-red)'"
+            onmouseout="this.style.borderColor='transparent'"
+            onfocus="this.style.borderColor='var(--theme-card-red)'"
+            onblur="this.style.borderColor='transparent'"
             aria-label="Diamonds suit"
             role="radio"
             tabindex="-1"
             data-suit="diamonds"
           >
-            <div class="text-6xl text-red-500 group-hover:scale-110 group-focus:scale-110 transition-transform">
+            <div
+              class="text-6xl group-hover:scale-110 group-focus:scale-110 transition-transform"
+              style="color: var(--theme-card-red);"
+            >
               ♦
             </div>
             <div class="mt-2 font-semibold">Diamonds</div>
@@ -445,13 +639,21 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="clubs"
-            class="p-6 rounded-xl bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 focus:ring-4 focus:ring-gray-300 transition-colors group touch-manipulation"
+            class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
+            style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
+            onmouseover="this.style.borderColor='var(--theme-card-black)'"
+            onmouseout="this.style.borderColor='transparent'"
+            onfocus="this.style.borderColor='var(--theme-card-black)'"
+            onblur="this.style.borderColor='transparent'"
             aria-label="Clubs suit"
             role="radio"
             tabindex="-1"
             data-suit="clubs"
           >
-            <div class="text-6xl text-black group-hover:scale-110 group-focus:scale-110 transition-transform">
+            <div
+              class="text-6xl group-hover:scale-110 group-focus:scale-110 transition-transform"
+              style="color: var(--theme-card-black);"
+            >
               ♣
             </div>
             <div class="mt-2 font-semibold">Clubs</div>
@@ -459,13 +661,21 @@ defmodule RachelWeb.GameComponents do
           <button
             phx-click="nominate_suit"
             phx-value-suit="spades"
-            class="p-6 rounded-xl bg-gray-50 hover:bg-gray-100 focus:bg-gray-100 focus:ring-4 focus:ring-gray-300 transition-colors group touch-manipulation"
+            class="p-6 rounded-xl transition-colors group touch-manipulation theme-text-primary"
+            style="background-color: var(--theme-bg-secondary); border: 2px solid transparent;"
+            onmouseover="this.style.borderColor='var(--theme-card-black)'"
+            onmouseout="this.style.borderColor='transparent'"
+            onfocus="this.style.borderColor='var(--theme-card-black)'"
+            onblur="this.style.borderColor='transparent'"
             aria-label="Spades suit"
             role="radio"
             tabindex="-1"
             data-suit="spades"
           >
-            <div class="text-6xl text-black group-hover:scale-110 group-focus:scale-110 transition-transform">
+            <div
+              class="text-6xl group-hover:scale-110 group-focus:scale-110 transition-transform"
+              style="color: var(--theme-card-black);"
+            >
               ♠
             </div>
             <div class="mt-2 font-semibold">Spades</div>
@@ -515,8 +725,7 @@ defmodule RachelWeb.GameComponents do
     |> String.trim()
     |> String.split(" ")
     |> Enum.take(2)
-    |> Enum.map(&String.first/1)
-    |> Enum.join("")
+    |> Enum.map_join("", &String.first/1)
     |> String.upcase()
   end
 

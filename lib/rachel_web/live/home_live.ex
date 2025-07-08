@@ -25,7 +25,7 @@ defmodule RachelWeb.HomeLive do
       <!-- Theme Management -->
       <div phx-hook="ThemeBridge" id="theme-bridge"></div>
       
-      <!-- Theme Selector Button -->
+    <!-- Theme Selector Button -->
       <.theme_selector_button current_theme={@current_theme} />
       <div class="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <!-- Hero Section -->
@@ -37,8 +37,8 @@ defmodule RachelWeb.HomeLive do
             The strategic card game that's been bringing friends and families together for over 30 years
           </p>
         </div>
-
-        <!-- Game Options -->
+        
+    <!-- Game Options -->
         <div class="space-y-8">
           <!-- Instant AI Play -->
           <div class="theme-card p-8 text-center">
@@ -49,17 +49,24 @@ defmodule RachelWeb.HomeLive do
               style="background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
             >
               <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
               Play vs AI
             </a>
-            <p class="text-sm theme-text-tertiary mt-3">Start instantly with a randomly generated name</p>
+            <p class="text-sm theme-text-tertiary mt-3">
+              Start instantly with a randomly generated name
+            </p>
           </div>
-
-          <!-- Multiplayer Options -->
+          
+    <!-- Multiplayer Options -->
           <div class="theme-card p-8">
             <h2 class="text-2xl font-bold theme-text-primary mb-6 text-center">Multiplayer</h2>
-            
+
             <div class="grid md:grid-cols-2 gap-8">
               <!-- Create Game -->
               <div class="space-y-4">
@@ -82,17 +89,19 @@ defmodule RachelWeb.HomeLive do
                     class="w-full py-3 px-4 rounded-lg font-medium transition-colors"
                     style={
                       if(@creating_game || String.trim(@player_name) == "",
-                        do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
-                        else: "background-color: var(--theme-button-primary); color: var(--theme-text-inverse);"
+                        do:
+                          "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
+                        else:
+                          "background-color: var(--theme-button-primary); color: var(--theme-text-inverse);"
                       )
                     }
                   >
-                    <%= if @creating_game, do: "Creating...", else: "Create Game" %>
+                    {if @creating_game, do: "Creating...", else: "Create Game"}
                   </button>
                 </form>
               </div>
-
-              <!-- Join Game -->
+              
+    <!-- Join Game -->
               <div class="space-y-4">
                 <h3 class="text-lg font-semibold theme-text-primary">Join Game</h3>
                 <form phx-submit="join_game" class="space-y-3">
@@ -120,24 +129,34 @@ defmodule RachelWeb.HomeLive do
                   />
                   <button
                     type="submit"
-                    disabled={@joining_game || String.trim(@player_name) == "" || String.trim(@game_code) == ""}
+                    disabled={
+                      @joining_game || String.trim(@player_name) == "" ||
+                        String.trim(@game_code) == ""
+                    }
                     class="w-full py-3 px-4 rounded-lg font-medium transition-colors"
                     style={
-                      if(@joining_game || String.trim(@player_name) == "" || String.trim(@game_code) == "",
-                        do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
-                        else: "background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
+                      if(
+                        @joining_game || String.trim(@player_name) == "" ||
+                          String.trim(@game_code) == "",
+                        do:
+                          "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
+                        else:
+                          "background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
                       )
                     }
                   >
-                    <%= if @joining_game, do: "Joining...", else: "Join Game" %>
+                    {if @joining_game, do: "Joining...", else: "Join Game"}
                   </button>
                 </form>
               </div>
             </div>
           </div>
-
-          <!-- How to Play Summary -->
-          <div class="rounded-2xl theme-shadow-lg p-8" style="background: var(--theme-primary); color: var(--theme-text-inverse);">
+          
+    <!-- How to Play Summary -->
+          <div
+            class="rounded-2xl theme-shadow-lg p-8"
+            style="background: var(--theme-primary); color: var(--theme-text-inverse);"
+          >
             <h3 class="text-xl font-bold mb-4">Quick Rules</h3>
             <div class="grid md:grid-cols-2 gap-6 text-sm">
               <div>
@@ -168,13 +187,13 @@ defmodule RachelWeb.HomeLive do
   @impl true
   def handle_event("update_player_name", %{"player_name" => name}, socket) do
     # Save to localStorage via client-side hook
-    socket = 
+    socket =
       if String.trim(name) != "" do
         push_event(socket, "save_player_name", %{name: String.trim(name)})
       else
         socket
       end
-    
+
     {:noreply, assign(socket, :player_name, name)}
   end
 
@@ -189,17 +208,17 @@ defmodule RachelWeb.HomeLive do
   def handle_event("create_game", %{"player_name" => name}, socket) do
     socket = assign(socket, :creating_game, true)
     player_id = socket.assigns.player_id
-    
+
     case GameManager.create_and_join_game(player_id, String.trim(name)) do
       {:ok, game_id} ->
         {:noreply, push_navigate(socket, to: "/game/#{game_id}/lobby")}
-      
+
       {:error, _reason} ->
         socket =
           socket
           |> assign(:creating_game, false)
           |> put_flash(:error, "Failed to create game. Please try again.")
-        
+
         {:noreply, socket}
     end
   end
@@ -208,33 +227,33 @@ defmodule RachelWeb.HomeLive do
     socket = assign(socket, :joining_game, true)
     player_id = socket.assigns.player_id
     game_id = String.trim(String.upcase(code))
-    
+
     case SessionManager.handle_game_join(game_id, player_id, String.trim(name)) do
       {:ok, _game} ->
         {:noreply, push_navigate(socket, to: "/game/#{game_id}")}
-      
+
       {:error, :game_not_found} ->
         socket =
           socket
           |> assign(:joining_game, false)
           |> put_flash(:error, "Game not found. Please check the code.")
-        
+
         {:noreply, socket}
-      
+
       {:error, :game_full} ->
         socket =
           socket
           |> assign(:joining_game, false)
           |> put_flash(:error, "Game is full (8 players max).")
-        
+
         {:noreply, socket}
-      
+
       {:error, _reason} ->
         socket =
           socket
           |> assign(:joining_game, false)
           |> put_flash(:error, "Failed to join game. Please try again.")
-        
+
         {:noreply, socket}
     end
   end
