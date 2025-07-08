@@ -768,6 +768,18 @@
   animation: bounce 1s infinite;
 }
 
+/* Special effect for Black Jacks - more ominous */
+.playing-card[data-rank="J"][data-suit="clubs"]::after,
+.playing-card[data-rank="J"][data-suit="spades"]::after {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  color: #ef4444;
+  border: 1px solid #dc2626;
+  font-size: 0.875rem;
+  padding: 3px 8px;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
 /* Smooth transitions */
 * {
   transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, 
