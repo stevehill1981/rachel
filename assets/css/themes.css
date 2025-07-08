@@ -125,23 +125,25 @@
   --theme-table-bg: radial-gradient(ellipse at center, #1a4d3a 0%, #0f2a1e 100%);
   --theme-table-overlay: rgba(212, 175, 55, 0.08);
   
-  --theme-card-bg: #f8f6f0;
+  --theme-card-bg: #2a3f5f;
   --theme-card-border: #d4af37;
-  --theme-card-shadow: rgba(0, 0, 0, 0.3);
-  --theme-card-red: #c41e3a;
-  --theme-card-black: #2c2c2c;
+  --theme-card-shadow: rgba(0, 0, 0, 0.5);
+  --theme-card-red: #ff6b6b;
+  --theme-card-black: #f8f9fa;
   
-  --theme-text-primary: #f8f6f0;
+  --theme-text-primary: #ecf0f1;
   --theme-text-secondary: #d4af37;
-  --theme-text-tertiary: #8b9dc3;
-  --theme-text-inverse: #1a2332;
+  --theme-text-tertiary: #95a5a6;
+  --theme-text-inverse: #2c3e50;
   
   --theme-button-primary: #d4af37;
   --theme-button-primary-hover: #e6c757;
-  --theme-button-success: #2d7d32;
-  --theme-button-success-hover: #388e3c;
-  --theme-button-danger: #c62828;
-  --theme-button-danger-hover: #d32f2f;
+  --theme-button-secondary: #7f8c8d;
+  --theme-button-secondary-hover: #95a5a6;
+  --theme-button-success: #27ae60;
+  --theme-button-success-hover: #2ecc71;
+  --theme-button-danger: #e74c3c;
+  --theme-button-danger-hover: #c0392b;
   
   --theme-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
   --theme-shadow-md: 0 6px 15px rgba(0, 0, 0, 0.25);
