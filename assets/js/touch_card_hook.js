@@ -48,6 +48,11 @@ export const TouchCard = {
       
       // Only trigger if it was a short tap and user didn't move much
       if (!hasMoved && touchDuration < 500) {
+        // Check if the card is disabled before allowing selection
+        if (this.el.disabled || this.el.hasAttribute('disabled') || this.el.classList.contains('disabled')) {
+          return; // Don't trigger selection for disabled cards
+        }
+        
         // Prevent the click event from firing (avoid double-tap)
         e.preventDefault();
         

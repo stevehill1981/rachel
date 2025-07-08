@@ -96,6 +96,11 @@ defmodule Rachel.Games.GameServer do
     GenServer.call(via_tuple(game_id), {:add_ai_player, name})
   end
 
+  @spec remove_player(game_id(), String.t()) :: {:ok, Game.t()} | {:error, atom()}
+  def remove_player(game_id, player_id) do
+    GenServer.call(via_tuple(game_id), {:remove_player, player_id})
+  end
+
   # Test helper to set state directly
   @spec set_state(game_id(), Game.t()) :: :ok
   def set_state(game_id, game) do
@@ -399,6 +404,33 @@ defmodule Rachel.Games.GameServer do
       {:reply, {:ok, new_state.game}, new_state}
     else
       {:reply, {:error, :cannot_add_ai}, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:remove_player, player_id}, _from, state) do
+    if state.game.status == :waiting do
+      # Find the player and remove them
+      new_players = Enum.reject(state.game.players, &(&1.id == player_id))
+      
+      if length(new_players) != length(state.game.players) do
+        # Player was found and removed
+        new_game = %{state.game | players: new_players}
+        
+        new_state = %{
+          state
+          | game: new_game,
+            connected_players: Map.delete(state.connected_players, player_id),
+            updated_at: DateTime.utc_now()
+        }
+        
+        broadcast_game_update(new_state)
+        {:reply, {:ok, new_state.game}, new_state}
+      else
+        {:reply, {:error, :player_not_found}, state}
+      end
+    else
+      {:reply, {:error, :game_already_started}, state}
     end
   end
 

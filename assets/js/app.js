@@ -53,6 +53,46 @@ const Hooks = {
       })
     }
   },
+  
+  CopyToClipboard: {
+    mounted() {
+      this.handleEvent("copy_to_clipboard", ({text}) => {
+        if (navigator.clipboard && window.isSecureContext) {
+          // Use modern clipboard API
+          navigator.clipboard.writeText(text).then(() => {
+            console.log("Text copied to clipboard:", text)
+          }).catch(err => {
+            console.error("Failed to copy text: ", err)
+            this.fallbackCopy(text)
+          })
+        } else {
+          // Fallback for older browsers or insecure contexts
+          this.fallbackCopy(text)
+        }
+      })
+    },
+    
+    fallbackCopy(text) {
+      // Create a temporary textarea element
+      const textArea = document.createElement("textarea")
+      textArea.value = text
+      textArea.style.position = "fixed"
+      textArea.style.left = "-999999px"
+      textArea.style.top = "-999999px"
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        document.execCommand('copy')
+        console.log("Text copied to clipboard using fallback:", text)
+      } catch (err) {
+        console.error("Fallback copy failed:", err)
+      }
+      
+      document.body.removeChild(textArea)
+    }
+  },
   AutoHideFlash: {
     mounted() {
       // Auto-hide flash messages after 5 seconds

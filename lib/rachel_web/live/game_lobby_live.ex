@@ -1,6 +1,6 @@
 defmodule RachelWeb.GameLobbyLive do
   use RachelWeb, :live_view
-  alias Rachel.Games.{GameManager, GameServer}
+  alias Rachel.Games.GameServer
   alias Phoenix.PubSub
 
   @impl true
@@ -168,23 +168,23 @@ defmodule RachelWeb.GameLobbyLive do
         <% end %>
 
         <!-- Share Link -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+        <div id="copy-section" class="bg-white rounded-2xl shadow-lg p-6 text-center" phx-hook="CopyToClipboard">
           <h3 class="text-lg font-semibold text-gray-900 mb-3">Invite Friends</h3>
           <div class="flex items-center gap-3 max-w-md mx-auto">
             <input
+              id="game-url-input"
               type="text"
               value={url(~p"/game/#{@game_id}")}
               readonly
               class="flex-1 px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg font-mono text-sm"
             />
             <button
-              phx-click={JS.dispatch("phx:copy", to: "#game-url")}
+              phx-click="copy_game_url"
               class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
             >
               Copy
             </button>
           </div>
-          <input id="game-url" type="hidden" value={url(~p"/game/#{@game_id}")} />
         </div>
       </div>
     </div>
@@ -197,22 +197,41 @@ defmodule RachelWeb.GameLobbyLive do
     
     case GameServer.add_ai_player(socket.assigns.game_id, generate_ai_name()) do
       {:ok, _game} ->
-        {:noreply, assign(socket, :adding_ai, false)}
-      
-      {:error, _reason} ->
         socket =
           socket
           |> assign(:adding_ai, false)
-          |> put_flash(:error, "Failed to add AI player")
+          |> put_flash(:info, "AI player added!")
+        
+        {:noreply, socket}
+      
+      {:error, :cannot_add_ai} ->
+        socket =
+          socket
+          |> assign(:adding_ai, false)
+          |> put_flash(:error, "Cannot add AI player - game is full or already started")
+        
+        {:noreply, socket}
+      
+      {:error, reason} ->
+        socket =
+          socket
+          |> assign(:adding_ai, false)
+          |> put_flash(:error, "Failed to add AI player: #{reason}")
         
         {:noreply, socket}
     end
   end
 
   def handle_event("remove_ai", %{"player-id" => player_id}, socket) do
-    # For now, we'll just remove the player from the game
-    # In the future, we might want a proper remove_player function
-    {:noreply, socket}
+    case GameServer.remove_player(socket.assigns.game_id, player_id) do
+      {:ok, _game} ->
+        socket = put_flash(socket, :info, "AI player removed")
+        {:noreply, socket}
+      
+      {:error, reason} ->
+        socket = put_flash(socket, :error, "Failed to remove AI player: #{reason}")
+        {:noreply, socket}
+    end
   end
 
   def handle_event("start_game", _, socket) do
@@ -224,6 +243,17 @@ defmodule RachelWeb.GameLobbyLive do
         socket = put_flash(socket, :error, "Failed to start game: #{reason}")
         {:noreply, socket}
     end
+  end
+
+  def handle_event("copy_game_url", _, socket) do
+    game_url = url(~p"/game/#{socket.assigns.game_id}")
+    
+    socket =
+      socket
+      |> push_event("copy_to_clipboard", %{text: game_url})
+      |> put_flash(:info, "Game URL copied to clipboard!")
+    
+    {:noreply, socket}
   end
 
   @impl true
