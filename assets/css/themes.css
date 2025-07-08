@@ -618,6 +618,13 @@ textarea::placeholder {
   outline-style: dashed;
 }
 
+/* Disable global focus outlines for theme selector buttons */
+#theme-menu button:focus,
+#theme-menu button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Prevent flash of unstyled content during theme loading */
 :root {
   /* Default theme variables are loaded first to prevent flickers */
