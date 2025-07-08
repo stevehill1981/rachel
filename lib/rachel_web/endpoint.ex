@@ -22,7 +22,15 @@ defmodule RachelWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
+    websocket: [
+      connect_info: [session: @session_options],
+      check_origin: [
+        "https://rachel.stevehill.xyz",
+        "https://rachel-game.fly.dev",
+        "http://localhost:4000",
+        "https://localhost:4000"
+      ]
+    ],
     longpoll: [connect_info: [session: @session_options]]
 
   # Serve at "/" the static files from "priv/static" directory.
@@ -79,6 +87,13 @@ defmodule RachelWeb.Endpoint do
   end
 
   defp csp_header do
+    # Get the host from the configuration
+    host = 
+      case Application.get_env(:rachel, RachelWeb.Endpoint)[:url] do
+        nil -> "localhost"
+        url_config -> url_config[:host] || "localhost"
+      end
+
     # Content Security Policy for Phoenix LiveView applications
     [
       "default-src 'self'",
@@ -86,7 +101,7 @@ defmodule RachelWeb.Endpoint do
       "style-src 'self' 'unsafe-inline'", # Needed for dynamic theme CSS custom properties
       "img-src 'self' data:",
       "font-src 'self'",
-      "connect-src 'self' ws: wss:", # WebSocket connections for LiveView
+      "connect-src 'self' ws://#{host} wss://#{host} ws://localhost:* wss://localhost:*", # WebSocket connections for LiveView
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'"
