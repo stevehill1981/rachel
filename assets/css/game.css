@@ -575,11 +575,23 @@
   }
 }
 
+/* Game layout spacing */
+.game-layout {
+  box-sizing: border-box;
+}
+
+/* Desktop grid layout - ensure middle row takes available space */
+@media (min-width: 1024px) {
+  .game-layout {
+    grid-template-rows: auto 1fr auto;
+  }
+}
+
 /* Mobile-specific game optimizations */
 @media (max-width: 1024px) {
-  /* Ensure fixed bottom hand doesn't interfere with iOS safe areas */
+  /* Account for fixed player hand at bottom */
   .game-layout {
-    padding-bottom: max(8rem, env(safe-area-inset-bottom, 8rem));
+    padding-bottom: 140px; /* Height of player hand */
   }
   
   /* Better mobile game action buttons */
@@ -617,8 +629,8 @@
     padding-right: max(1rem, env(safe-area-inset-right));
   }
   
-  .fixed.bottom-0 {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
   }
 }
 
@@ -750,23 +762,7 @@
     var(--theme-card-gradient);
 }
 
-.pickup-card-indicator {
-  position: relative;
-}
-
-.pickup-card-indicator::after {
-  content: attr(data-effect);
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: bold;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+/* Removed pickup card indicator styling */
 
 
 /* Reset deck draw button appearance */

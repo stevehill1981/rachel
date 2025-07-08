@@ -358,36 +358,38 @@ defmodule RachelWeb.GameLive do
   @spec render(map()) :: Phoenix.LiveView.Rendered.t()
   def render(assigns) do
     ~H"""
-    <div class="game-board min-h-screen">
+    <div class="game-board min-h-screen" style="background: var(--theme-table-bg);">
       <!-- Theme Management -->
       <div phx-hook="ThemeBridge" id="theme-bridge"></div>
       
     <!-- Main Game Area -->
-      <main class="relative z-10 p-4 max-w-7xl mx-auto">
-        <%= cond do %>
-          <% !@game -> %>
+      <%= cond do %>
+        <% !@game -> %>
+          <main class="relative z-10 p-4 max-w-7xl mx-auto">
             <div class="text-center text-white">
               <h1 class="text-4xl font-bold mb-4">Rachel</h1>
               <p>Loading game...</p>
             </div>
-          <% @game.status == :waiting -> %>
+          </main>
+        <% @game.status == :waiting -> %>
+          <main class="relative z-10 p-4 max-w-7xl mx-auto">
             <RachelWeb.Components.Game.WaitingRoom.waiting_room
               game={@game}
               game_id={@game_id}
               player_id={@player_id}
             />
-          <% true -> %>
-            <RachelWeb.Components.Game.GameInProgress.game_in_progress
-              game={@game}
-              player_id={@player_id}
-              selected_cards={@selected_cards}
-              is_spectator={Map.get(assigns, :is_spectator, false)}
-              commentary_feed={Map.get(assigns, :commentary_feed, [])}
-              spectator_show_cards={Map.get(assigns, :spectator_show_cards, false)}
-              spectator_show_stats={Map.get(assigns, :spectator_show_stats, false)}
-            />
-        <% end %>
-      </main>
+          </main>
+        <% true -> %>
+          <RachelWeb.Components.Game.GameInProgress.game_in_progress
+            game={@game}
+            player_id={@player_id}
+            selected_cards={@selected_cards}
+            is_spectator={Map.get(assigns, :is_spectator, false)}
+            commentary_feed={Map.get(assigns, :commentary_feed, [])}
+            spectator_show_cards={Map.get(assigns, :spectator_show_cards, false)}
+            spectator_show_stats={Map.get(assigns, :spectator_show_stats, false)}
+          />
+      <% end %>
       
     <!-- Winner celebration -->
       <%= if @show_winner_banner do %>

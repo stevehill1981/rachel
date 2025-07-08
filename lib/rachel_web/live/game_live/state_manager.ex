@@ -37,7 +37,7 @@ defmodule RachelWeb.GameLive.StateManager do
     normalized = %Game{
       id: Map.get(game, :id),
       status: Map.get(game, :status, :waiting),
-      players: Map.get(game, :players, []),
+      players: normalize_players(Map.get(game, :players, [])),
       current_player_index: Map.get(game, :current_player_index, 0),
       current_card: Map.get(game, :current_card),
       deck: Map.get(game, :deck, %Deck{cards: []}),
@@ -60,6 +60,25 @@ defmodule RachelWeb.GameLive.StateManager do
   end
 
   def normalize_game_data(_), do: nil
+
+  # Normalize players to ensure is_ai is always a boolean
+  defp normalize_players(players) when is_list(players) do
+    Enum.map(players, fn player ->
+      # Ensure is_ai is a boolean, not a string
+      is_ai_value = case Map.get(player, :is_ai) do
+        true -> true
+        "true" -> true
+        false -> false
+        "false" -> false
+        nil -> false
+        _ -> false
+      end
+      
+      Map.put(player, :is_ai, is_ai_value)
+    end)
+  end
+  
+  defp normalize_players(_), do: []
 
   @doc """
   Returns socket updates to check and show winner banner if appropriate.

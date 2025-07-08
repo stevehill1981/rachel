@@ -56,7 +56,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
       <%= if @player && @player_id not in @game.winners do %>
         <div
           id={"player-hand-active-#{@player_id}"}
-          class="theme-card backdrop-blur rounded-t-2xl p-4 pb-2"
+          class="theme-card backdrop-blur rounded-t-2xl p-4 pb-safe"
           style="background-color: var(--theme-bg-glass);"
         >
           <.play_button selected_cards={@selected_cards} />
@@ -229,7 +229,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
       </div>
       
     <!-- Desktop: Grid layout -->
-      <div class="hidden lg:grid lg:grid-cols-8 gap-2">
+      <div class="hidden lg:grid lg:grid-cols-8 gap-2 pb-4">
         <%= for {card, idx} <- Enum.with_index(@player.hand) do %>
           <div class="flex justify-center">
             <.playing_card

@@ -23,17 +23,10 @@ defmodule RachelWeb.Components.Game.GameInProgress do
     assigns = assign(assigns, :current_player, StateManager.current_player(assigns.game))
 
     ~H"""
-    <!-- Game Board with themed background -->
-    <div class="game-board min-h-screen relative" style="background: var(--theme-table-bg);">
-      <!-- Table overlay effect -->
-      <div
-        class="absolute inset-0 pointer-events-none"
-        style="background-color: var(--theme-table-overlay);"
-      >
-      </div>
-      
-    <!-- Theme Selector Button - Top Right -->
-      <.theme_selector_button position="absolute top-4 right-4" />
+    <!-- Main game container -->
+    <div class="h-screen relative flex flex-col overflow-hidden">
+      <!-- Theme Selector Button - Top Right -->
+      <.theme_selector_button position="absolute top-4 right-4 z-50" />
       
       <!-- Connection Status Indicator - Top Left -->
       <div 
@@ -46,16 +39,16 @@ defmodule RachelWeb.Components.Game.GameInProgress do
       </div>
       
     <!-- Game Layout -->
-      <div class="relative game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 min-h-screen lg:min-h-[80vh] page-transition pb-0">
+      <div class="flex-1 game-layout flex flex-col lg:grid lg:grid-cols-3 lg:grid-rows-3 gap-2 lg:gap-4 p-4 h-full">
         <!-- Top Players - Compact on mobile for more game space -->
         <div class="lg:col-span-3 lg:row-start-1 flex-shrink-0">
           <.players_display game={@game} player_id={@player_id} />
         </div>
         
     <!-- Mobile: Compact middle section with game area and status side by side -->
-        <div class="flex lg:hidden gap-2 flex-shrink-0 px-2">
+        <div class="flex lg:hidden gap-2 flex-1 px-2 items-stretch">
           <!-- Main Game Area -->
-          <div class="flex-1 flex items-center justify-center min-h-[200px]">
+          <div class="flex-1 flex items-center justify-center py-4">
             <.deck_area
               game={@game}
               player_id={@player_id}
@@ -87,7 +80,7 @@ defmodule RachelWeb.Components.Game.GameInProgress do
         </div>
         
     <!-- Player Hand - Fixed bottom position for easy thumb access -->
-        <div class="fixed bottom-0 left-0 right-0 lg:col-span-3 lg:row-start-3 lg:self-end lg:relative lg:bottom-auto p-0 z-40">
+        <div class="fixed bottom-0 left-0 right-0 lg:static lg:col-span-3 lg:row-start-3 lg:mt-auto p-0 z-40">
           <.player_hand
             game={@game}
             player_id={@player_id}

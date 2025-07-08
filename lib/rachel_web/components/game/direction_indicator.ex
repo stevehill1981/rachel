@@ -8,7 +8,7 @@ defmodule RachelWeb.Components.Game.DirectionIndicator do
 
   def direction_indicator(assigns) do
     ~H"""
-    <div class="text-white/60 text-sm md:text-xl direction-indicator hidden sm:block">
+    <div class="theme-text-secondary text-sm md:text-xl direction-indicator hidden sm:block">
       <%= if @direction == :clockwise do %>
         →
       <% else %>

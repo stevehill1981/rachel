@@ -39,8 +39,7 @@ defmodule RachelWeb.GameComponents do
           !@disabled && "active:scale-95 cursor-pointer touch-card",
           # Hover for non-touch
           !@disabled && "hover:shadow-xl hover:-translate-y-2",
-          special_card?(@card) && "special-card-glow",
-          pickup_card?(@card) && "pickup-card-indicator"
+          special_card?(@card) && "special-card-glow"
         ]
       }
       style={
