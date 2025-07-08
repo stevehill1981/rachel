@@ -43,8 +43,11 @@ defmodule RachelWeb.HomeLive do
           <!-- Instant AI Play -->
           <div class="theme-card p-8 text-center">
             <h2 class="text-2xl font-bold theme-text-primary mb-4">Quick Play</h2>
-            <a
-              href="/play"
+            <button
+              phx-click="play_with_ai"
+              id="play-with-ai-btn"
+              phx-hook="ClickDebounce"
+              data-debounce="1000"
               class="inline-flex items-center px-8 py-4 text-lg font-bold theme-button-primary hover:theme-button-primary-hover rounded-xl focus:outline-none focus:ring-4 focus:ring-opacity-50 transition-all duration-200 theme-shadow-lg hover:theme-shadow-xl transform hover:-translate-y-1"
               style="background-color: var(--theme-button-success); color: var(--theme-text-inverse);"
             >
@@ -57,7 +60,7 @@ defmodule RachelWeb.HomeLive do
                 />
               </svg>
               Play vs AI
-            </a>
+            </button>
             <p class="text-sm theme-text-tertiary mt-3">
               Start instantly with a randomly generated name
             </p>
@@ -269,5 +272,9 @@ defmodule RachelWeb.HomeLive do
 
   def handle_event("theme_loaded", %{"theme" => theme_id}, socket) do
     {:noreply, assign(socket, :current_theme, theme_id)}
+  end
+
+  def handle_event("play_with_ai", _params, socket) do
+    {:noreply, push_navigate(socket, to: "/play")}
   end
 end
