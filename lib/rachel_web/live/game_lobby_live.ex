@@ -134,7 +134,7 @@ defmodule RachelWeb.GameLobbyLive do
                 style={
                   if(@adding_ai || length(@game.players) >= 8,
                     do: "background-color: var(--theme-bg-tertiary); color: var(--theme-text-tertiary); cursor: not-allowed;",
-                    else: "background-color: var(--theme-button-secondary); color: var(--theme-text-inverse);"
+                    else: "background-color: var(--theme-button-primary); color: var(--theme-text-inverse);"
                   )
                 }
               >
