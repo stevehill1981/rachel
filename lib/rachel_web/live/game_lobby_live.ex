@@ -101,6 +101,7 @@ defmodule RachelWeb.GameLobbyLive do
 
                 <%= if @is_host && player.is_ai do %>
                   <button
+                    id={"remove-ai-btn-#{player.id}"}
                     phx-click="remove_ai"
                     phx-value-player-id={player.id}
                     phx-hook="ClickDebounce"
@@ -146,6 +147,7 @@ defmodule RachelWeb.GameLobbyLive do
 
             <div class="flex flex-wrap gap-3">
               <button
+                id="add-ai-btn"
                 phx-click="add_ai"
                 disabled={@adding_ai || length(@game.players) >= 8}
                 phx-hook="ClickDebounce"
@@ -174,6 +176,7 @@ defmodule RachelWeb.GameLobbyLive do
               </button>
 
               <button
+                id="start-game-lobby-btn"
                 phx-click="start_game"
                 disabled={length(@game.players) < 2}
                 phx-hook="ClickDebounce"
@@ -238,6 +241,7 @@ defmodule RachelWeb.GameLobbyLive do
               style="background-color: var(--theme-bg-secondary); border: 1px solid var(--theme-card-border);"
             />
             <button
+              id="copy-game-url-btn"
               phx-click="copy_game_url"
               phx-hook="ClickDebounce"
               data-debounce="1000"

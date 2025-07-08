@@ -34,6 +34,7 @@ defmodule RachelWeb.Components.Game.WaitingRoom do
               {if @game_id, do: String.slice(@game_id, -6..-1), else: "------"}
             </span>
             <button
+              id="copy-game-code-btn"
               phx-click="copy_game_code"
               phx-hook="ClickDebounce"
               data-debounce="1000"
@@ -118,6 +119,7 @@ defmodule RachelWeb.Components.Game.WaitingRoom do
       <%= if @player_id == @host_id do %>
         <%= if @player_count >= 2 do %>
           <button
+            id="start-game-btn"
             phx-click="start_game"
             phx-hook="ClickDebounce"
             data-debounce="1000"

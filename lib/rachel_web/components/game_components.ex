@@ -593,6 +593,7 @@ defmodule RachelWeb.GameComponents do
         </p>
         <div class="grid grid-cols-2 gap-4" role="radiogroup" aria-labelledby="suit-selector-title">
           <button
+            id="suit-hearts-btn"
             phx-click="nominate_suit"
             phx-value-suit="hearts"
             phx-hook="ClickDebounce"
@@ -617,6 +618,7 @@ defmodule RachelWeb.GameComponents do
             <div class="mt-2 font-semibold">Hearts</div>
           </button>
           <button
+            id="suit-diamonds-btn"
             phx-click="nominate_suit"
             phx-value-suit="diamonds"
             phx-hook="ClickDebounce"
@@ -641,6 +643,7 @@ defmodule RachelWeb.GameComponents do
             <div class="mt-2 font-semibold">Diamonds</div>
           </button>
           <button
+            id="suit-clubs-btn"
             phx-click="nominate_suit"
             phx-value-suit="clubs"
             phx-hook="ClickDebounce"
@@ -665,6 +668,7 @@ defmodule RachelWeb.GameComponents do
             <div class="mt-2 font-semibold">Clubs</div>
           </button>
           <button
+            id="suit-spades-btn"
             phx-click="nominate_suit"
             phx-value-suit="spades"
             phx-hook="ClickDebounce"

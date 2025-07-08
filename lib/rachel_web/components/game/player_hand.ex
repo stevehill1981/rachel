@@ -42,6 +42,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
           </div>
         <% end %>
         <button
+          id="return-to-lobby-btn"
           phx-click="return_to_lobby"
           phx-hook="ClickDebounce"
           data-debounce="1000"
@@ -117,6 +118,7 @@ defmodule RachelWeb.Components.Game.PlayerHand do
         
     <!-- Main play button -->
         <button
+          id="play-cards-btn"
           phx-click="play_cards"
           phx-hook="ClickDebounce"
           data-debounce="500"
