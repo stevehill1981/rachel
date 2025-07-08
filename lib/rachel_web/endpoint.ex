@@ -49,7 +49,8 @@ defmodule RachelWeb.Endpoint do
   if code_reloading? do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
-    plug Phoenix.CodeReloader
+    # Temporarily disabled due to Phoenix 1.7 compatibility
+    # plug Phoenix.CodeReloader
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,

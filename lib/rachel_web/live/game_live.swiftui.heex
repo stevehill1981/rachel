@@ -1,0 +1,227 @@
+<VStack spacing="0">
+  <!-- Players Display -->
+  <HStack spacing="8">
+    <%= for {player, idx} <- Enum.with_index(@game.players) do %>
+      <VStack spacing="4">
+        <!-- Player indicator -->
+        <Circle>
+          .fill(idx == @game.current_player_index && Color.blue || Color.gray.opacity(0.3))
+          .frame(width: 50, height: 50)
+          .overlay(
+            Text style="fontWeight(.bold); foregroundColor(.white)">
+              <%= String.slice(player.name, 0..1) |> String.upcase() %>
+            </Text>
+          )
+          <%= if player.is_ai do %>
+            .overlay(
+              Text style="font(.caption)">🤖</Text>
+              .offset(x: 20, y: -20)
+            )
+          <% end %>
+        </Circle>
+        
+        <!-- Player name -->
+        <Text style="font(.caption); foregroundColor(.secondary)">
+          <%= player.name %>
+        </Text>
+        
+        <!-- Card count -->
+        <Text style="font(.caption2); foregroundColor(.tertiary)">
+          <%= length(player.hand) %> cards
+        </Text>
+      </VStack>
+      
+      <!-- Direction indicator -->
+      <%= if idx < length(@game.players) - 1 do %>
+        <Text style="foregroundColor(.secondary)">
+          <%= if Map.get(@game, :direction, :clockwise) == :clockwise, do: "→", else: "←" %>
+        </Text>
+      <% end %>
+    <% end %>
+  </HStack>
+  .padding()
+  .background(Color.gray.opacity(0.1))
+  
+  <!-- Game Area -->
+  <ZStack>
+    <!-- Table background -->
+    <Rectangle>
+      .fill(Color.green.opacity(0.2))
+      .ignoresSafeArea()
+    
+    <VStack spacing="20">
+      <!-- Current card and deck -->
+      <HStack spacing="40">
+        <!-- Deck -->
+        <VStack spacing="8">
+          <Text style="font(.caption); foregroundColor(.secondary)">Deck</Text>
+          <Button phx-click="draw_card" disabled={!can_draw?(@game, @player_id)}>
+            <RoundedRectangle cornerRadius="12">
+              .fill(Color.blue.opacity(0.8))
+              .frame(width: 80, height: 120)
+              .overlay(
+                VStack {
+                  Image systemName="square.stack.fill">
+                    .font(.largeTitle)
+                    .foregroundColor(.white)
+                  Text style="foregroundColor(.white); font(.caption)">
+                    <%= Rachel.Games.Deck.size(@game.deck) %>
+                  </Text>
+                }
+              )
+          </Button>
+        </VStack>
+        
+        <!-- Current card -->
+        <VStack spacing="8">
+          <Text style="font(.caption); foregroundColor(.secondary)">Current Card</Text>
+          <%= if @game.current_card do %>
+            <RoundedRectangle cornerRadius="12">
+              .fill(Color.white)
+              .frame(width: 80, height: 120)
+              .overlay(
+                VStack spacing="8">
+                  <Text style="font(.largeTitle); fontWeight(.bold)">
+                    <%= rank_to_string(@game.current_card.rank) %>
+                  </Text>
+                  <Image systemName={suit_to_system_image(@game.current_card.suit)}>
+                    .font(.title)
+                    .foregroundColor({suit_color(@game.current_card.suit)})
+                  </Image>
+                </VStack>
+              )
+              .shadow(radius: 4)
+          <% end %>
+          
+          <!-- Pending actions -->
+          <%= if @game.pending_pickups > 0 do %>
+            <Text style="font(.caption); foregroundColor(.red)">
+              Pick up <%= @game.pending_pickups %>!
+            </Text>
+          <% end %>
+          
+          <%= if @game.pending_skips > 0 do %>
+            <Text style="font(.caption); foregroundColor(.orange)">
+              Skip × <%= @game.pending_skips %>
+            </Text>
+          <% end %>
+        </VStack>
+      </HStack>
+      
+      <!-- Game messages -->
+      <%= if @show_ai_thinking do %>
+        <HStack spacing="8">
+          <ProgressView />
+          <Text style="foregroundColor(.secondary)">AI thinking...</Text>
+        </HStack>
+      <% end %>
+    </VStack>
+  </ZStack>
+  
+  <!-- Player Hand -->
+  <VStack spacing="12">
+    <!-- Play button -->
+    <%= if length(@selected_cards) > 0 do %>
+      <Button phx-click="play_cards">
+        <Text style="fontWeight(.semibold)">
+          Play <%= length(@selected_cards) %> Card<%= if length(@selected_cards) > 1, do: "s" %>
+        </Text>
+      </Button>
+      .buttonStyle(.borderedProminent)
+      .controlSize(.large)
+    <% end %>
+    
+    <!-- Hand cards -->
+    <ScrollView(.horizontal) showsIndicators={false}>
+      <HStack spacing="8">
+        <%= for {card, idx} <- Enum.with_index(@player.hand) do %>
+          <Button 
+            phx-click="select_card" 
+            phx-value-index={idx}
+            disabled={!can_select_card?(@game, card, @selected_cards, @player.hand)}
+          >
+            <RoundedRectangle cornerRadius="12">
+              .fill(Color.white)
+              .frame(width: 80, height: 120)
+              .overlay(
+                VStack spacing="8">
+                  <Text style="font(.largeTitle); fontWeight(.bold)">
+                    <%= rank_to_string(card.rank) %>
+                  </Text>
+                  <Image systemName={suit_to_system_image(card.suit)}>
+                    .font(.title)
+                    .foregroundColor({suit_color(card.suit)})
+                  </Image>
+                </VStack>
+              )
+              .shadow(radius: idx in @selected_cards && 8 || 4)
+              .scaleEffect(idx in @selected_cards && 1.1 || 1.0)
+              <%= if idx in @selected_cards do %>
+                .overlay(
+                  Image systemName="checkmark.circle.fill">
+                    .font(.title)
+                    .foregroundColor(.blue)
+                    .offset(x: 30, y: -40)
+                )
+              <% end %>
+          </Button>
+        <% end %>
+      </HStack>
+      .padding()
+    </ScrollView>
+  </VStack>
+  .background(Color.gray.opacity(0.1))
+}
+
+<!-- Suit nomination modal -->
+<%= if Map.get(@game, :nominated_suit) == :pending && @current_player && @current_player.id == @player_id do %>
+  .sheet(isPresented: .constant(true)) {
+    VStack spacing="20">
+      <Text style="font(.title2); fontWeight(.semibold)">
+        Choose a suit
+      </Text>
+      
+      <HStack spacing="20">
+        <%= for suit <- [:hearts, :diamonds, :clubs, :spades] do %>
+          <Button phx-click="nominate_suit" phx-value-suit={suit}>
+            <VStack spacing="8">
+              <Image systemName={suit_to_system_image(suit)}>
+                .font(.largeTitle)
+                .foregroundColor({suit_color(suit)})
+              </Image>
+              <Text style="font(.caption)">
+                <%= String.capitalize(to_string(suit)) %>
+              </Text>
+            </VStack>
+          </Button>
+          .buttonStyle(.bordered)
+        <% end %>
+      </HStack>
+    </VStack>
+    .padding()
+    .presentationDetents([.height(200)])
+    .presentationDragIndicator(.hidden)
+    .interactiveDismissDisabled()
+  }
+<% end %>
+
+<!-- Winner celebration -->
+<%= if @show_winner_banner do %>
+  .overlay(
+    VStack spacing="20">
+      <Text style="font(.largeTitle); fontWeight(.bold)">
+        🎉 Winner! 🎉
+      </Text>
+      <Text style="font(.title)">
+        <%= hd(@game.winners) %> wins!
+      </Text>
+      <Button phx-click="return_to_lobby">
+        <Text>Return Home</Text>
+      </Button>
+      .buttonStyle(.borderedProminent)
+    </VStack>
+    .padding()
+    .background(.regularMaterial)
+    .cornerRadius(20)
+  )
+<% end %>
