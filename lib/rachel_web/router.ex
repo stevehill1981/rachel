@@ -18,6 +18,8 @@ defmodule RachelWeb.Router do
   scope "/", RachelWeb do
     pipe_through :browser
 
+    get "/privacy", PageController, :privacy
+
     live_session :default,
       on_mount: [{RachelWeb.PlayerSessionHook, :default}] do
       live "/", HomeLive
