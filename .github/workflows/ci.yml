@@ -40,7 +40,7 @@ jobs:
         elixir-version: ${{matrix.elixir}}
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Cache deps
       id: cache-deps
@@ -87,7 +87,7 @@ jobs:
         elixir-version: '1.18.0'
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Cache deps
       id: cache-deps
@@ -123,7 +123,7 @@ jobs:
         elixir-version: '1.18.0'
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Cache deps
       id: cache-deps

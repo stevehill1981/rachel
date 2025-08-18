@@ -23,7 +23,7 @@ jobs:
           --health-retries 5
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Check for performance issues
       run: |
@@ -106,7 +106,7 @@ jobs:
     needs: [quality_check, performance_check]
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Check deployment readiness
       run: |
