@@ -67,7 +67,7 @@ jobs:
         MIX_ENV: test
         
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: coverage-report
         path: cover/
