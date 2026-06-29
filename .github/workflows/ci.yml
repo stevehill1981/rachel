@@ -44,7 +44,7 @@ jobs:
 
     - name: Cache deps
       id: cache-deps
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       env:
         cache-name: cache-elixir-deps
       with:
@@ -55,7 +55,7 @@ jobs:
 
     - name: Cache compiled build
       id: cache-build
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       env:
         cache-name: cache-compiled-build
       with:
@@ -91,7 +91,7 @@ jobs:
 
     - name: Cache deps
       id: cache-deps
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       env:
         cache-name: cache-elixir-deps
       with:
@@ -127,7 +127,7 @@ jobs:
 
     - name: Cache deps
       id: cache-deps
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       env:
         cache-name: cache-elixir-deps
       with:
