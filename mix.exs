@@ -48,7 +48,7 @@ defmodule Rachel.MixProject do
       {:phoenix, "~> 1.8.0"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.1.3"},
+      {:phoenix_live_view, "~> 1.2.3"},
       {:floki, ">= 0.30.0", only: :test},
       {:excoveralls, "~> 0.18", only: :test},
       {:meck, "~> 1.0", only: :test},
