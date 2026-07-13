@@ -76,7 +76,7 @@ defmodule Rachel.MixProject do
       {:ex_machina, "~> 2.7", only: :test},
 
       # Error tracking and monitoring
-      {:sentry, "~> 11.0"},
+      {:sentry, "~> 13.3"},
       {:hackney, "~> 1.18"},
 
       # Code quality and analysis tools
